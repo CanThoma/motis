@@ -1,0 +1,14 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 error pnpm": {
+    "code": "ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND",
+    "err": {
+      "name": "pnpm",
+      "message": "No package.json (or package.yaml, or package.json5) was found in \"D:\\Webstorm Projects\\Bachelor Praktikum\".",
+      "code": "ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND",
+      "stack": "pnpm: No package.json (or package.yaml, or package.json5) was found in \"D:\\Webstorm Projects\\Bachelor Praktikum\".\n    at readProjectManifest (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:41090:13)\n    at async Object.readProjectManifestOnly (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:41094:28)\n    at async readProjectManifestOnly (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:41313:24)\n    at async Object.handler (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:129736:24)\n    at async C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:133927:20\n    at async run (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:133902:34)\n    at async runPnpm (C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:134113:5)\n    at async C:\\Users\\Tiago\\AppData\\Roaming\\npm\\pnpm-global\\5\\node_modules\\.pnpm\\pnpm@6.20.3\\node_modules\\pnpm\\dist\\pnpm.cjs:134105:7"
+    }
+  }
+}
