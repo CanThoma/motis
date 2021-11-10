@@ -34,7 +34,7 @@ function shortTripName(tsi: TripServiceInfo) {
 }
 
 type TripPickerProps = {
-  onTripPicked: (trip: TripServiceInfo | undefined) => void;
+  onTripPicked: (tripID: TripId | undefined) => void;
   clearOnPick: boolean;
   longDistanceOnly: boolean;
   className?: string;

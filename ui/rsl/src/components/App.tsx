@@ -24,7 +24,7 @@ function App(): JSX.Element {
   const [simActive, setSimActive] = useState(false);
 
   const tripDisplay =
-    selectedTrip !== undefined ? <TripDetails tripId={selectedTrip} /> : null;
+    selectedTrip !== undefined ? <TripDetails tripId={selectedTrip} onSectionDetailClick={(trip ) => setSelectedTrip(trip)} /> : null;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,7 +59,7 @@ function App(): JSX.Element {
             <div className="mt-6 flex items-center justify-center gap-2">
               <span>Trip:</span>
               <TripPicker
-                onTripPicked={(tsi) => setSelectedTrip(tsi?.trip)}
+                onTripPicked={(trip ) => setSelectedTrip(trip)}
                 clearOnPick={false}
                 longDistanceOnly={true}
                 className="w-96"

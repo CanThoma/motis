@@ -25,6 +25,7 @@ export type CombinedGroupProps = {
   startStation: Station;
   earliestDeparture: number;
   groupByDirection: GroupByDirection;
+  onSectionDetailClick: (trip: TripId | undefined) => void;
 };
 
 const SEARCH_INTERVAL = 61;
@@ -47,6 +48,14 @@ function getDepartureTime(j: Journey): number {
     case "walk":
       return firstLeg.from.departure.time;
   }
+}
+
+async function loadAndProcessTripInfo(universe: number, trip: TripId) {
+  const res = await sendPaxMonTripLoadInfosRequest({
+    universe,
+    trips: [trip],
+  });
+  return res.load_infos[0].tsi;
 }
 
 function CombinedGroup(props: CombinedGroupProps): JSX.Element {

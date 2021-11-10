@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { TripId } from "../api/protocol/motis";
+import {TripId, TripServiceInfo} from "../api/protocol/motis";
 import { usePaxMonGroupsInTripQuery } from "../api/paxmon";
 import { PaxMonEdgeLoadInfoWithStats } from "../data/loadInfo";
 import {
@@ -45,12 +45,14 @@ const groupByStationOptions: Array<{
 type TripSectionDetailsProps = {
   tripId: TripId;
   selectedSection: PaxMonEdgeLoadInfoWithStats | undefined;
+  onSectionDetailClick: (trip: TripId | undefined) => void;
   onClose: () => void;
 };
 
 function TripSectionDetails({
   tripId,
   selectedSection,
+  onSectionDetailClick,
   onClose,
 }: TripSectionDetailsProps): JSX.Element {
   const [universe] = useAtom(universeAtom);
@@ -115,6 +117,7 @@ function TripSectionDetails({
                     startStation={sec.from}
                     earliestDeparture={sec.departure_current_time}
                     groupByDirection={groupByDirection}
+                    onSectionDetailClick={onSectionDetailClick}
                   />
                 </li>
               ))}
