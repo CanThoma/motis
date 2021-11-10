@@ -273,14 +273,15 @@ function TripLoadForecastChart({
       : 0;
     const y100 = 200 - Math.round((e.capacity / maxVal) * 200);
     const y80 = 200 - Math.round(((e.capacity * 0.8) / maxVal) * 200);
-    const yDarkRed = 0;
-    const hDarkRed = y200;
-    const yRed = y200;
-    const hRed = y100 - y200;
-    const yYellow = y100;
-    const hYellow = y80 - y100;
-    const yGreen = y80;
-    const hGreen = 200 - y80;
+
+    const yDarkRed  = 0;
+    const hDarkRed  = y200;
+    const yRed      = y200;
+    const hRed      = y100 - y200;
+    const yYellow   = y100;
+    const hYellow   = y80 - y100;
+    const yGreen    = y80;
+    const hGreen    = 200 - y80;
     return (
       <g key={idx.toString()}>
         <rect
