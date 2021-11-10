@@ -3,7 +3,7 @@ import { useCombobox } from "downshift";
 import { ChevronDownIcon, XIcon } from "@heroicons/react/solid";
 
 import { PaxMonTripInfo } from "../api/protocol/motis/paxmon";
-import { TripServiceInfo } from "../api/protocol/motis";
+import {TripId, TripServiceInfo} from "../api/protocol/motis";
 import { ServiceClass } from "../api/constants";
 import { usePaxMonFindTripsQuery } from "../api/paxmon";
 
@@ -77,7 +77,7 @@ function TripPicker({
     },
     onSelectedItemChange: (changes) => {
       if (changes.selectedItem != null || !clearOnPick) {
-        onTripPicked(changes.selectedItem?.tsi);
+        onTripPicked(changes.selectedItem?.tsi.trip);
       }
       if (changes.selectedItem != null && clearOnPick) {
         reset();

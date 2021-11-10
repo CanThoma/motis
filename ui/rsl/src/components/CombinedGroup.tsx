@@ -1,9 +1,9 @@
 import React from "react";
-import { useQuery } from "react-query";
+import {useQuery, useQueryClient} from "react-query";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
-import { Station, TripId } from "../api/protocol/motis";
-import { GroupedPassengerGroups } from "../api/protocol/motis/paxmon";
+import {Station, TripId, TripServiceInfo} from "../api/protocol/motis";
+import {GroupedPassengerGroups, PaxMonGetTripLoadInfosResponse} from "../api/protocol/motis/paxmon";
 import { sendRoutingRequest } from "../api/routing";
 import { connectionToJourney, Journey } from "../data/journey";
 import { formatTime } from "../util/dateFormat";
@@ -11,6 +11,11 @@ import { formatTime } from "../util/dateFormat";
 import TripLoadForecastChart from "./TripLoadForecastChart";
 import JourneyTripNameView from "./JourneyTripNameView";
 import TripServiceInfoView from "./TripServiceInfoView";
+import TripPicker from "./TripPicker";
+import {useAtom} from "jotai";
+import {universeAtom} from "../data/simulation";
+import {sendPaxMonTripLoadInfosRequest, usePaxMonStatusQuery} from "../api/paxmon";
+import {addEdgeStatistics} from "../util/statistics";
 
 export type GroupByDirection = "Origin" | "Destination";
 
@@ -124,20 +129,25 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
             {formatTime(getArrivalTime(j))}, {j.transfers} Umstiege:
             <span className="inline-flex gap-3 pl-2">
               {j.tripLegs.map((leg, legIdx) => (
-                <Tooltip.Root key={legIdx}>
-                  <Tooltip.Trigger className="cursor-default">
-                    <JourneyTripNameView jt={leg.trips[0]} />
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    <div className="w-96 bg-white p-2 rounded-md shadow-lg flex justify-center">
-                      <TripLoadForecastChart
-                        tripId={leg.trips[0].trip.id}
-                        mode="Tooltip"
-                      />
-                    </div>
-                    <Tooltip.Arrow className="text-white fill-current" />
-                  </Tooltip.Content>
-                </Tooltip.Root>
+                <div onClick={()=> {
+                  console.log(leg.trips[0].trip.id.train_nr);
+                  props.onSectionDetailClick(leg.trips[0].trip.id);
+                }}>
+                  <Tooltip.Root key={legIdx}>
+                    <Tooltip.Trigger className="cursor-default">
+                      <JourneyTripNameView jt={leg.trips[0]} />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      <div className="w-96 bg-white p-2 rounded-md shadow-lg flex justify-center">
+                        <TripLoadForecastChart
+                          tripId={leg.trips[0].trip.id}
+                          mode="Tooltip"
+                        />
+                      </div>
+                      <Tooltip.Arrow className="text-white fill-current" />
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                </div>
               ))}
             </span>
           </li>
