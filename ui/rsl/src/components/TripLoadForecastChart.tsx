@@ -42,25 +42,68 @@ function getSvgLinePath(
     return "";
   }
 }
+function getSvgLinePathVertical(
+  edges: PaxMonEdgeLoadInfoWithStats[],
+  maxVal: number,
+  getProp: (ef: PaxMonEdgeLoadInfoWithStats) => number
+) {
+  const points = [];
+  let y = 0;
+  for (const ef of edges) {
+    const load = getProp(ef);
+    const x = Math.round((load / maxVal) * 200);
+    points.push(`${x} ${y}`);
+    y += 50;
+    points.push(`${x} ${y}`);
+  }
+
+  if (points.length > 0) {
+    return "M" + points.join(" ");
+  } else {
+    return "";
+  }
+}
 
 function getYLabels(maxVal: number) {
   const stepSize =
     maxVal >= 20000
       ? 2000
       : maxVal >= 10000
-      ? 1000
-      : maxVal >= 3000
-      ? 500
-      : maxVal >= 1500
-      ? 200
-      : maxVal >= 700
-      ? 100
-      : 50;
+        ? 1000
+        : maxVal >= 3000
+          ? 500
+          : maxVal >= 1500
+            ? 200
+            : maxVal >= 700
+              ? 100
+              : 50;
   const labels = [];
   for (let pax = stepSize; pax < maxVal; pax += stepSize) {
     labels.push({
       pax,
       y: 200 - Math.round((pax / maxVal) * 200),
+    });
+  }
+  return labels;
+}
+function getXLabels(maxVal: number) {
+  const stepSize =
+    maxVal >= 20000
+      ? 2000
+      : maxVal >= 10000
+        ? 1000
+        : maxVal >= 3000
+          ? 500
+          : maxVal >= 1500
+            ? 200
+            : maxVal >= 700
+              ? 100
+              : 50;
+  const labels = [];
+  for (let pax = stepSize; pax < maxVal; pax += stepSize) {
+    labels.push({
+      pax,
+      x: Math.round((pax / maxVal) * 200) - 200,
     });
   }
   return labels;
@@ -170,10 +213,10 @@ type TripLoadForecastChartProps = {
 };
 
 function TripLoadForecastChart({
-  tripId,
-  mode,
-  onSectionClick,
-}: TripLoadForecastChartProps): JSX.Element | null {
+                                 tripId,
+                                 mode,
+                                 onSectionClick,
+                               }: TripLoadForecastChartProps): JSX.Element | null {
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery();
 
@@ -375,7 +418,7 @@ function TripLoadForecastChart({
     const arrivalDelayed =
       idx > 0 &&
       edges[idx - 1].arrival_current_time >
-        edges[idx - 1].arrival_schedule_time;
+      edges[idx - 1].arrival_schedule_time;
     const departureScheduleTime =
       idx < edges.length ? edges[idx].departure_schedule_time : null;
     const departureCurrentTime =
@@ -473,21 +516,21 @@ function TripLoadForecastChart({
 
   const clickRegions = onSectionClick
     ? edges.map((e, idx) => {
-        return (
-          <rect
-            key={idx.toString()}
-            x={idx * 50}
-            y="0"
-            width="50"
-            height="200"
-            fill="transparent"
-            className="cursor-pointer"
-            onClick={() => {
-              onSectionClick(e);
-            }}
-          />
-        );
-      })
+      return (
+        <rect
+          key={idx.toString()}
+          x={idx * 50}
+          y="0"
+          width="50"
+          height="200"
+          fill="transparent"
+          className="cursor-pointer"
+          onClick={() => {
+            onSectionClick(e);
+          }}
+        />
+      );
+    })
     : [];
 
   const chart = (
@@ -549,4 +592,391 @@ function TripLoadForecastChart({
   }
 }
 
-export default TripLoadForecastChart;
+function TripLoadForecastChartVertical({
+                                         tripId,
+                                         mode,
+                                         onSectionClick
+                                       }: TripLoadForecastChartProps): JSX.Element | null {
+  const [universe] = useAtom(universeAtom); // get parallel universe
+  const { data: status } = usePaxMonStatusQuery();
+
+  const queryClient = useQueryClient();
+  const { data /*, isLoading, error*/ } = useQuery(
+    queryKeys.tripLoad(universe, tripId), // load trip from parallel universe
+    async () => loadAndProcessTripInfo(universe, tripId),
+    {
+      enabled: !!status,
+      placeholderData: () => {
+        return universe != 0
+          ? queryClient.getQueryData(queryKeys.tripLoad(0, tripId))
+          : undefined;
+      },
+    }
+  );
+
+  const svgEl = useRef<SVGSVGElement>(null);
+
+  if (!status || !data) {
+    return null;
+  }
+
+  const systemTime = status.system_time;
+  const edges = data.edges;
+  const graphHeight = edges.length * 50;
+  console.log("Graph Height: " + graphHeight)
+  // get maximum amount of passengers from all infos
+  const maxPax = edges.reduce((max, ef) => Math.max(max, ef.max_pax || 0), 0);
+  const maxCapacity = edges.reduce(
+    (max, ef) => (ef.capacity ? Math.max(max, ef.capacity) : max),
+    0
+  );
+
+  // multiply max x value with 1.1 for better readability
+  const maxVal = Math.max(maxPax, maxCapacity) * 1.1;
+
+  const background = edges.map((e, idy) => {
+    const y = idy * 50;
+    if (e.capacity == 0) {
+      return (
+        <g key={idy.toString()}>
+          <rect
+            x={0}
+            y={y}
+            width={200}
+            height="50"
+            stroke="#DDD"
+            fill="#ffffff"
+          />
+        </g>
+      );
+    }
+    /*
+    Set the limit for the chart background colors
+     */
+    const over200 = maxVal >= e.capacity * 2;
+    const x200 = over200
+      ? 200 - Math.round(((e.capacity * 2.0) / maxVal) * 200)
+      : 0;
+    const x100 = 200 - Math.round((e.capacity / maxVal) * 200);
+    const x80 = 200 - Math.round(((e.capacity * 0.8) / maxVal) * 200);
+
+    const xDarkRed  = 200;
+    const wDarkRed  = x200;
+    const xRed      = 200 - x100;
+    const wRed      = x100-x200;
+    const xYellow   = 200 - x80;
+    const wYellow   = x80-x100;
+    const xGreen    = 0;
+    const wGreen    = 200 - x80;
+    return (
+      <g key={idy.toString()}>
+
+        <rect
+          x={xGreen}
+          y={y}
+          width={wGreen}
+          height="50"
+          stroke="#DDD"
+          fill="#D4FFCA"
+        />
+        <rect
+          x={xRed}
+          y={y}
+          width={wRed}
+          height="50"
+          stroke="#DDD"
+          fill="#FFCACA"
+        />
+        <rect
+          x={xYellow}
+          y={y}
+          width={wYellow}
+          height="50"
+          stroke="#DDD"
+          fill="#FFF3CA"
+        />
+        <rect
+          x={-xDarkRed}
+          y={y}
+          width={wDarkRed}
+          height="50"
+          stroke="#DDD"
+          fill="#f57a7a"
+        />
+      </g>
+    );
+  });
+
+
+  const overCapProbs = edges.map((e, idy) => {
+    const classes = ["over-cap-prob"];
+    let text = "";
+    if (e.capacity != 0) {
+      text = `${(e.p_load_gt_100 * 100).toFixed(0)}%`;
+      if (text === "0%") {
+        classes.push("zero");
+      }
+    }
+    return (
+      <text
+        key={idy.toString()}
+        x={idy * 50 + 25}
+        y="8"
+        textAnchor="middle"
+        className={classes.join(" ")}
+        transform={`translate(200 0) rotate(90 0 0)`}
+      >
+        {text}
+      </text>
+    );
+  });
+
+  const names = [
+    ...new Set(
+      data.tsi.service_infos.map((si) =>
+        si.line ? `${si.train_nr} [${si.name}]` : si.name
+      )
+    ),
+  ];
+  const title = `${names.join(", ")} (${data.tsi.primary_station.name} - ${
+    data.tsi.secondary_station.name
+  }), Vorhersage vom ${formatLongDateTime(systemTime)}`;
+
+  const baseFileName = getBaseFileName(data, systemTime);
+
+  const spreadTopPoints = [];
+  const spreadBottomPoints = [];
+  let y = 0;
+  for (const ef of edges) {
+    const topLoad = ef.q_95 || 0;
+    const bottomLoad = ef.q_5 || 0;
+    const topX =  0 - Math.round((topLoad / maxVal) * 200);
+    const bottomX = 0 - Math.round((bottomLoad / maxVal) * 200);
+    spreadTopPoints.push(`${-topX} ${y}`);
+    spreadBottomPoints.unshift(`${-bottomX} ${y}`);
+    y += 50;
+    spreadTopPoints.push(`${-topX} ${y}`);
+    spreadBottomPoints.unshift(`${-bottomX} ${y}`);
+  }
+
+  const spreadPath = (
+    <path
+      d={`M${spreadTopPoints.join(" ")} ${spreadBottomPoints.join(" ")}z`}
+      className="spread"
+    />
+  );
+
+  const expectedPath = (
+    <path
+      d={getSvgLinePathVertical(edges, maxVal, (ef) => ef.expected_passengers || 0)}
+      className="planned"
+    />
+  );
+
+  const medianPath = (
+    <path
+      d={getSvgLinePathVertical(edges, maxVal, (ef) => ef.q_50 || 0)}
+      className="median"
+    />
+  );
+
+  const xLabels = getXLabels(maxVal).map((label) => (
+    <text
+      x={label.x + 4}
+      y="-2"
+      textAnchor="end"
+      className="legend"
+      key={label.pax}
+      transform={`translate(200 0) rotate(0 0 0)`}
+    >
+      {label.pax}
+    </text>
+  ));
+
+  const stationNameLabels = [];
+  const scheduleTimeLabels = [];
+  const currentTimeLabels = [];
+  const stops = [edges[0].from].concat(edges.map((ef) => ef.to));
+  for (const [idy, station] of stops.entries()) {
+    const y = idy * 50;
+    const arrivalScheduleTime =
+      idy > 0 ? edges[idy - 1].arrival_schedule_time : null;
+    const arrivalCurrentTime =
+      idy > 0 ? edges[idy - 1].arrival_current_time : null;
+    const arrivalDelayed =
+      idy > 0 &&
+      edges[idy - 1].arrival_current_time >
+      edges[idy - 1].arrival_schedule_time;
+    const departureScheduleTime =
+      idy < edges.length ? edges[idy].departure_schedule_time : null;
+    const departureCurrentTime =
+      idy < edges.length ? edges[idy].departure_current_time : null;
+    const departureDelayed =
+      idy < edges.length &&
+      edges[idy].departure_current_time > edges[idy].departure_schedule_time;
+
+    stationNameLabels.push(
+      <text
+        x="0"
+        y="2.5"
+        textAnchor="end"
+        className="legend station"
+        transform={`translate(-5 ${y}) rotate(0 0 0)`}
+        key={idy}
+      >
+        {station.name}
+        <title>{station.id}</title>
+      </text>
+    );
+
+    if (arrivalScheduleTime && arrivalCurrentTime) {
+      if (arrivalScheduleTime !== arrivalCurrentTime) {
+        scheduleTimeLabels.push(
+          <text
+            x="33"
+            y={y-2}
+            textAnchor="end"
+            className="time schedule"
+            key={`${idy}.sched.arr`}
+          >
+            {formatTime(arrivalScheduleTime)}
+          </text>
+        );
+      }
+      currentTimeLabels.push(
+        <text
+          x="16"
+          y={y-2}
+          textAnchor="end"
+          className={`time current${arrivalDelayed ? " delayed" : ""}`}
+          key={`${idy}.curr.arr`}
+        >
+          {formatTime(arrivalCurrentTime)}
+        </text>
+      );
+    }
+    if (departureScheduleTime && departureCurrentTime) {
+      if (departureScheduleTime !== departureCurrentTime) {
+        scheduleTimeLabels.push(
+          <text
+            x="33"
+            y={y + 8}
+            textAnchor="end"
+            className="time schedule"
+            key={`${idy}.sched.dep`}
+          >
+            {formatTime(departureScheduleTime)}
+          </text>
+        );
+      }
+      currentTimeLabels.push(
+        <text
+          x="16"
+          y={y + 8}
+          textAnchor="end"
+          className={`time current${departureDelayed ? " delayed" : ""}`}
+          key={`${idy}.curr.dep`}
+        >
+          {formatTime(departureCurrentTime)}
+        </text>
+      );
+    }
+  }
+
+  const outerBorder = (
+    <rect
+      x="0"
+      y="0"
+      width="200"
+      height={graphHeight}
+      stroke="#333"
+      fill="transparent"
+    />
+  );
+
+  const currentTimePosition = getCurrentTimePosition(edges, systemTime);
+  const currentTimeIndicator = (
+    <path
+      d={`M0 0 l2 4 l-4 0 z`}
+      className="current-time-indicator"
+      transform={`translate(0 ${currentTimePosition}) rotate(90 0 0)`}
+    />
+  );
+
+  const clickRegions = onSectionClick
+    ? edges.map((e, idy) => {
+      return (
+        <rect
+          key={idy.toString()}
+          x="0"
+          y={idy * 50}
+          width="200"
+          height="50"
+          fill="transparent"
+          className="cursor-pointer"
+          onClick={() => {
+            onSectionClick(e);
+          }}
+        />
+      );
+    })
+    : [];
+
+  const chart = (
+    <svg
+      ref={svgEl}
+      viewBox={`-170 -30 435 ${120 + graphHeight}`}
+      className="max-w-[60rem] mx-auto mt-2" //set svg size
+    >
+      <g>{background}</g>
+      <g>
+        <path stroke="#DDD" d={`M190 0v${graphHeight}`} />
+        {overCapProbs}
+      </g>
+      {spreadPath}
+      {expectedPath}
+      {medianPath}
+      {outerBorder}
+      <text x="50" y="-15" textAnchor="middle" className="legend">
+        {title}
+      </text>
+      <g>{xLabels}</g>
+      <g>
+        {stationNameLabels}
+        {scheduleTimeLabels}
+        {currentTimeLabels}
+      </g>
+      {currentTimeIndicator}
+      <g>{clickRegions}</g>
+    </svg>
+  );
+
+  if (mode == "Interactive") {
+    return (
+      <div>
+        <div>{chart}</div>
+        <div className="flex justify-center gap-2 my-2">
+          <button
+            type="button"
+            onClick={() => saveAsSVG(svgEl.current, baseFileName)}
+            className="flex items-center bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+          >
+            <DownloadIcon className="w-5 h-5 mr-2" aria-hidden="true" />
+            SVG
+          </button>
+          <button
+            type="button"
+            onClick={() => saveAsPNG(svgEl.current, baseFileName)}
+            className="flex items-center bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+          >
+            <DownloadIcon className="w-5 h-5 mr-2" aria-hidden="true" />
+            PNG
+          </button>
+        </div>
+      </div>
+    );
+  } else {
+    return chart;
+  }
+}
+export default {TripLoadForecastChart, TripLoadForecastChartVertical};
