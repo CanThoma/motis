@@ -142,7 +142,7 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
                   props.onSectionDetailClick(leg.trips[0].trip.id);
                 }}>
                   <Tooltip.Root key={legIdx}>
-                    <Tooltip.Trigger className="cursor-default">
+                    <Tooltip.Trigger className="cursor-pointer hover:underline">
                       <JourneyTripNameView jt={leg.trips[0]} />
                     </Tooltip.Trigger>
                     <Tooltip.Content>
