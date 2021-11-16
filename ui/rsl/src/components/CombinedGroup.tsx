@@ -8,7 +8,7 @@ import { sendRoutingRequest } from "../api/routing";
 import { connectionToJourney, Journey } from "../data/journey";
 import { formatTime } from "../util/dateFormat";
 
-import TripLoadForecastChart from "./TripLoadForecastChart";
+import TripLoadForecastCharts from "./TripLoadForecastChart";
 import JourneyTripNameView from "./JourneyTripNameView";
 import TripServiceInfoView from "./TripServiceInfoView";
 
@@ -130,7 +130,7 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
                   </Tooltip.Trigger>
                   <Tooltip.Content>
                     <div className="w-96 bg-white p-2 rounded-md shadow-lg flex justify-center">
-                      <TripLoadForecastChart
+                      <TripLoadForecastCharts.TripLoadForecastChart
                         tripId={leg.trips[0].trip.id}
                         mode="Tooltip"
                       />
