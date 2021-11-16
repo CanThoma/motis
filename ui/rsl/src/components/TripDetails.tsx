@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import {TripId, TripServiceInfo} from "../api/protocol/motis";
 import { PaxMonEdgeLoadInfoWithStats } from "../data/loadInfo";
 
-import TripLoadForecastChart from "./TripLoadForecastChart";
+import TripLoadForecastCharts from "./TripLoadForecastChart";
 import TripSectionDetails from "./TripSectionDetails";
 
 type TripDetailsProps = {
@@ -17,11 +17,17 @@ function TripDetails({ tripId,onSectionDetailClick }: TripDetailsProps): JSX.Ele
 
   return (
     <div>
-      <TripLoadForecastChart
+      {/*< TripLoadForecastCharts.TripLoadForecastChart
+        tripId={tripId}
+        mode="Interactive"
+        onSectionClick={setSelectedSection}
+      />*/}
+      <TripLoadForecastCharts.TripLoadForecastChartVertical
         tripId={tripId}
         mode="Interactive"
         onSectionClick={setSelectedSection}
       />
+
       {selectedSection && (
         <TripSectionDetails
           tripId={tripId}

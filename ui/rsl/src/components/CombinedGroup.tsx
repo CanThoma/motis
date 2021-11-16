@@ -1,21 +1,16 @@
 import React from "react";
-import {useQuery, useQueryClient} from "react-query";
+import { useQuery } from "react-query";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
-import {Station, TripId, TripServiceInfo} from "../api/protocol/motis";
-import {GroupedPassengerGroups, PaxMonGetTripLoadInfosResponse} from "../api/protocol/motis/paxmon";
+import { Station, TripId } from "../api/protocol/motis";
+import { GroupedPassengerGroups } from "../api/protocol/motis/paxmon";
 import { sendRoutingRequest } from "../api/routing";
 import { connectionToJourney, Journey } from "../data/journey";
 import { formatTime } from "../util/dateFormat";
 
-import TripLoadForecastChart from "./TripLoadForecastChart";
+import TripLoadForecastCharts from "./TripLoadForecastChart";
 import JourneyTripNameView from "./JourneyTripNameView";
 import TripServiceInfoView from "./TripServiceInfoView";
-import TripPicker from "./TripPicker";
-import {useAtom} from "jotai";
-import {universeAtom} from "../data/simulation";
-import {sendPaxMonTripLoadInfosRequest, usePaxMonStatusQuery} from "../api/paxmon";
-import {addEdgeStatistics} from "../util/statistics";
 
 export type GroupByDirection = "Origin" | "Destination";
 
@@ -25,7 +20,6 @@ export type CombinedGroupProps = {
   startStation: Station;
   earliestDeparture: number;
   groupByDirection: GroupByDirection;
-  onSectionDetailClick: (trip: TripId | undefined) => void;
 };
 
 const SEARCH_INTERVAL = 61;
@@ -48,14 +42,6 @@ function getDepartureTime(j: Journey): number {
     case "walk":
       return firstLeg.from.departure.time;
   }
-}
-
-async function loadAndProcessTripInfo(universe: number, trip: TripId) {
-  const res = await sendPaxMonTripLoadInfosRequest({
-    universe,
-    trips: [trip],
-  });
-  return res.load_infos[0].tsi;
 }
 
 function CombinedGroup(props: CombinedGroupProps): JSX.Element {
@@ -138,24 +124,20 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
             {formatTime(getArrivalTime(j))}, {j.transfers} Umstiege:
             <span className="inline-flex gap-3 pl-2">
               {j.tripLegs.map((leg, legIdx) => (
-                <div onClick={()=> {
-                  props.onSectionDetailClick(leg.trips[0].trip.id);
-                }}>
-                  <Tooltip.Root key={legIdx}>
-                    <Tooltip.Trigger className="cursor-pointer hover:underline">
-                      <JourneyTripNameView jt={leg.trips[0]} />
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>
-                      <div className="w-96 bg-white p-2 rounded-md shadow-lg flex justify-center">
-                        <TripLoadForecastChart
-                          tripId={leg.trips[0].trip.id}
-                          mode="Tooltip"
-                        />
-                      </div>
-                      <Tooltip.Arrow className="text-white fill-current" />
-                    </Tooltip.Content>
-                  </Tooltip.Root>
-                </div>
+                <Tooltip.Root key={legIdx}>
+                  <Tooltip.Trigger className="cursor-default">
+                    <JourneyTripNameView jt={leg.trips[0]} />
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <div className="w-96 bg-white p-2 rounded-md shadow-lg flex justify-center">
+                      <TripLoadForecastCharts.TripLoadForecastChart
+                        tripId={leg.trips[0].trip.id}
+                        mode="Tooltip"
+                      />
+                    </div>
+                    <Tooltip.Arrow className="text-white fill-current" />
+                  </Tooltip.Content>
+                </Tooltip.Root>
               ))}
             </span>
           </li>

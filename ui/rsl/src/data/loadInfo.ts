@@ -8,8 +8,8 @@ export interface PaxMonEdgeLoadInfoWithStats extends PaxMonEdgeLoadInfo {
   q_80: number;
   q_5: number;
   q_95: number;
-  min_pax: number;
-  max_pax: number;
+  min_pax: number; // minimum passengers
+  max_pax: number; // maximum passengers
 }
 
 export interface PaxMonTripLoadInfoWithStats {
