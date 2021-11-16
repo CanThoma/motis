@@ -139,7 +139,6 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
             <span className="inline-flex gap-3 pl-2">
               {j.tripLegs.map((leg, legIdx) => (
                 <div onClick={()=> {
-                  console.log(leg.trips[0].trip.id.train_nr);
                   props.onSectionDetailClick(leg.trips[0].trip.id);
                 }}>
                   <Tooltip.Root key={legIdx}>
