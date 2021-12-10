@@ -14,7 +14,7 @@ import TripServiceInfoView from "./TripServiceInfoView";
 import TripPicker from "./TripPicker";
 import {useAtom} from "jotai";
 import {universeAtom} from "../data/simulation";
-import {sendPaxMonTripLoadInfosRequest, usePaxMonStatusQuery} from "../api/paxmon";
+import {sendPaxMonTripLoadInfosRequest, usePaxMonGroupsInTripQuery, usePaxMonStatusQuery} from "../api/paxmon";
 import {addEdgeStatistics} from "../util/statistics";
 
 export type GroupByDirection = "Origin" | "Destination";
@@ -48,14 +48,6 @@ function getDepartureTime(j: Journey): number {
     case "walk":
       return firstLeg.from.departure.time;
   }
-}
-
-async function loadAndProcessTripInfo(universe: number, trip: TripId) {
-  const res = await sendPaxMonTripLoadInfosRequest({
-    universe,
-    trips: [trip],
-  });
-  return res.load_infos[0].tsi;
 }
 
 function CombinedGroup(props: CombinedGroupProps): JSX.Element {
@@ -140,8 +132,8 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
               {j.tripLegs.map((leg, legIdx) => (
                 <div onClick={()=> {
                   props.onSectionDetailClick(leg.trips[0].trip.id);
-                }}>
-                  <Tooltip.Root key={legIdx}>
+                }} key={legIdx}>
+                  <Tooltip.Root>
                     <Tooltip.Trigger className="cursor-pointer hover:underline">
                       <JourneyTripNameView jt={leg.trips[0]} />
                     </Tooltip.Trigger>
