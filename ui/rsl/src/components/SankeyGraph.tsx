@@ -199,6 +199,7 @@ const SankeyGraph = ({
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
     function branchAnimate(_: MouseEvent, node: Node) {
+      branchClear();
       view
         .selectAll("path.link")
         .transition()
@@ -234,7 +235,6 @@ const SankeyGraph = ({
     }
 
     function branchClear() {
-      gradientLinks.transition();
       gradientLinks.attr("stroke-opactiy", 0).each(setDash);
       view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
     }
