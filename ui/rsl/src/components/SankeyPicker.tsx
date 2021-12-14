@@ -2,7 +2,7 @@ import React from "react";
 import { useCombobox } from "downshift";
 import { ChevronDownIcon, XIcon } from "@heroicons/react/solid";
 
-import { SankeyInterfaceMinimal } from "./TeetassenTypes";
+import { SankeyInterfaceMinimal } from "./SankeyTypes";
 
 const graph2: SankeyInterfaceMinimal = {
   nodes: [
