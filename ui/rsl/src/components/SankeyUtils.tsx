@@ -93,7 +93,7 @@ export default class Utils {
     targetName: string,
     value: number
   ): string => {
-    return `${sourceName} \u2192 ${targetName}\n${value} Peoplezz`;
+    return `${sourceName} \u2192 ${targetName}\n${value} Personen`;
   };
 
   /**

@@ -1,11 +1,23 @@
-import React from "react";
+import React, {useState} from "react";
 import ReactDOM from "react-dom";
 
 import "./index.css";
 import SankeyGraph from "./components/SankeyGraph";
 import SankeyPicker from "./components/SankeyPicker";
 import { graphDefault } from "./components/SankeyTypes";
-
+import {QueryClient, QueryClientProvider} from "react-query";
+import TimeControl from "./components/TimeControl";
+import UniverseControl from "./components/UniverseControl";
+import MeasureInput from "./components/measures/MeasureInput";
+import TripPicker from "./components/TripPicker";
+import {TripId} from "./api/protocol/motis";
+import getQueryParameters from "./util/queryParameters";
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { refetchOnWindowFocus: true, staleTime: 10000 },
+  },
+});
+const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 class App extends React.Component {
   state = {
     data: null,
@@ -16,10 +28,13 @@ class App extends React.Component {
     target: true,
     targetText: "Ich kann momentan nichts. :(",
     key: 1,
+    selectedTrip: null,
+    simActive: false
   };
   svgRef = React.createRef();
 
-  changeData(data: string | undefined) {
+  changeData(data: TripId | undefined) {
+    console.log("change data happens");
     this.setState({ data });
   }
   toggleTarget(target: boolean, key: number) {
@@ -68,35 +83,77 @@ class App extends React.Component {
       target,
       targetText,
       key,
+      selectedTrip,
+      simActive
     } = this.state;
-
+    const sankeyDisplay = selectedTrip !== null? <SankeyPicker tripId={selectedTrip}
+                                                               onTripPicked={(trip) => this.changeData(trip)}
+                                                               onTripPickedHeadline={(headline) => this.changeHeadline(headline)}
+                                                               className="w-96"/>:null;
     return (
-      <div className="App mt-16 text-center">
-        <h1>{subHeadline}</h1>
-        <h2 className="text-gray-500">{headline}</h2>
-        <div className="mb-6 mt-6 flex items-center justify-center gap-2">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => this.toggleTarget(target, key)}
-          >
-            {targetText}
-          </button>
-          <SankeyPicker
-            onTripPicked={(data) => this.changeData(data)}
-            onTripPickedHeadline={(headline) => this.changeHeadline(headline)}
-            className="w-96"
-          />
-          <input
-            type="text"
-            pattern="[0-9]*"
-            onInput={(zz) => this.handleChange(zz)}
-            value={this.state.width}
-            className="w-96 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
+      <QueryClientProvider client={queryClient}>
+
+        <div
+          className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
+            bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
+        >
+          <TimeControl allowForwarding={allowForwarding} />
+          <UniverseControl />
+          <div className="flex pl-4">
+            <button
+              type="button"
+              className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+              onClick={() => this.setState({simActive: !simActive})}
+            >
+              Maßnahmensimulation
+            </button>
+          </div>
         </div>
 
-        {data && <SankeyGraph data={data} width={width} />}
-      </div>
+        <div className="flex justify-between w-full mt-10">
+          {simActive && (
+            <div
+              className="h-screen sticky top-0 pt-10 flex flex-col w-full bg-db-cool-gray-200
+              w-80 p-2 shadow-md overflow-visible"
+            >
+              <MeasureInput />
+            </div>
+          )}
+          <div className="flex-grow">
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <span>Trip:</span>
+              <TripPicker
+                onTripPicked={(trip ) => this.setState({selectedTrip: trip})}
+                clearOnPick={false}
+                longDistanceOnly={true}
+                className="w-96"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="App mt-16 text-center">
+          <h1>{subHeadline}</h1>
+          <h2 className="text-gray-500">{headline}</h2>
+          <div className="mb-6 mt-6 flex items-center justify-center gap-2">
+            <button
+              className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+              onClick={() => this.toggleTarget(target, key)}
+            >
+              {targetText}
+            </button>
+            {sankeyDisplay}
+            <input
+              type="text"
+              pattern="[0-9]*"
+              onInput={(zz) => this.handleChange(zz)}
+              value={this.state.width}
+              className="w-96 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+
+          {data && <SankeyGraph data={data} width={width} />}
+        </div>
+      </QueryClientProvider>
     );
   }
 }
