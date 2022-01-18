@@ -1,30 +1,26 @@
-import React, { MouseEvent, useRef } from "react";
-import { select as d3Select, easeLinear } from "d3";
+import React, { MouseEvent } from "react";
+import * as d3 from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
-import { Node, Link } from "./SankeyTypes";
+import { Node, Link, SankeyInterfaceMinimal } from "./SankeyTypes";
 import Utils from "./SankeyUtils";
-import { TripId } from "../api/protocol/motis";
-import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
 type Props = {
-  tripId: TripId;
+  data: SankeyInterfaceMinimal;
   width?: number;
   height?: number;
   nodeWidth?: number;
   nodePadding?: number;
   duration?: number;
-  minNodeHeight?: number;
 };
 
 const SankeyGraph = ({
-  tripId,
+  data,
   width = 600,
   height = 600,
   nodeWidth = 25,
   nodePadding = 15,
   duration = 250,
-  minNodeHeight = 15, // Nicht die Höhe in Pixel, glaube ich
 }: Props): JSX.Element => {
   // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
   const svgRef = React.useRef(null);
@@ -38,32 +34,19 @@ const SankeyGraph = ({
 
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
-  const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
-
-  const graphData = ExtractGroupInfoForThisTrain(tripId);
-
-  const svgHeight = useRef(height);
+  const rowBackgroundOppacity = 0.2;
 
   React.useEffect(() => {
-    if (!graphData) return;
-
-    // TODO: Berechnung der Größe der svg
-    // Gedanke Nr. 1: Gehe von einer Mindesthöhe von 20px pro Node aus.
-    // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
-    const potentialNewHeight =
-      graphData.nodes.length * (minNodeHeight + nodePadding);
-    svgHeight.current = Math.max(potentialNewHeight, height);
     const graph = Utils.createGraph(
-      graphData.nodes,
-      graphData.links,
-      svgHeight.current,
+      data.nodes,
+      data.links,
+      height,
       width,
       nodeWidth,
-      nodePadding,
-      minNodeHeight
+      nodePadding
     );
 
-    const svg = d3Select(svgRef.current);
+    const svg = d3.select(svgRef.current);
     // Säubern von potentiellen svg Inhalt
     svg.selectAll("*").remove();
 
@@ -192,8 +175,8 @@ const SankeyGraph = ({
       const sourceName = graph.nodes.find((n) => n.id == d.source)?.name;
       const targetName = graph.nodes.find((n) => n.id == d.target)?.name;
       return Utils.formatTextLink(
-        sourceName || " - ",
-        targetName || " - ",
+        sourceName || " – ",
+        targetName || " – ",
         d.value
       );
     });
@@ -215,14 +198,13 @@ const SankeyGraph = ({
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function branchAnimate(_: MouseEvent, node: Node) {
       branchClear();
       view
         .selectAll("path.link")
         .transition()
         .duration(duration)
-        .ease(easeLinear)
+        .ease(d3.easeLinear)
         .attr("stroke-opacity", linkOppacityClear);
 
       let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
@@ -236,7 +218,7 @@ const SankeyGraph = ({
           .attr("stroke-opacity", linkOppacityFocus)
           .transition()
           .duration(duration)
-          .ease(easeLinear)
+          .ease(d3.easeLinear)
           .attr("stroke-dashoffset", 0);
       } else if (node.sourceLinks && node.sourceLinks.length === 0) {
         links = view.selectAll("path.gradient-link").filter((link) => {
@@ -252,42 +234,12 @@ const SankeyGraph = ({
       }
     }
 
-    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
-    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-    function branchShow(_: MouseEvent, node: Node) {
-      view.selectAll("path.link").attr("stroke-opacity", linkOppacityClear);
-
-      let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
-
-      if (node.sourceLinks && node.sourceLinks.length > 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.sourceLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .attr("stroke-dashoffset", 0);
-      } else if (node.sourceLinks && node.sourceLinks.length === 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.targetLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .attr("stroke-dashoffset", 0);
-      }
-    }
-
     function branchClear() {
       gradientLinks.attr("stroke-opactiy", 0).each(setDash);
       view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
     }
 
-    // TODO:
-    // Das ist für die Animation:
-    //nodes.on("mouseover", branchAnimate).on("mouseout", branchClear);
-    // Das für ein einfaches Show/Don't Show
-    nodes.on("mouseover", branchShow).on("mouseout", branchClear);
+    nodes.on("mouseover", branchAnimate).on("mouseout", branchClear);
 
     function linkAnimate(_: MouseEvent, link: Link) {
       const links = view.selectAll("path.link").filter((l) => {
@@ -301,30 +253,9 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [
-    graphData,
-    svgHeight,
-    height,
-    width,
-    nodeWidth,
-    nodePadding,
-    duration,
-    minNodeHeight,
-  ]);
+  }, [data, height, width, nodeWidth, nodePadding, duration]);
 
-  return (
-    <>
-      {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
-      {graphData && (
-        <svg
-          ref={svgRef}
-          width={width}
-          height={svgHeight.current}
-          className="m-auto"
-        />
-      )}
-    </>
-  );
+  return <svg ref={svgRef} width={width} height={height} className="m-auto" />;
 };
 
 export default SankeyGraph;
