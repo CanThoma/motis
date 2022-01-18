@@ -7,7 +7,139 @@ import {TripId} from "../api/protocol/motis";
 import {useAtom} from "jotai";
 import {universeAtom} from "../data/simulation";
 import {usePaxMonFindTripsQuery, usePaxMonGroupsInTripQuery} from "../api/paxmon";
+interface InfoRenameThis {
+  enterStationID: string;
+  exitStationID: string;
+  passengers: number;
+}
+function ExtractGroupInfoForThisTrain(tripId:TripId) : SankeyInterfaceMinimal | null {
+  const [universe] = useAtom(universeAtom);
+  let sankeyInterface: SankeyInterfaceMinimal = {
+    links: [],
+    nodes: []
+  };
+  let groupInfo = new Map<number, InfoRenameThis>();
 
+  {
+    const {
+      data: groupsInTrip,
+      isLoading,
+      error,
+    } = usePaxMonGroupsInTripQuery({
+      universe,
+      trip: tripId,
+      filter: "Entering",
+      group_by_station: "None", // get the Last station => ENTER station
+      group_by_other_trip: false,
+      include_group_infos: true,
+    });
+    //TODO: add check if null first
+    groupsInTrip?.sections.forEach((groupsInTripSection) => {
+      //get entering station name
+      const currentEnteringStationID = groupsInTripSection.from.id;
+      const currentEnteringStationName = groupsInTripSection.from.name;
+      let node : NodeMinimal = {
+        id: currentEnteringStationID,
+        name: currentEnteringStationName
+      }
+      sankeyInterface.nodes.push(node);
+      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
+        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
+            const info: InfoRenameThis = {
+              enterStationID: currentEnteringStationID,
+              exitStationID: "",
+              passengers: paxMonGroupBaseInfo.passenger_count
+            };
+            groupInfo.set(paxMonGroupBaseInfo.id, info);
+          }
+        );
+      });
+    });
+    if(groupsInTrip != null && groupsInTrip.sections.length > 0)
+    {
+      const currentEnteringStationID = groupsInTrip.sections[groupsInTrip.sections.length-1].to.id;
+      const currentEnteringStationName = groupsInTrip.sections[groupsInTrip.sections.length-1].to.name;
+      let node : NodeMinimal = {
+        id: currentEnteringStationID,
+        name: currentEnteringStationName
+      }
+      sankeyInterface.nodes.push(node);
+    }
+  }
+  {
+    const {
+      data: groupsInTrip,
+      isLoading,
+      error,
+    } = usePaxMonGroupsInTripQuery({
+      universe,
+      trip: tripId,
+      filter: "Exiting",
+      group_by_station: "None", // get the Last station => ENTER station
+      group_by_other_trip: false,
+      include_group_infos: true,
+    });
+    //TODO: add check if null first
+    groupsInTrip?.sections.forEach((groupsInTripSection) => {
+      //get entering station name
+      const currentExitingStationID = groupsInTripSection.to.id;
+      const currentExitingStationName = groupsInTripSection.to.name;
+      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
+        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
+            let info = groupInfo.get(paxMonGroupBaseInfo.id);
+            if(info == null)
+            {
+              // TODO: error handling
+            }
+            else {
+              info.exitStationID = currentExitingStationID;
+            }
+          }
+        );
+      });
+    });
+  };
+  let infos = Array.from(groupInfo.values());
+  const prio = sankeyInterface.nodes.map(x => x.id);
+
+  //infos = infos.sort((a, b) => prio.indexOf(a.exitStationID) - prio.indexOf(b.exitStationID));
+  //infos = infos.sort((a, b) => prio.indexOf(a.enterStationID) - prio.indexOf(b.enterStationID));
+
+  //infos = infos.sort((a, b) => {
+  //  if(a.exitStationID === b.exitStationID){
+  //    return prio.indexOf(a.enterStationID) < prio.indexOf(b.enterStationID) ? -1 : 1;
+  //  } else {
+  //    return prio.indexOf(a.exitStationID) < prio.indexOf(b.exitStationID) ? -1 : 1;
+  //  }
+  //});
+  infos = infos.sort((a, b) => {
+    if(a.enterStationID === b.enterStationID){
+      return prio.indexOf(a.exitStationID) < prio.indexOf(b.exitStationID) ? -1 : 1;
+    } else {
+      return prio.indexOf(a.enterStationID) < prio.indexOf(b.enterStationID) ? -1 : 1;
+    }
+  });
+  let lastEnterStationID = null,lastExitStationID = null;
+  for(let info of infos)
+  {
+    if(info.exitStationID != lastExitStationID || info.enterStationID != lastEnterStationID)
+    {
+      const link : LinkMinimal = {
+        id: "link"+sankeyInterface.links.length,
+        source: info.enterStationID,
+        target: info.exitStationID,
+        value: info.passengers
+      }
+      sankeyInterface.links.push(link);
+      lastExitStationID= info.exitStationID;
+      lastEnterStationID = info.enterStationID;
+    }
+    else {
+      sankeyInterface.links[sankeyInterface.links.length-1].value += info.passengers;
+    }
+  }
+  return sankeyInterface;
+}
 const graph2: SankeyInterfaceMinimal = {
   nodes: [
     { name: "Wiesbaden Hbf Bussteige und so halt", id: "node9" },
@@ -115,40 +247,6 @@ const graph1: SankeyInterfaceMinimal = {
     { source: "node7", target: "node8", value: 70, id: "link36" },
   ],
 };
-const graphDefault: SankeyInterfaceMinimal = {
-  nodes: [
-    { id: "id1", name: "Zürich HB" },
-    { id: "id2", name: "Olten" },
-    { id: "id3", name: "Oensingen" },
-    { id: "id4", name: "Solothurn" },
-    { id: "id5", name: "Grenchen Süd" },
-    { id: "id6", name: "Biel/Bienne" },
-    { id: "id7", name: "Neuchâtel" },
-    { id: "id8", name: "Yverdon-les-Bains" },
-    { id: "id9", name: "Lausanne" },
-  ],
-  links: [
-    { id: "link0", source: "id1", target: "id2", value: 80 },
-    { id: "link1", source: "id1", target: "id3", value: 80 },
-    { id: "link2", source: "id1", target: "id6", value: 80 },
-    { id: "link3", source: "id1", target: "id7", value: 80 },
-    { id: "link4", source: "id1", target: "id8", value: 80 },
-    { id: "link5", source: "id1", target: "id9", value: 80 },
-    { id: "link6", source: "id2", target: "id7", value: 80 },
-    { id: "link7", source: "id2", target: "id8", value: 80 },
-    { id: "link8", source: "id2", target: "id9", value: 80 },
-    { id: "link9", source: "id3", target: "id4", value: 80 },
-    { id: "link10", source: "id4", target: "id8", value: 80 },
-    { id: "link11", source: "id4", target: "id9", value: 80 },
-    { id: "link12", source: "id5", target: "id9", value: 80 },
-    { id: "link13", source: "id6", target: "id8", value: 80 },
-    { id: "link14", source: "id6", target: "id9", value: 80 },
-    { id: "link15", source: "id7", target: "id8", value: 80 },
-    { id: "link16", source: "id7", target: "id9", value: 80 },
-    { id: "link17", source: "id8", target: "id9", value: 80 },
-  ],
-};
-
 
 type TripPickerProps = {
   tripId:TripId;
@@ -165,6 +263,7 @@ function SankeyPicker({
   onTripPickedHeadline,
   className,
 }: TripPickerProps): JSX.Element {
+  const graph = ExtractGroupInfoForThisTrain(tripId);
   const tripList = [
     {
       text: "Rückfahrt HLB RB75 (61962)",
@@ -174,7 +273,7 @@ function SankeyPicker({
     },
     {
       text: "Hinfahrt HLB RB75 (61962)",
-      link: graphDefault,
+      link: graph,
       headline:
         'Die Strecke von Aschaffenburg Hbf nach Wiesbaden Hbf. Meine "Lieblingsstrecke".',
     },
