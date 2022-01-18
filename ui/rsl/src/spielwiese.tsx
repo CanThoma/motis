@@ -26,7 +26,7 @@ class App extends React.Component {
     headline: "und ich bin eine weitere, spezifizierende, Überschrift.",
     subHeadline: "Ich bin ein tolles Diagramm",
     target: true,
-    targetText: "Ich kann momentan nichts. :(",
+    targetText: "Grafik auffrischen",
     key: 1,
     selectedTrip: null,
     simActive: false
@@ -39,7 +39,7 @@ class App extends React.Component {
   }
   toggleTarget(target: boolean, key: number) {
     this.setState({ target: false });
-    this.setState({ targetText: "Giraffik auffrischen" });
+    this.setState({ targetText: "Grafik auffrischen" });
   }
   changeHeadline(headline: { text: string; link: string; headline: string }) {
     this.setState({ headline: headline.headline, subHeadline: headline.text });
