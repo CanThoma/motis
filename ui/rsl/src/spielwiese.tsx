@@ -12,7 +12,6 @@ import MeasureInput from "./components/measures/MeasureInput";
 import TripPicker from "./components/TripPicker";
 import {TripId} from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
-import TripDetails from "./components/TripDetails";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: true, staleTime: 10000 },
@@ -27,6 +26,7 @@ class App extends React.Component {
     headline: "und ich bin eine weitere, spezifizierende, Überschrift.",
     subHeadline: "Ich bin ein tolles Diagramm",
     target: true,
+    targetText: "Grafik auffrischen",
     key: 1,
     selectedTrip: null,
     simActive: false
@@ -39,6 +39,7 @@ class App extends React.Component {
   }
   toggleTarget(target: boolean, key: number) {
     this.setState({ target: false });
+    this.setState({ targetText: "Grafik auffrischen" });
   }
   changeHeadline(headline: { text: string; link: string; headline: string }) {
     this.setState({ headline: headline.headline, subHeadline: headline.text });
@@ -80,13 +81,15 @@ class App extends React.Component {
       headline,
       subHeadline,
       target,
+      targetText,
       key,
       selectedTrip,
       simActive
     } = this.state;
-    const sankeyDisplay = null;
-    const tripDisplay =
-      selectedTrip !== null? <TripDetails tripId={selectedTrip} onSectionDetailClick={(trip ) => setSelectedTrip(trip)} /> : null;
+    const sankeyDisplay = selectedTrip !== null? <SankeyPicker tripId={selectedTrip}
+                                                               onTripPicked={(trip) => this.changeData(trip)}
+                                                               onTripPickedHeadline={(headline) => this.changeHeadline(headline)}
+                                                               className="w-96"/>:null;
     return (
       <QueryClientProvider client={queryClient}>
 
@@ -131,7 +134,24 @@ class App extends React.Component {
         <div className="App mt-16 text-center">
           <h1>{subHeadline}</h1>
           <h2 className="text-gray-500">{headline}</h2>
-          {selectedTrip && <SankeyGraph tripId={selectedTrip} width={width} />}
+          <div className="mb-6 mt-6 flex items-center justify-center gap-2">
+            <button
+              className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+              onClick={() => this.toggleTarget(target, key)}
+            >
+              {targetText}
+            </button>
+            {sankeyDisplay}
+            <input
+              type="text"
+              pattern="[0-9]*"
+              onInput={(zz) => this.handleChange(zz)}
+              value={this.state.width}
+              className="w-96 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+
+          {data && <SankeyGraph data={data} width={width} />}
         </div>
       </QueryClientProvider>
     );
