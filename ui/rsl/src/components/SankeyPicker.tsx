@@ -126,8 +126,8 @@ function ExtractGroupInfoForThisTrain(tripId:TripId) : SankeyInterfaceMinimal | 
     {
       const link : LinkMinimal = {
         id: "link"+sankeyInterface.links.length,
-        source: info.enterStationID,
-        target: info.exitStationID,
+        source: sankeyInterface.nodes.findIndex(x=>x.id === info.enterStationID).toString(),
+        target: sankeyInterface.nodes.findIndex(x=>x.id === info.exitStationID).toString(),
         value: info.passengers
       }
       sankeyInterface.links.push(link);
@@ -138,6 +138,8 @@ function ExtractGroupInfoForThisTrain(tripId:TripId) : SankeyInterfaceMinimal | 
       sankeyInterface.links[sankeyInterface.links.length-1].value += info.passengers;
     }
   }
+  for(let i = 0;i< sankeyInterface.nodes.length;i++)
+    sankeyInterface.nodes[i].id = i.toString();
   return sankeyInterface;
 }
 const graph2: SankeyInterfaceMinimal = {
@@ -247,6 +249,40 @@ const graph1: SankeyInterfaceMinimal = {
     { source: "node7", target: "node8", value: 70, id: "link36" },
   ],
 };
+const graphDefault: SankeyInterfaceMinimal = {
+  nodes: [
+    { id: "id1", name: "Zürich HB" },
+    { id: "id2", name: "Olten" },
+    { id: "id3", name: "Oensingen" },
+    { id: "id4", name: "Solothurn" },
+    { id: "id5", name: "Grenchen Süd" },
+    { id: "id6", name: "Biel/Bienne" },
+    { id: "id7", name: "Neuchâtel" },
+    { id: "id8", name: "Yverdon-les-Bains" },
+    { id: "id9", name: "Lausanne" },
+  ],
+  links: [
+    { id: "link0", source: "id1", target: "id2", value: 80 },
+    { id: "link1", source: "id1", target: "id3", value: 80 },
+    { id: "link2", source: "id1", target: "id6", value: 80 },
+    { id: "link3", source: "id1", target: "id7", value: 80 },
+    { id: "link4", source: "id1", target: "id8", value: 80 },
+    { id: "link5", source: "id1", target: "id9", value: 80 },
+    { id: "link6", source: "id2", target: "id7", value: 80 },
+    { id: "link7", source: "id2", target: "id8", value: 80 },
+    { id: "link8", source: "id2", target: "id9", value: 80 },
+    { id: "link9", source: "id3", target: "id4", value: 80 },
+    { id: "link10", source: "id4", target: "id8", value: 80 },
+    { id: "link11", source: "id4", target: "id9", value: 80 },
+    { id: "link12", source: "id5", target: "id9", value: 80 },
+    { id: "link13", source: "id6", target: "id8", value: 80 },
+    { id: "link14", source: "id6", target: "id9", value: 80 },
+    { id: "link15", source: "id7", target: "id8", value: 80 },
+    { id: "link16", source: "id7", target: "id9", value: 80 },
+    { id: "link17", source: "id8", target: "id9", value: 80 },
+  ],
+};
+
 
 type TripPickerProps = {
   tripId:TripId;
@@ -273,7 +309,7 @@ function SankeyPicker({
     },
     {
       text: "Hinfahrt HLB RB75 (61962)",
-      link: graph,
+      link: graphDefault,
       headline:
         'Die Strecke von Aschaffenburg Hbf nach Wiesbaden Hbf. Meine "Lieblingsstrecke".',
     },
