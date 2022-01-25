@@ -3,10 +3,8 @@ import {
   Node,
   Link,
   SankeyInterface,
-  graphDefault,
   NodeMinimal,
   LinkMinimal,
-  SankeyInterfaceMinimal,
 } from "./SankeyTypes";
 
 export default class Utils {
@@ -21,24 +19,26 @@ export default class Utils {
     };
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static groupBy = <T, K extends keyof any>(
+  // TODO: Gib ein Array an Keys weitä
+  static groupBy = <T, K extends string>(
     list: T[],
     getKey: (item: T) => K
-  ): Record<K, T[]> =>
-    list.reduce((previous, currentItem) => {
+  ): Record<K, T[]> => {
+    console.log(list);
+    return list.reduce((previous, currentItem) => {
       const group = getKey(currentItem);
       if (!previous[group]) previous[group] = [];
       previous[group].push(currentItem);
       return previous;
     }, {} as Record<K, T[]>);
+  };
 
   static colour = (value: number): string => {
     return interpolateRainbow(value);
   };
 
   static calcLinkSum = (
-    nodeID: string | number,
+    nodeID: string,
     links: LinkMinimal[],
     selector: "source" | "target"
   ): number => {
@@ -105,21 +105,25 @@ export default class Utils {
     height = 600,
     width = 600,
     nodeWidth = 20,
-    nodePadding = 20
+    nodePadding = 20,
+    minNodeHeight = 15
   ): SankeyInterface => {
     // #####################################################################################
     // Berechnung der Nodes
     // #####################################################################################
-
     const leftNodes: Node[] = [];
     const rightNodes: Node[] = [];
 
     // Zuordnen der Links zu den passenden Stationen
-    // Gleichzeitiges sammeln der Values – Hier die Passagieranzahl.
+    // Gleichzeitiges Sammeln der Values – Hier die Passagieranzahl.
     for (let i = 0; i < nodes.length; i++) {
       const leftLinkSum = this.calcLinkSum(nodes[i].id, links, "source");
       const rightLinkSum = this.calcLinkSum(nodes[i].id, links, "target");
-      const biggerNodeTotalValue = Math.max(leftLinkSum, rightLinkSum);
+      const biggerNodeTotalValue = Math.max(
+        leftLinkSum,
+        rightLinkSum,
+        minNodeHeight
+      );
 
       const colour = this.colour(i / nodes.length);
 
@@ -202,6 +206,11 @@ export default class Utils {
     // #####################################################################################
     let calculatedlinks: Link[] = [];
 
+    // Ändern der Link ID zu Zahlen, um später eine geordnete Reihenfolgesicherstellen zu können.
+    for (let i = 0; i < links.length; i++) {
+      links[i].id = i;
+    }
+
     // Gruppieren der Links nach der Quelle
     const groupedLinksMinimal = this.groupBy(links, (l) => l.source);
 
@@ -213,7 +222,7 @@ export default class Utils {
       //let currentNode = leftNodes.filter((n) => n.id === key)[0];
 
       // Nur nötig, wenn in der Datengenerierung etwas schief gelaufen ist
-      if (currentNode === undefined) continue;
+      if (!currentNode) continue;
 
       // initialisieren des sourceLink arrays, da vorher undefined
       leftNodes[currentNodeIndex].sourceLinks = [];
@@ -222,9 +231,9 @@ export default class Utils {
       for (let j = 0; j < currentLinks.length; j++) {
         const currentLink = currentLinks[j];
         const l: Link = {
-          id: currentLink.id as string,
-          source: currentLink.source as string,
-          target: currentLink.target as string,
+          id: currentLink.id,
+          source: currentLink.source,
+          target: currentLink.target,
           value: currentLink.value,
         };
 
@@ -251,17 +260,21 @@ export default class Utils {
       }
     }
 
+    // Sortieren der Links für eine einheitliche Ordnung.
+    calculatedlinks.sort((a, b) => (a.id as number) - (b.id as number));
+
     // Gruppieren nach target und anpassen der y1-Koordinate
     const groupedLinks = this.groupBy(calculatedlinks, (l) => l.target);
     calculatedlinks = [];
 
     for (const key in groupedLinks) {
+      console.log(groupedLinks[key]);
       const currentLinks = groupedLinks[key];
       const currentNodeIndex = rightNodes.findIndex((n) => n.id === key);
       const currentNode = rightNodes[currentNodeIndex];
 
       // Nur nötig, wenn in der Datengenerierung etwas schief gelaufen ist
-      if (currentNode === undefined) continue;
+      if (!currentNode) continue;
 
       rightNodes[currentNodeIndex].sourceLinks = [];
       rightNodes[currentNodeIndex].targetLinks = [];
@@ -275,13 +288,16 @@ export default class Utils {
 
         // Alle 0-Links entfernen
         if (currentLink.width) {
-          // Ziel bestimmt die Farbe der Knoten
-          // currentLink.colour = currentNode.colour;
           calculatedlinks.push(currentLink);
           (rightNodes[currentNodeIndex].targetLinks || []).push(currentLink);
         }
       }
     }
+
+    // Na, wenn die AGs das wollen ...
+    // entfernen der "unmöglichen" Ein- und Ausstiege
+    leftNodes.pop();
+    rightNodes.shift();
 
     return { nodes: [...leftNodes, ...rightNodes], links: calculatedlinks };
   };
