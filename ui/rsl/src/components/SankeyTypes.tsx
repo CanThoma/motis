@@ -42,6 +42,7 @@ interface SankeyInterfaceMinimal {
 
 type NodeMinimal = {
   id: string;
+  sId: string;
   name: string;
 };
 
