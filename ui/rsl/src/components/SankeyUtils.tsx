@@ -24,7 +24,6 @@ export default class Utils {
     list: T[],
     getKey: (item: T) => K
   ): Record<K, T[]> => {
-    console.log(list);
     return list.reduce((previous, currentItem) => {
       const group = getKey(currentItem);
       if (!previous[group]) previous[group] = [];
@@ -268,7 +267,6 @@ export default class Utils {
     calculatedlinks = [];
 
     for (const key in groupedLinks) {
-      console.log(groupedLinks[key]);
       const currentLinks = groupedLinks[key];
       const currentNodeIndex = rightNodes.findIndex((n) => n.id === key);
       const currentNode = rightNodes[currentNodeIndex];
