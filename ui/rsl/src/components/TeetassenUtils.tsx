@@ -134,7 +134,7 @@ export default class Utils {
     });
     rightNodes.push({
       id: "boarding",
-      name: boardingSum + " steigen ein",
+      name: " ",
       colour,
       nodeMaxCapacity,
       totalNodeValue: 0
@@ -182,14 +182,14 @@ export default class Utils {
 
     leftNodes.push({
       id: "exiting",
-      name: "Aussteiger",
+      name: " ",
       colour,
       nodeMaxCapacity,
       totalNodeValue: 0,
     });
     rightNodes.push({
       id: "exiting",
-      name: exitingSum + "steigen aus",
+      name: "Aussteiger",
       colour,
       nodeMaxCapacity,
       totalNodeValue: exitingSum,
@@ -301,7 +301,7 @@ export default class Utils {
         offset += l.width;
 
         // blende die links zwischen dem gleichen Zug aus welche Passagiere darstellen die weder ein- noch aussteigen
-        if(currentLink.source === currentLink.target){continue;};
+        //if(currentLink.source === currentLink.target){continue;};
 
         // Start bestimmt die Farbe der Knoten
         l.colour = currentNode.colour;

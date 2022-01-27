@@ -34,7 +34,7 @@ const Teetasse = ({
 
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
-  const rowBackgroundOppacity = 0.2;
+  const rowBackgroundOppacity = 0.0; // AG wollte nicht die 0.2 die vom Team bevorzugt werden
 
   React.useEffect(() => {
     const graph = Utils.createGraph(
@@ -76,7 +76,7 @@ const Teetasse = ({
       .attr("y", (d) => d.y0_backdrop || 0)
       .attr("width", width)
       .attr("height", (d) =>
-        Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
+        Math.max(10, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
       .attr("opacity", rowBackgroundOppacity);
@@ -255,7 +255,7 @@ const Teetasse = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
   }, [data, height, width, nodeWidth, nodePadding, duration]);
 
-  return <svg ref={svgRef} width={width} height={height} className="m-auto" />;
+  return <svg ref={svgRef} width={width} height={height+150} className="m-auto" />;
 };
 
 export default Teetasse;
