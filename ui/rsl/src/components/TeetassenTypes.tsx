@@ -70,7 +70,7 @@ const graphDefault: SankeyInterfaceMinimal = {
 
     { source: "node1", target: "node1", value: 0, id: "link51" },
     { source: "node1", target: "node1", value: 0, id: "link6" },
-    { source: "node1", target: "node2", value: 30, id: "link7" },
+    { source: "node1", target: "node2", value: 40, id: "link7" },
     { source: "node1", target: "node3", value: 0, id: "link8" },
 
     { source: "node2", target: "node2", value: 380, id: "link16" },
