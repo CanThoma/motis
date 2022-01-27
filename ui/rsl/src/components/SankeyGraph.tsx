@@ -1,4 +1,4 @@
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useRef } from "react";
 import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
@@ -42,6 +42,8 @@ const SankeyGraph = ({
 
   const graphData = ExtractGroupInfoForThisTrain(tripId);
 
+  const svgHeight = useRef(height);
+
   React.useEffect(() => {
     if (!graphData) return;
 
@@ -50,11 +52,11 @@ const SankeyGraph = ({
     // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
     const potentialNewHeight =
       graphData.nodes.length * (minNodeHeight + nodePadding);
-    const svgHeight = Math.max(potentialNewHeight, height);
+    svgHeight.current = Math.max(potentialNewHeight, height);
     const graph = Utils.createGraph(
       graphData.nodes,
       graphData.links,
-      svgHeight,
+      svgHeight.current,
       width,
       nodeWidth,
       nodePadding,
@@ -301,6 +303,7 @@ const SankeyGraph = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
   }, [
     graphData,
+    svgHeight,
     height,
     width,
     nodeWidth,
@@ -313,7 +316,12 @@ const SankeyGraph = ({
     <>
       {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
       {graphData && (
-        <svg ref={svgRef} width={width} height={height} className="m-auto" />
+        <svg
+          ref={svgRef}
+          width={width}
+          height={svgHeight.current}
+          className="m-auto"
+        />
       )}
     </>
   );
