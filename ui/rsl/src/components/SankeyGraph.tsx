@@ -2,12 +2,10 @@ import React, { MouseEvent } from "react";
 import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
-import {Node, Link, SankeyInterfaceMinimal, NodeMinimal, LinkMinimal} from "./SankeyTypes";
+import { Node, Link } from "./SankeyTypes";
 import Utils from "./SankeyUtils";
-import {TripId} from "../api/protocol/motis";
-import {useAtom} from "jotai";
-import {universeAtom} from "../data/simulation";
-import {usePaxMonGroupsInTripQuery} from "../api/paxmon";
+import { TripId } from "../api/protocol/motis";
+import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
 type Props = {
   tripId: TripId;
@@ -18,135 +16,6 @@ type Props = {
   duration?: number;
   minNodeHeight?: number;
 };
-interface EdgeInfo {
-  enterStationID: string;
-  exitStationID: string;
-  passengers: number;
-}
-function ExtractGroupInfoForThisTrain(tripId:TripId) : SankeyInterfaceMinimal | null {
-  const [universe] = useAtom(universeAtom);
-  let sankeyInterface: SankeyInterfaceMinimal = {
-    links: [],
-    nodes: []
-  };
-  let groupInfo = new Map<number, EdgeInfo>();
-  {
-    const {
-      data: groupsInTrip,
-      isLoading,
-      error,
-    } = usePaxMonGroupsInTripQuery({
-      universe,
-      trip: tripId,
-      filter: "Entering",
-      group_by_station: "None", // get the Last station => ENTER station
-      group_by_other_trip: false,
-      include_group_infos: true,
-    });
-    //TODO: add check if null first
-    groupsInTrip?.sections.forEach((groupsInTripSection) => {
-      //get entering station name
-      const currentEnteringStationID = groupsInTripSection.from.id;
-      const currentEnteringStationName = groupsInTripSection.from.name;
-      let nodeIdx = sankeyInterface.nodes.length.toString();
-      let node : NodeMinimal = {
-        id: nodeIdx,
-        sId: currentEnteringStationID,
-        name: currentEnteringStationName
-      }
-      sankeyInterface.nodes.push(node);
-      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
-        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
-            const info: EdgeInfo = {
-              enterStationID: nodeIdx,
-              exitStationID: "",
-              passengers: paxMonGroupBaseInfo.passenger_count
-            };
-            groupInfo.set(paxMonGroupBaseInfo.id, info);
-          }
-        );
-      });
-    });
-    if(groupsInTrip != null && groupsInTrip.sections.length > 0)
-    {
-      const currentEnteringStationID = groupsInTrip.sections[groupsInTrip.sections.length-1].to.id;
-      const currentEnteringStationName = groupsInTrip.sections[groupsInTrip.sections.length-1].to.name;
-      let node : NodeMinimal = {
-        id: sankeyInterface.nodes.length.toString(),
-        sId: currentEnteringStationID,
-        name: currentEnteringStationName
-      }
-      sankeyInterface.nodes.push(node);
-    }
-  }
-  {
-    const {
-      data: groupsInTrip,
-      isLoading,
-      error,
-    } = usePaxMonGroupsInTripQuery({
-      universe,
-      trip: tripId,
-      filter: "Exiting",
-      group_by_station: "None", // get the Last station => ENTER station
-      group_by_other_trip: false,
-      include_group_infos: true,
-    });
-    //TODO: add check if null first
-    let count = 1;
-    groupsInTrip?.sections.forEach((groupsInTripSection) => {
-      //get entering station name
-      const currentExitingStationID = groupsInTripSection.to.id;
-      const currentExitingStationName = groupsInTripSection.to.name;
-      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
-        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
-            let info = groupInfo.get(paxMonGroupBaseInfo.id);
-            if(info == null)
-            {
-              // TODO: error handling
-            }
-            else {
-              info.exitStationID = count.toString();
-            }
-          }
-        );
-      });
-      count = count + 1;
-    });
-  };
-  let infos = Array.from(groupInfo.values());
-  const prio = sankeyInterface.nodes.map(x => x.id);
-
-  infos = infos.sort((a, b) => {
-    if(a.enterStationID === b.enterStationID){
-      return prio.indexOf(a.exitStationID) < prio.indexOf(b.exitStationID) ? -1 : 1;
-    } else {
-      return prio.indexOf(a.enterStationID) < prio.indexOf(b.enterStationID) ? -1 : 1;
-    }
-  });
-  let lastEnterStationID = null,lastExitStationID = null;
-  for(let info of infos)
-  {
-    if(info.exitStationID != lastExitStationID || info.enterStationID != lastEnterStationID)
-    {
-      const link : LinkMinimal = {
-        id: "link"+sankeyInterface.links.length,
-        source: sankeyInterface.nodes.findIndex(x=>x.id === info.enterStationID).toString(),
-        target: sankeyInterface.nodes.findIndex(x=>x.id === info.exitStationID).toString(),
-        value: info.passengers
-      }
-      sankeyInterface.links.push(link);
-      lastExitStationID= info.exitStationID;
-      lastEnterStationID = info.enterStationID;
-    }
-    else {
-      sankeyInterface.links[sankeyInterface.links.length-1].value += info.passengers;
-    }
-  }
-  for(let i = 0;i< sankeyInterface.nodes.length;i++)
-    sankeyInterface.nodes[i].id = i.toString();
-  return sankeyInterface;
-}
 
 const SankeyGraph = ({
   tripId,
@@ -170,21 +39,22 @@ const SankeyGraph = ({
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
+
   const graphData = ExtractGroupInfoForThisTrain(tripId);
 
-  if(!graphData)
-    return (<div>Daten zum Zug nicht verfügbar</div>)
-  // TODO: Berechnung der Größe der svg
-  // Gedanke Nr. 1: Gehe von einer Mindesthöhe von 20px pro Node aus.
-  // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
-  const potentialNewHeight = graphData.nodes.length * (minNodeHeight + nodePadding);
-  height = Math.max(potentialNewHeight, height);
-
   React.useEffect(() => {
+    if (!graphData) return;
+
+    // TODO: Berechnung der Größe der svg
+    // Gedanke Nr. 1: Gehe von einer Mindesthöhe von 20px pro Node aus.
+    // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
+    const potentialNewHeight =
+      graphData.nodes.length * (minNodeHeight + nodePadding);
+    const svgHeight = Math.max(potentialNewHeight, height);
     const graph = Utils.createGraph(
       graphData.nodes,
       graphData.links,
-      height,
+      svgHeight,
       width,
       nodeWidth,
       nodePadding,
@@ -429,9 +299,24 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [graphData, height, width, nodeWidth, nodePadding, duration, minNodeHeight]);
+  }, [
+    graphData,
+    height,
+    width,
+    nodeWidth,
+    nodePadding,
+    duration,
+    minNodeHeight,
+  ]);
 
-  return <svg ref={svgRef} width={width} height={height} className="m-auto" />;
+  return (
+    <>
+      {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
+      {graphData && (
+        <svg ref={svgRef} width={width} height={height} className="m-auto" />
+      )}
+    </>
+  );
 };
 
 export default SankeyGraph;
