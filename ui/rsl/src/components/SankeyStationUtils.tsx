@@ -162,14 +162,14 @@ export default class StationUtils {
 
       leftNodes.push({
         id: nodes[i].id,
-        name: nodes[i].name+" - Ankunft: "+((nodeArrivalTime != 0)?(ahour+":"+aminute.substr(-2)):"--:--"),
+        name: nodes[i].name+" - Ankunft: "+ahour+":"+aminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: leftLinkSum,
       });
       rightNodes.push({
         id: nodes[i].id,
-        name: "Abfahrt: "+((nodeDepartureTime != 0)?(dhour+":"+dminute.substr(-2)):"--:--"),
+        name: "Abfahrt: "+dhour+":"+dminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: rightLinkSum,
@@ -263,11 +263,6 @@ export default class StationUtils {
     // #####################################################################################
     let calculatedlinks: Link[] = [];
 
-    // Ändern der Link ID zu Zahlen, um später eine geordnete Reihenfolgesicherstellen zu können.
-    for (let i = 0; i < links.length; i++) {
-      links[i].id = i;
-    }
-
     // Gruppieren der Links nach der Quelle
     const groupedLinksMinimal = this.groupBy(links, (l) => l.source);
 
@@ -320,9 +315,6 @@ export default class StationUtils {
         (leftNodes[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
-
-    // Sortieren der Links für eine einheitliche Ordnung.
-    calculatedlinks.sort((a, b) => (a.id as number) - (b.id as number));
 
     // Gruppieren nach target und anpassen der y1-Koordinate
     const groupedLinks = this.groupBy(calculatedlinks, (l) => l.target);
