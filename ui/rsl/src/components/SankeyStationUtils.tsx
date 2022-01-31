@@ -7,7 +7,7 @@ import {
   NodeMinimal,
   LinkMinimal,
   SankeyInterfaceMinimal,
-} from "./SankeyStationTypes";
+} from "./SankeyTypes";
 
 export default class StationUtils {
   static createNode = (id: string, name: string): Node => {
@@ -118,7 +118,7 @@ export default class StationUtils {
     var colour;
 
     // berechnen der menge an Zusteigern
-    const boardingSum = this.calcLinkSum("boarding", links, "source");
+    const boardingSum = this.calcLinkSum("boarding", links, "source")
     const boarderColour = "#ffaec9";
 
     colour = boarderColour;
@@ -129,20 +129,21 @@ export default class StationUtils {
       name: "Einsteiger",
       colour,
       nodeMaxCapacity,
-      totalNodeValue: boardingSum,
+      totalNodeValue: boardingSum
     });
     rightNodes.push({
       id: "boarding",
       name: " ",
       colour,
       nodeMaxCapacity,
-      totalNodeValue: 0,
+      totalNodeValue: 0
     });
 
     // Zuordnen der Links zu den passenden Stationen
     // Gleichzeitiges sammeln der Values – Hier die Passagieranzahl.
 
     for (let i = 0; i < nodes.length; i++) {
+
       const leftLinkSum = this.calcLinkSum(nodes[i].id, links, "source");
       const rightLinkSum = this.calcLinkSum(nodes[i].id, links, "target");
       nodeMaxCapacity = nodes[i].capacity;
@@ -150,21 +151,25 @@ export default class StationUtils {
 
       const colour = this.colour(i / nodes.length);
 
-      let nodeTime = nodes[i].time;
-      const date = new Date(nodeTime * 1000);
-      const hour = date.getHours();
-      const minute = "0" + date.getMinutes();
+      let nodeArrivalTime = nodes[i].arrival_time;
+      const adate = new Date(nodeArrivalTime * 1000);
+      const ahour = adate.getHours();
+      const aminute = "0"+adate.getMinutes();
+      let nodeDepartureTime = nodes[i].departure_time;
+      const ddate = new Date(nodeDepartureTime * 1000);
+      const dhour = ddate.getHours();
+      const dminute = "0"+ddate.getMinutes();
 
       leftNodes.push({
         id: nodes[i].id,
-        name: nodes[i].name + " - Abfahrt: " + hour + ":" + minute.substr(-2),
+        name: nodes[i].name+" - Ankunft: "+ahour+":"+aminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: leftLinkSum,
       });
       rightNodes.push({
         id: nodes[i].id,
-        name: "Kapazität: " + nodes[i].capacity + " Personen",
+        name: "Abfahrt: "+dhour+":"+dminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: rightLinkSum,
@@ -172,7 +177,7 @@ export default class StationUtils {
     }
 
     // berechnen der menge an Aussteigern
-    const exitingSum = this.calcLinkSum("exiting", links, "target");
+    const exitingSum = this.calcLinkSum("exiting", links, "target")
     const exitingColour = "#ffaec9";
 
     colour = exitingColour;
@@ -194,15 +199,18 @@ export default class StationUtils {
     });
 
     // Wie viele Passagiere steigen insgesammt um?
-    const totalValue = leftNodes.reduce((sum, current) => sum + (600 || 0), 0);
+    const totalValue = leftNodes.reduce(
+      (sum, current) => sum + (600 || 0),
+      0
+    );
 
     // Eigentliche Nutzfläche für die Nodes.
     const effectiveHeight = height - (leftNodes.length - 1) * nodePadding;
 
     // Berechnen des prozentualen Anteils der einzelnen Stationen
     // und Zuweisung der entsprechenden Koordinaten.
-    for (let i = 0; i < rightNodes.length; i++) {
-      console.log(leftNodes[i].nodeMaxCapacity);
+    for (let i = 0; i < rightNodes.length ; i++) {
+      console.log(leftNodes[i].nodeMaxCapacity)
       rightNodes[i].backdropHeight = this.calcNodeRelativeHeight(
         leftNodes[i].nodeMaxCapacity,
         totalValue,

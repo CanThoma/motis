@@ -8,7 +8,8 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
 import MeasureInput from "./components/measures/MeasureInput";
-import { TripId } from "./api/protocol/motis";
+import TripPicker from "./components/TripPicker";
+import {TripId} from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
 import TripDetails from "./components/TripDetails";
 import StationPicker from "./components/StationPicker";
@@ -30,7 +31,7 @@ class App extends React.Component {
     selectedStation: null,
     startTime: 0,
     endTime: 0,
-    simActive: false,
+    simActive: false
   };
   svgRef = React.createRef();
 
@@ -132,15 +133,7 @@ class App extends React.Component {
         <div className="App mt-16 text-center">
           <h1>{subHeadline}</h1>
           <h2 className="text-gray-500">{headline}</h2>
-          {selectedStation && (
-            <SankeyStationGraph
-              stationId={selectedStation}
-              startTime={startTime}
-              endTime={endTime}
-              maxCount={0}
-              width={width}
-            />
-          )}
+          {selectedStation && <SankeyStationGraph stationId={selectedStation} startTime={startTime} endTime={endTime} maxCount={0} width={width} />}
         </div>
       </QueryClientProvider>
     );
