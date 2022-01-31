@@ -8,10 +8,10 @@ import {QueryClient, QueryClientProvider} from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
 import MeasureInput from "./components/measures/MeasureInput";
-import TripPicker from "./components/TripPicker";
 import {TripId} from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
 import TripDetails from "./components/TripDetails";
+import StationPicker from "./components/StationPicker";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: true, staleTime: 10000 },
@@ -27,7 +27,9 @@ class App extends React.Component {
     subHeadline: "Ich bin ein tolles Diagramm",
     target: true,
     key: 1,
-    selectedTrip: null,
+    selectedStation: null,
+    startTime: 0,
+    endTime: 0,
     simActive: false
   };
   svgRef = React.createRef();
@@ -80,12 +82,14 @@ class App extends React.Component {
       subHeadline,
       target,
       key,
-      selectedTrip,
+      selectedStation,
       simActive
     } = this.state;
+    var someDate = new Date('Mon, 25 Oct 2021 09:15:00 GMT+2');
+    var theUnixTime = someDate.getTime() / 1000;
+    const startTime = theUnixTime-theUnixTime%1800; // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
+    const endTime = startTime + 15*60; // dd-mm-yy 9:30
     const sankeyDisplay = null;
-    const tripDisplay =
-      selectedTrip !== null? <TripDetails tripId={selectedTrip} onSectionDetailClick={(trip ) => setSelectedTrip(trip)} /> : null;
     return (
       <QueryClientProvider client={queryClient}>
 
@@ -117,12 +121,10 @@ class App extends React.Component {
           )}
           <div className="flex-grow">
             <div className="mt-6 flex items-center justify-center gap-2">
-              <span>Trip:</span>
-              <TripPicker
-                onTripPicked={(trip ) => this.setState({selectedTrip: trip})}
+              <span>Station:</span>
+              <StationPicker
+                onStationPicked={(station ) => this.setState({selectedStation: station?.id})}
                 clearOnPick={false}
-                longDistanceOnly={true}
-                className="w-96"
               />
             </div>
           </div>
@@ -130,7 +132,7 @@ class App extends React.Component {
         <div className="App mt-16 text-center">
           <h1>{subHeadline}</h1>
           <h2 className="text-gray-500">{headline}</h2>
-          {selectedTrip && <SankeyStationGraph data={stationGraphDefault} width={width} />}
+          {selectedStation && <SankeyStationGraph stationId={selectedStation} startTime={startTime} endTime={endTime} maxCount={0} width={width} />}
         </div>
       </QueryClientProvider>
     );

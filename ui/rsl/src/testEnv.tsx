@@ -4,241 +4,444 @@ import "./index.css";
 import App from "./components/App";
 
 import {
-  GroupsInTripSection,
+  GroupedPassengerGroups,
+  GroupsInTripSection, PaxMonGetInterchangesRequest,
   PaxMonGroupByStation,
   PaxMonGroupFilter,
 } from "./api/protocol/motis/paxmon";
 import {
   queryKeys,
   sendPaxMonTripLoadInfosRequest,
-  usePaxMonFindTripsQuery,
+  usePaxMonFindTripsQuery, usePaxMonGetInterchangesQuery,
   usePaxMonGroupsInTripQuery,
   usePaxMonStatusQuery
 } from "./api/paxmon";
 import {useAtom} from "jotai";
 import {universeAtom} from "./data/simulation";
 import {QueryClient, QueryClientProvider, useQuery} from "react-query";
-import {TripId} from "./api/protocol/motis";
+import {Station, Trip, TripId} from "./api/protocol/motis";
 import TripDetails from "./components/TripDetails";
 import {addEdgeStatistics} from "./util/statistics";
 import {group} from "d3";
+import {GroupByDirection} from "./components/CombinedGroup";
+import {formatLongDateTime} from "./util/dateFormat";
+import StationPicker from "./components/StationPicker";
+import {LinkMinimal, NodeMinimal, SankeyInterfaceMinimal} from "./components/SankeyTypes";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: true, staleTime: 10000 },
   },
 });
-type TripDetailsType = {
-  tripNumber: number;
+
+export type StationInterchangeParameters = {
+  stationId:string;
+  startTime: number;
+  endTime: number;
+  maxCount: number;
 };
-type TripSectionDetailsType = {
-  tripId: TripId;
-  filter: PaxMonGroupFilter;
-  groupByStation: PaxMonGroupByStation;
-};
-type TripGeneratorParams = {
-  onClick: () => void;
-}
-
-async function loadAndProcessTripInfo(universe: number, trip: TripId) {
-  const res = await sendPaxMonTripLoadInfosRequest({
-    universe,
-    trips: [trip],
-  });
-  const tli = res.load_infos[0];
-  return addEdgeStatistics(tli);
-}
-
-function TripGenerator({onClick} : TripGeneratorParams) : JSX.Element {
-return (<button type="button"
-              className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
-              onClick={onClick}>Generate</button>)
-}
-interface InfoRenameThis {
-  enterStationID: string;
-  enterStationName: string;
-  exitStationID: string;
-  exitStationName: string;
-  passengers: number;
-}
-function ExtractGroupInfoForThisTrain(tripId:TripId) : InfoRenameThis[] | null {
-  const [universe] = useAtom(universeAtom);
-  let groupInfo = new Map<number, InfoRenameThis>();
-
-  {
-    const {
-      data: groupsInTrip,
-      isLoading,
-      error,
-    } = usePaxMonGroupsInTripQuery({
-      universe,
-      trip: tripId,
-      filter: "Entering",
-      group_by_station: "None", // get the Last station => ENTER station
-      group_by_other_trip: false,
-      include_group_infos: true,
-    });
-    //TODO: add check if null first
-    groupsInTrip?.sections.forEach((groupsInTripSection) => {
-      //get entering station name
-      const currentEnteringStationID = groupsInTripSection.from.id;
-      const currentEnteringStationName = groupsInTripSection.from.name;
-      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
-        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
-            const info: InfoRenameThis = {
-              enterStationID: currentEnteringStationID,
-              enterStationName: currentEnteringStationName,
-              exitStationID: "",
-              exitStationName: "",
-              passengers: paxMonGroupBaseInfo.passenger_count
-            };
-            groupInfo.set(paxMonGroupBaseInfo.id, info);
-          }
-        );
-      });
-    });
+type ExtTripId = TripId & {arrival_time: number|null; departure_time: number|null};
+function ToExtTripId(tripId: TripId) : ExtTripId {
+  let extTripId :ExtTripId= {
+    time: tripId.time,
+    train_nr: tripId.train_nr,
+    target_station_id: tripId.target_station_id,
+    station_id: tripId.station_id,
+    line_id : tripId.line_id,
+    target_time: tripId.target_time,
+    arrival_time: null,
+    departure_time: null,
   }
-  {
-    const {
-      data: groupsInTrip,
-      isLoading,
-      error,
-    } = usePaxMonGroupsInTripQuery({
-      universe,
-      trip: tripId,
-      filter: "Exiting",
-      group_by_station: "None", // get the Last station => ENTER station
-      group_by_other_trip: false,
-      include_group_infos: true,
-    });
-    //TODO: add check if null first
-    groupsInTrip?.sections.forEach((groupsInTripSection) => {
-      //get entering station name
-      const currentExitingStationID = groupsInTripSection.to.id;
-      const currentExitingStationName = groupsInTripSection.to.name;
-      groupsInTripSection.groups.forEach((groupedPassengerGroup)=>{
-        groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo)=> {
-            let info = groupInfo.get(paxMonGroupBaseInfo.id);
-            if(info == null)
-            {
-              // TODO: error handling
-            }
-            else {
-              info.exitStationID = currentExitingStationID;
-              info.exitStationName = currentExitingStationName;
-            }
-          }
-        );
-      });
-    });
+  return extTripId;
+};
+function ExtractStationData(params:StationInterchangeParameters) : SankeyInterfaceMinimal {
+  let graph :SankeyInterfaceMinimal = {
+    nodes: [],
+    links: []
   };
-  let infos = Array.from(groupInfo.values());
-  infos = infos.sort((a, b) => a.exitStationID.localeCompare(b.exitStationID));
-  infos = infos.sort((a, b) => a.enterStationID.localeCompare(b.enterStationID));
-  let lastEnterStationID = null,lastExitStationID = null;
-  let links = new Array();
-  for(let info of infos)
-  {
-    if(info.exitStationID != lastExitStationID || info.enterStationID != lastEnterStationID)
+  const [universe] = useAtom(universeAtom);
+  const interchangeRequest : PaxMonGetInterchangesRequest = {
+    start_time: params.startTime, // 25.10.2021 - 9:00
+    end_time: params.endTime, // 25.10.2021 - 9:30
+    station: params.stationId, // Lausanne
+    include_meta_stations: false,
+    include_group_infos: true,
+    max_count: params.maxCount,
+    universe: universe
+  };
+  const {data} = usePaxMonGetInterchangesQuery(interchangeRequest);
+  let interchangingTripsInStation : ExtTripId[] = [];
+  let sameTripId = (tripIdA : ExtTripId,tripIdB : ExtTripId) => {
+    return tripIdA.time == tripIdB.time &&
+      tripIdA.train_nr == tripIdB.train_nr &&
+      tripIdA.target_station_id == tripIdB.target_station_id &&
+      tripIdA.station_id == tripIdB.station_id &&
+      tripIdA.line_id == tripIdB.line_id &&
+      tripIdA.target_time == tripIdB.target_time;
+  }
+  if(data) {
+    for(let interchange of data.interchanges)
     {
-      const link : InfoRenameThis = {
-        enterStationID: info.enterStationID,
-        enterStationName: info.enterStationName,
-        exitStationID: info.exitStationID,
-        exitStationName: info.exitStationName,
-        passengers: info.passengers
+      console.log("arrival: " + interchange.arrival.length + " | departure: " + interchange.departure.length)
+
+      let arrivingStationIndex = -1;
+      let departureStationIndex = -1;
+
+      if(interchange.arrival.length == 0 && interchange.departure.length == 0)
+      {
+        // error message? interchange has NO arrival or departure
+        continue;
       }
-      links.push(link);
-      lastExitStationID= info.exitStationID;
-      lastEnterStationID = info.enterStationID;
-    }
-    else {
-      links[links.length-1].passengers += info.passengers;
+      /* Get arrival point */
+      if(interchange.arrival.length < 1)
+      {
+        // edge case if motis ever bugs, starting trip here => arrival stays "boarding"
+      }
+      else if(interchange.arrival.length == 1)
+      {
+        // zwischenstop/endstop
+        let arrivalInfo = interchange.arrival[0];
+        // assume error if length != null (all cases seemed to fulfil this property)
+        if(arrivalInfo.trips.length != 1)
+          continue;
+        //"boarding" group, when arrival train is out of time range
+        if(arrivalInfo.schedule_time < params.startTime)
+          continue;
+        else {
+          let trip = arrivalInfo.trips[0];
+          arrivingStationIndex = interchangingTripsInStation.findIndex((tripId) => {return sameTripId(tripId,ToExtTripId(trip.trip));});
+          let foundTripsInStation = interchangingTripsInStation[arrivingStationIndex];
+          if(!foundTripsInStation)
+          {
+            let exttid = ToExtTripId(trip.trip);
+            exttid.arrival_time = arrivalInfo.schedule_time;
+            interchangingTripsInStation.push(exttid);
+          }
+          else {
+            foundTripsInStation.arrival_time = arrivalInfo.schedule_time;
+          }
+        }
+      }
+      else {
+        // error!! this shouldnt happen
+        continue;
+      }
+
+      /* Get departure point */
+
+      if(interchange.departure.length < 1)
+      {
+        // edge case if motis ever bugs, endstation => "target" = exiting
+      }
+      else if(interchange.departure.length == 1)
+      {
+        //zwischenstop/start
+        let departureInfo = interchange.departure[0];
+        // assume error if length != null (all cases seemed to fulfil this property)
+        if(departureInfo.trips.length != 1)
+          continue;
+        //"exiting" group, when arrival train is out of time range. this shouldn't happen from how the query works though
+        if(departureInfo.schedule_time > params.endTime) {
+          //console.log("schedule time of departure train is outside of end time. This shouldn't happen from how the query functions. departureInfo.schedule_time " +
+          // formatLongDateTime(departureInfo.schedule_time) + " params.endTime " + formatLongDateTime(params.endTime));
+          continue;
+        }
+        else {
+          let trip = departureInfo.trips[0];
+          departureStationIndex = interchangingTripsInStation.findIndex((tripId) => {return sameTripId(tripId,ToExtTripId(trip.trip));});
+          let foundTripsInStation = interchangingTripsInStation[departureStationIndex];
+          if(!foundTripsInStation)
+          {
+            let exttid = ToExtTripId(trip.trip);
+            exttid.departure_time = departureInfo.schedule_time;
+            interchangingTripsInStation.push(exttid);
+          }
+          else {
+            foundTripsInStation.departure_time = departureInfo.schedule_time;
+          }
+        }
+      }
+      else {
+        // error!!
+        continue;
+      }
+
+      /* take care of the links from the data we now gained */
+      let link : LinkMinimal = {
+        id: graph.links.length,
+        value: interchange.groups.max_passenger_count,
+        source: arrivingStationIndex === -1 ? "boarding" : arrivingStationIndex.toString(),
+        target: departureStationIndex === -1 ? "exiting" : departureStationIndex.toString()
+      };
+      graph.links.push(link);
     }
   }
-  return links;
-}
-function TripSectionInfoDisplay({tripId,filter,groupByStation} : TripSectionDetailsType) : JSX.Element | null {
-  const groupInfo = ExtractGroupInfoForThisTrain(tripId);
-  const content = groupInfo === null ? (
-    <div>Loading trip section data..</div>
-  ) :
-    (
-    <div>
-      {groupInfo.map((info)=>(<p>{info.passengers} from {info.enterStationName} to {info.exitStationName}</p>))}
-    </div>
-  );
 
-  return content;
+
+  for(let trips of interchangingTripsInStation) {
+    let node :NodeMinimal = {
+      id: graph.nodes.length.toString(),
+      name: trips.train_nr.toString(),
+      sId: "TBI",
+      arrival_time:trips.arrival_time?trips.arrival_time:0,
+      departure_time:trips.departure_time?trips.departure_time:0,
+      capacity: 999 // TODO: TBI
+    };
+    graph.nodes.push(node);
+  }
+
+  graph.nodes.sort((a,b)=>{
+    /* null comparators (out of time range of search) / new arriving/just exiting journey */
+    if(a.departure_time == null && b.departure_time == null)
+      return 0;
+    else if(a.departure_time == null)
+      return -1;
+    else if(b.departure_time == null)
+      return 1;
+    /* number comparators */
+    else if(a.departure_time < b.departure_time)
+      return -1;
+    else if(a.departure_time > b.departure_time)
+      return 1;
+    else
+      return 0;
+  });
+  graph.nodes.sort((a,b)=>{
+    /* null comparators (out of time range of search) / new arriving/just exiting journey */
+    if(a.arrival_time == null && b.arrival_time == null)
+      return 0;
+    else if(a.arrival_time == null)
+      return -1;
+    else if(b.arrival_time == null)
+      return 1;
+    /* number comparators */
+    else if(a.arrival_time < b.arrival_time)
+      return -1;
+    else if(a.arrival_time > b.arrival_time)
+      return 1;
+    else
+      return 0;
+  });
+  return graph;
 }
-function TripInfoDisplay({tripNumber} : TripDetailsType) : JSX.Element | null {
-    if(tripNumber === 0)
-      return null;
+function StationInterchangesDisplay(params:StationInterchangeParameters) : JSX.Element {
   const [universe] = useAtom(universeAtom);
-  const {data} = usePaxMonFindTripsQuery(universe, tripNumber);
-  const firstTrip = data?.trips || [];
-  const tripId = firstTrip.length > 0? firstTrip[0].tsi.trip : null;
-  const tripSectionInfoDisplayEntering =
-    tripId !== null ? <TripSectionInfoDisplay tripId={tripId} filter="Entering" groupByStation="LastLongDistance"/> : null;
-  const tripSectionInfoDisplayExiting =
-    tripId !== null ? <TripSectionInfoDisplay tripId={tripId} filter="Exiting" groupByStation="LastLongDistance"/> : null;
+  const interchangeRequest : PaxMonGetInterchangesRequest = {
+    start_time: params.startTime, // 25.10.2021 - 9:00
+    end_time: params.endTime, // 25.10.2021 - 9:30
+    station: params.stationId, // Lausanne
+    include_meta_stations: false,
+    include_group_infos: true,
+    max_count: params.maxCount,
+    universe: universe
+  };
+  const {data} = usePaxMonGetInterchangesQuery(interchangeRequest);
+  let interchangingTripsInStation : ExtTripId[] = [];
+  let sameTripId = (tripIdA : ExtTripId,tripIdB : ExtTripId) => {
+    return tripIdA.time == tripIdB.time &&
+      tripIdA.train_nr == tripIdB.train_nr &&
+      tripIdA.target_station_id == tripIdB.target_station_id &&
+      tripIdA.station_id == tripIdB.station_id &&
+      tripIdA.line_id == tripIdB.line_id &&
+      tripIdA.target_time == tripIdB.target_time;
+  }
+  let links : LinkMinimal[] = [];
+  if(data) {
+    for(let interchange of data.interchanges)
+    {
+      console.log("arrival: " + interchange.arrival.length + " | departure: " + interchange.departure.length)
 
-    const tripObjectGen = (tripId: TripId) => (<div>
-      <label>Time: {tripId?.time}</label><br/>
-      <label>Target Station ID: {tripId?.target_station_id}</label><br/>
-      <label>Train Nr: {tripId?.train_nr}</label><br/>
-      <label>Target Time: {tripId?.target_time}</label><br/>
-      <label>Station ID: {tripId?.target_station_id}</label><br/>
-      <label>Line ID: {tripId?.line_id}</label><br/>
-      <label>Station ID: {tripId?.station_id}</label><br/>
-    </div>);
-    const {data: status} = usePaxMonStatusQuery();
-    const {data: resData /*, isLoading, error*/} = useQuery(
-      queryKeys.tripLoad(universe, tripId),
-      async () => loadAndProcessTripInfo(universe, tripId),
+      let arrivingStationIndex = -1;
+      let departureStationIndex = -1;
+
+      if(interchange.arrival.length == 0 && interchange.departure.length == 0)
       {
-        enabled: !!status && tripId != null,
-        placeholderData: () => {
-          return universe != 0
-            ? queryClient.getQueryData(queryKeys.tripLoad(0, tripId))
-            : undefined;
-        },
+        // error message? interchange has NO arrival or departure
+        continue;
       }
-    );
-    //Object.keys(resData).forEach(e => console.log(`key=${e}  value=${resData[e]}`));
-    const searchingTrip = tripId ? tripObjectGen(tripId) : null;
-    return (
+      /* Get arrival point */
+      if(interchange.arrival.length < 1)
+      {
+        // edge case if motis ever bugs, starting trip here => arrival stays "boarding"
+      }
+      else if(interchange.arrival.length == 1)
+      {
+        // zwischenstop/endstop
+        let arrivalInfo = interchange.arrival[0];
+        // assume error if length != null (all cases seemed to fulfil this property)
+        if(arrivalInfo.trips.length != 1)
+          continue;
+        //"boarding" group, when arrival train is out of time range
+        if(arrivalInfo.schedule_time < params.startTime)
+          continue;
+        else {
+          let trip = arrivalInfo.trips[0];
+          arrivingStationIndex = interchangingTripsInStation.findIndex((tripId) => {return sameTripId(tripId,ToExtTripId(trip.trip));});
+          let foundTripsInStation = interchangingTripsInStation[arrivingStationIndex];
+          if(!foundTripsInStation)
+          {
+            let exttid = ToExtTripId(trip.trip);
+            exttid.arrival_time = arrivalInfo.schedule_time;
+            interchangingTripsInStation.push(exttid);
+          }
+          else {
+            foundTripsInStation.arrival_time = arrivalInfo.schedule_time;
+          }
+        }
+      }
+      else {
+        // error!! this shouldnt happen
+        continue;
+      }
+
+      /* Get departure point */
+
+      if(interchange.departure.length < 1)
+      {
+        // edge case if motis ever bugs, endstation => "target" = exiting
+      }
+      else if(interchange.departure.length == 1)
+      {
+        //zwischenstop/start
+        let departureInfo = interchange.departure[0];
+        // assume error if length != null (all cases seemed to fulfil this property)
+        if(departureInfo.trips.length != 1)
+          continue;
+        //"exiting" group, when arrival train is out of time range. this shouldn't happen from how the query works though
+        if(departureInfo.schedule_time > params.endTime) {
+          //console.log("schedule time of departure train is outside of end time. This shouldn't happen from how the query functions. departureInfo.schedule_time " +
+           // formatLongDateTime(departureInfo.schedule_time) + " params.endTime " + formatLongDateTime(params.endTime));
+          continue;
+        }
+        else {
+          let trip = departureInfo.trips[0];
+          departureStationIndex = interchangingTripsInStation.findIndex((tripId) => {return sameTripId(tripId,ToExtTripId(trip.trip));});
+          let foundTripsInStation = interchangingTripsInStation[departureStationIndex];
+          if(!foundTripsInStation)
+          {
+            let exttid = ToExtTripId(trip.trip);
+            exttid.departure_time = departureInfo.schedule_time;
+            interchangingTripsInStation.push(exttid);
+          }
+          else {
+            foundTripsInStation.departure_time = departureInfo.schedule_time;
+          }
+        }
+      }
+      else {
+        // error!!
+        continue;
+      }
+
+      /* take care of the links from the data we now gained */
+      let link : LinkMinimal = {
+        id: links.length,
+        value: interchange.groups.max_passenger_count,
+        source: arrivingStationIndex === -1 ? "boarding" : arrivingStationIndex.toString(),
+        target: departureStationIndex === -1 ? "exiting" : departureStationIndex.toString()
+      };
+      links.push(link);
+    }
+  }
+
+  let nodes : NodeMinimal[] = [];
+
+  for(let trips of interchangingTripsInStation) {
+    let node :NodeMinimal = {
+      id: nodes.length.toString(),
+      name: trips.train_nr.toString(),
+      sId: "TBI",
+      arrival_time:trips.arrival_time?trips.arrival_time:0,
+      departure_time:trips.departure_time?trips.departure_time:0,
+      capacity: 999 // TODO: TBI
+    };
+    nodes.push(node);
+  }
+
+  nodes.sort((a,b)=>{
+    /* null comparators (out of time range of search) / new arriving/just exiting journey */
+    if(a.departure_time == null && b.departure_time == null)
+      return 0;
+    else if(a.departure_time == null)
+      return -1;
+    else if(b.departure_time == null)
+      return 1;
+    /* number comparators */
+    else if(a.departure_time < b.departure_time)
+      return -1;
+    else if(a.departure_time > b.departure_time)
+      return 1;
+    else
+      return 0;
+  });
+  nodes.sort((a,b)=>{
+    /* null comparators (out of time range of search) / new arriving/just exiting journey */
+    if(a.arrival_time == null && b.arrival_time == null)
+      return 0;
+    else if(a.arrival_time == null)
+      return -1;
+    else if(b.arrival_time == null)
+      return 1;
+    /* number comparators */
+    else if(a.arrival_time < b.arrival_time)
+      return -1;
+    else if(a.arrival_time > b.arrival_time)
+      return 1;
+    else
+      return 0;
+  });
+  return (
+    <div>
       <div>
-        {searchingTrip}{tripSectionInfoDisplayEntering}{tripSectionInfoDisplayExiting}
+        <h1>Links count: {links.length}</h1>
+        {links.map((val) => (
+          <div>id={val.id} value={val.value} source={val.source} target={val.target}</div>
+        ))}
       </div>
-    )
+      <div>
+        <h1>Interchange Count: {interchangingTripsInStation.length}</h1>
+        {interchangingTripsInStation.map((x)=>(<div>{x.train_nr} ===
+            Arrival: {x.arrival_time &&formatLongDateTime(x.arrival_time)} ===
+          Departure: {x.departure_time &&formatLongDateTime(x.departure_time)}</div>
+        ))}
+      </div>
+      {data?.station.name}
+      {data?.interchanges.map((pmIntInfo) => (
+        <div>===================<br/>Max Passenger Count: {pmIntInfo.groups.max_passenger_count}<br/>
+          Groups: {pmIntInfo.groups.groups.map((pmGInfo) => (<div></div>))}<br/>
+          Arrival: {pmIntInfo.arrival.map((tripStopInfo) =>
+            (<div>{formatLongDateTime(tripStopInfo.schedule_time)}<br/>
+            Train Number: {tripStopInfo.trips.map((tripServiceInfo)=>(tripServiceInfo.trip.train_nr))}</div>))}<br/>
+          Departure: {pmIntInfo.departure.map((tripStopInfo) =>
+            (<div>{formatLongDateTime(tripStopInfo.schedule_time)}<br/>
+              Train Number: {tripStopInfo.trips.map((tripServiceInfo)=>(tripServiceInfo.trip.train_nr))}</div>))}<br/>
+          <br/>
+        </div>))}
+    </div>
+  )
+
+}
+type TestEnvParams = {
+  stationId : string;
 }
 function TestEnv() : JSX.Element{
-  const [tripNumber,setTripNumber]=useState<number>(1517);
-  const TripInfoDisplayItem = <TripInfoDisplay tripNumber={tripNumber} />;
-  const TripInfoGenerator = <TripGenerator onClick={()=>{
-    //if(tripNumber == 0) setTripNumber(4); else setTripNumber(0)
-    setTripNumber(tripNumber+1);
-  }} />;
-  return (<div>{TripInfoGenerator} {TripInfoDisplayItem} </div>);
-  // var tripId = data.trips[0].tsi.trip;
-  // const {
-  //   data: groupsInTrip,
-  //   isLoading,
-  //   error,
-  // } = usePaxMonGroupsInTripQuery({
-  //   universe,
-  //   trip: tripId,
-  //   filter: groupFilter,
-  //   group_by_station: groupByStation,
-  //   group_by_other_trip: groupByOtherTrip,
-  //   include_group_infos: false
-  // });
-  // return (<label>{tripId.target_station_id.toString()}</label>)
+  const [station,setStation] = useState<string>();
+  var someDate = new Date('Mon, 25 Oct 2021 09:15:00 GMT+2');
+  var theUnixTime = someDate.getTime() / 1000;
+  const startTime = theUnixTime-theUnixTime%1800; // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
+  const endTime = startTime + 60*60; // dd-mm-yy 9:30
+  const StationInterchangesDisplayItem = station !== undefined?<StationInterchangesDisplay
+                                          stationId={station}
+                                          startTime={startTime}
+                                          endTime={endTime}
+                                          maxCount={0}/>:null;
+  return (<div>
+    <StationPicker onStationPicked={(station)=>{setStation(station?.id)}} clearOnPick={false}></StationPicker>
+    {StationInterchangesDisplayItem} </div>);
 }
 ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-    <TestEnv></TestEnv>
+      <TestEnv ></TestEnv>
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById("root")

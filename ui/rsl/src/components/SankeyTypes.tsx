@@ -44,7 +44,8 @@ type NodeMinimal = {
   id: string;
   sId: string;
   name: string;
-  time: number;
+  arrival_time: number;
+  departure_time: number;
   capacity: number;
 };
 
@@ -57,26 +58,26 @@ type LinkMinimal = {
 
 const stationGraphDefault: SankeyInterfaceMinimal = {
   nodes: [
-    { name: "S3 Bad Soden(Taunus) - 8890",time: 1639487100, capacity: 600, id: "node1" },
-    { name: "ICE 1576 - 6489", time: 1639488240, capacity: 900, id: "node2" },
-    { name: "S3 Bad Soden(Taunus) - 7832", time: 1639488900, capacity: 600, id: "node3" }
+    { name: "S3 Bad Soden(Taunus) - 8890",arrival_time: 1639487100,departure_time: 1639487100, capacity: 600, id: "4",sId:"TBI" },
+    { name: "ICE 1576 - 6489", arrival_time: 1639488240,departure_time: 1639488240, capacity: 900, id: "2",sId:"TBI" },
+    { name: "S3 Bad Soden(Taunus) - 7832", arrival_time: 1639488900, departure_time: 1639488900, capacity: 600, id: "3",sId:"TBI" }
   ],
   links: [
-    { source: "boarding", target: "node1", value: 150, id: "link5" },
-    { source: "boarding", target: "node2", value: 200, id: "link10" },
-    { source: "boarding", target: "node3", value: 189, id: "link11" },
+    { source: "boarding", target: "4", value: 150, id: "link5" },
+    { source: "boarding", target: "2", value: 200, id: "link10" },
+    { source: "boarding", target: "3", value: 189, id: "link11" },
 
-    { source: "node1", target: "node1", value: 0, id: "link51" },
-    { source: "node1", target: "node1", value: 0, id: "link6" },
-    { source: "node1", target: "node2", value: 40, id: "link7" },
-    { source: "node1", target: "node3", value: 0, id: "link8" },
+    { source: "4", target: "4", value: 0, id: "link51" },
+    { source: "4", target: "4", value: 0, id: "link6" },
+    { source: "4", target: "2", value: 40, id: "link7" },
+    { source: "4", target: "3", value: 0, id: "link8" },
 
-    { source: "node2", target: "node2", value: 380, id: "link16" },
-    { source: "node2", target: "node3", value: 180, id: "link165" },
+    { source: "2", target: "2", value: 380, id: "link16" },
+    { source: "2", target: "3", value: 180, id: "link165" },
 
-    { source: "node1", target: "exiting", value: 300, id: "link50" },
-    { source: "node2", target: "exiting", value: 210, id: "link60" },
-    { source: "node3", target: "exiting", value: 110, id: "link161" },
+    { source: "4", target: "exiting", value: 300, id: "link50" },
+    { source: "2", target: "exiting", value: 210, id: "link60" },
+    { source: "3", target: "exiting", value: 110, id: "link161" },
   ],
 };
 

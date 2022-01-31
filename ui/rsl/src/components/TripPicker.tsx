@@ -49,7 +49,6 @@ function TripPicker({
   const [universe] = useAtom(universeAtom);
   const [trainNr, setTrainNr] = useState<number>();
   const { data } = usePaxMonFindTripsQuery(universe, trainNr);
-  console.log(typeof(data?.trips));
   const tripList = longDistanceOnly
     ? filterTrips(data?.trips || [])
     : data?.trips || [];

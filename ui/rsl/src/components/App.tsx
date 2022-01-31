@@ -61,7 +61,7 @@ function App(): JSX.Element {
               <TripPicker
                 onTripPicked={(trip ) => setSelectedTrip(trip)}
                 clearOnPick={false}
-                longDistanceOnly={true}
+                longDistanceOnly={false}
                 className="w-96"
               />
             </div>
