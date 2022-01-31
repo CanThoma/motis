@@ -53,6 +53,16 @@ type LinkMinimal = {
   value: number;
 };
 
+interface createGraphInterface {
+  nodes: NodeMinimal[];
+  links: LinkMinimal[];
+  onSvgResize(newSvgSize: number): void;
+  width: number;
+  nodeWidth: number;
+  nodePadding: number;
+}
+
+/*
 const graphDefault: SankeyInterfaceMinimal = {
   nodes: [
     { id: "8503000", name: "Zürich HB" },
@@ -108,10 +118,12 @@ const graphDefault: SankeyInterfaceMinimal = {
 };
 
 export { graphDefault };
+*/
 export type {
   Link,
   Node,
   SankeyInterface,
+  createGraphInterface,
   LinkMinimal,
   NodeMinimal,
   SankeyInterfaceMinimal,

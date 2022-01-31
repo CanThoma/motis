@@ -3,7 +3,7 @@ import {
   Node,
   Link,
   SankeyInterface,
-  NodeMinimal,
+  createGraphInterface,
   LinkMinimal,
 } from "./SankeyTypes";
 
@@ -19,7 +19,6 @@ export default class Utils {
     };
   };
 
-  // TODO: Gib ein Array an Keys weitä
   static groupBy = <T, K extends string>(
     list: T[],
     getKey: (item: T) => K
@@ -57,7 +56,46 @@ export default class Utils {
     totalValue: number,
     effectiveHeight: number
   ): number => {
+    const height = ((nodeValue || 0) / totalValue) * effectiveHeight;
+    return height > 0 ? Math.max(height, 1) : 0;
+  };
+
+  static calcLinkRelativeHeight = (
+    nodeValue: number | undefined,
+    totalValue: number,
+    effectiveHeight: number
+  ): number => {
     return ((nodeValue || 0) / totalValue) * effectiveHeight;
+  };
+
+  /**
+   * Berechnen der Höhe eines Knotens basierend auf der Pasagieranzahl.
+   * Das Value ist die Anzahl der Passagiere.
+   * TODO: optional einen Skalierungsfaktor wählen.
+   */
+  static calcLogNodeHeight = (nodeValue: number): number => {
+    if (nodeValue < 1) return 0;
+
+    /**
+     * Diese Funktion ist ein erster Test. Ich bin von maximal 1000 Gästen ausgeganen
+     * und diese Dann auf ein Maximum von 300px begrenzt.
+     * Orientiert habe ich mich an dieser Formel:
+     * https://math.stackexchange.com/questions/970094/convert-a-linear-scale-to-a-logarithmic-scale
+     *
+     * Danach noch die Kurve für einen flacheren Verlauf ein wenig verschoben.
+     * Daher die + 100, - 200 und + 4
+     *
+     * Sicherlich ist das etwas zu viel Berechnung, aber eine lineare Steigung sah scheiße aus.
+     * TODO: es gilt also noch etwas zu experimentieren.
+     */
+    // Die "blaue Funktion"
+    //return Math.ceil(100 * Math.log10(nodeValue + 100) - 200) + 4; // Na, das lässt sich aber noch vereinfachen.
+
+    // Die "rote Funktion"
+    //return Math.ceil(25 * Math.log2(nodeValue + 20) - 110) + 4;
+
+    // Der orangene Knick™
+    return Math.ceil(0.2953 * nodeValue + 4.7);
   };
 
   /**
@@ -98,15 +136,14 @@ export default class Utils {
   /**
    * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
    */
-  static createGraph = (
-    nodes: NodeMinimal[],
-    links: LinkMinimal[],
-    height = 600,
-    width = 600,
-    nodeWidth = 20,
-    nodePadding = 20,
-    minNodeHeight = 15
-  ): SankeyInterface => {
+  static createGraph = ({
+    nodes,
+    links,
+    onSvgResize,
+    width,
+    nodeWidth,
+    nodePadding,
+  }: createGraphInterface): SankeyInterface => {
     // #####################################################################################
     // Berechnung der Nodes
     // #####################################################################################
@@ -121,7 +158,7 @@ export default class Utils {
       const biggerNodeTotalValue = Math.max(
         leftLinkSum,
         rightLinkSum,
-        minNodeHeight
+        1 // minNodeHeight
       );
 
       const colour = this.colour(i / nodes.length);
@@ -148,34 +185,55 @@ export default class Utils {
       0
     );
 
+    // Ein Test, der eine neue Höhe aus der Gesamtanzahl berechnet.
+    let totalLogarithmicHeight = this.calcLogNodeHeight(totalValue);
+
+    // Ein Test, der eine neue Gesamthöhe aus dem logarithmischen Werten aller einzelnen Knoten
+    // errechnet. Das würde die die Berehung der variablen total Value und totallogvalue irrelevant machen.
+    totalLogarithmicHeight = leftNodes.reduce(
+      (sum, current) =>
+        sum + this.calcLogNodeHeight(current.biggerNodeTotalValue || 0),
+      0
+    );
+
     // Eigentliche Nutzfläche für die Nodes.
-    const effectiveHeight = height - (leftNodes.length - 1) * nodePadding;
+    // const effectiveHeight = height - (leftNodes.length - 1) * nodePadding;
 
     // Berechnen des prozentualen Anteils der einzelnen Stationen
-    // und Zuweisung der entsprechenden Koordinaten.
+    // und Zuweisung der entsprechenden Koordinaten
+
     for (let i = 0; i < nodes.length; i++) {
-      rightNodes[i].backdropHeight = this.calcNodeRelativeHeight(
-        leftNodes[i].biggerNodeTotalValue,
-        totalValue,
-        effectiveHeight
+      rightNodes[i].backdropHeight = Math.max(
+        this.calcNodeRelativeHeight(
+          leftNodes[i].biggerNodeTotalValue,
+          totalValue,
+          totalLogarithmicHeight
+        ),
+        1
       );
       leftNodes[i].backdropHeight = rightNodes[i].backdropHeight;
+
       rightNodes[i].nodeHeight = this.calcNodeRelativeHeight(
         rightNodes[i].totalNodeValue,
         totalValue,
-        effectiveHeight
+        totalLogarithmicHeight
       );
+
       leftNodes[i].nodeHeight = this.calcNodeRelativeHeight(
         leftNodes[i].totalNodeValue,
         totalValue,
-        effectiveHeight
+        totalLogarithmicHeight
       );
 
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
       const y1_start = rightNodes[Math.max(0, i - 1)].y1_backdrop || 0;
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
-      rightNodes[i].y0_backdrop = y1_start + (i === 0 ? 0 : nodePadding);
+      // rightNodes[i].y0_backdrop = y1_start + (i === 0 ? 0 : nodePadding);
+      // beginne auch schon beim ersten Node mit Padding, da sonst bei leeren Ersthaltestellen
+      // die Schrift abgehackt ist.
+      rightNodes[i].y0_backdrop = y1_start + nodePadding;
+
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
       rightNodes[i].y1_backdrop =
         (rightNodes[i].y0_backdrop || 0) + (rightNodes[i].backdropHeight || 0);
@@ -199,6 +257,8 @@ export default class Utils {
       rightNodes[i].x0 = width - nodeWidth;
       rightNodes[i].x1 = width;
     }
+
+    onSvgResize(totalLogarithmicHeight + (leftNodes.length + 1) * nodePadding);
 
     // #####################################################################################
     // Berechnung der Links für diesen Knoten, ggf später auslagern.
@@ -236,7 +296,7 @@ export default class Utils {
           value: currentLink.value,
         };
 
-        l.width = this.calcNodeRelativeHeight(
+        l.width = this.calcLinkRelativeHeight(
           currentLink.value,
           currentNode.totalNodeValue || 1,
           currentNode.nodeHeight || 0

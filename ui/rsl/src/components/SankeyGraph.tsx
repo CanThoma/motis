@@ -1,4 +1,4 @@
-import React, { MouseEvent, useRef } from "react";
+import React, { MouseEvent, useRef, useState } from "react";
 import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
@@ -20,14 +20,12 @@ type Props = {
 const SankeyGraph = ({
   tripId,
   width = 600,
-  height = 600,
   nodeWidth = 25,
   nodePadding = 15,
   duration = 250,
-  minNodeHeight = 15, // Nicht die Höhe in Pixel, glaube ich
 }: Props): JSX.Element => {
-  // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
-  const svgRef = React.useRef(null);
+  const svgRef = useRef(null);
+  const [svgHeight, setSvgHeight] = useState(600);
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -42,26 +40,21 @@ const SankeyGraph = ({
 
   const graphData = ExtractGroupInfoForThisTrain(tripId);
 
-  const svgHeight = useRef(height);
-
   React.useEffect(() => {
     if (!graphData) return;
 
-    // TODO: Berechnung der Größe der svg
-    // Gedanke Nr. 1: Gehe von einer Mindesthöhe von 20px pro Node aus.
-    // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
-    const potentialNewHeight =
-      graphData.nodes.length * (minNodeHeight + nodePadding);
-    svgHeight.current = Math.max(potentialNewHeight, height);
-    const graph = Utils.createGraph(
-      graphData.nodes,
-      graphData.links,
-      svgHeight.current,
+    const handleSvgResize = (newSize: number) => {
+      setSvgHeight(newSize);
+    };
+
+    const graph = Utils.createGraph({
+      nodes: graphData.nodes,
+      links: graphData.links,
+      onSvgResize: handleSvgResize,
       width,
       nodeWidth,
       nodePadding,
-      minNodeHeight
-    );
+    });
 
     const svg = d3Select(svgRef.current);
     // Säubern von potentiellen svg Inhalt
@@ -301,16 +294,7 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [
-    graphData,
-    svgHeight,
-    height,
-    width,
-    nodeWidth,
-    nodePadding,
-    duration,
-    minNodeHeight,
-  ]);
+  }, [graphData, svgHeight, width, nodeWidth, nodePadding, duration]);
 
   return (
     <>
@@ -319,8 +303,9 @@ const SankeyGraph = ({
         <svg
           ref={svgRef}
           width={width}
-          height={svgHeight.current}
+          height={svgHeight}
           className="m-auto"
+          style={{ marginBottom: "1.45rem" }} // TODO: das ist nur testweise wegen der besseren Lesbarkeit.
         />
       )}
     </>
