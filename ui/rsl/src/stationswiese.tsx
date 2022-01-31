@@ -23,8 +23,8 @@ class App extends React.Component {
     data: null,
     width: 600,
     height: 600,
-    headline: "und ich bin eine weitere, spezifizierende, Überschrift.",
-    subHeadline: "Ich bin ein tolles Diagramm",
+    headline: "",
+    subHeadline: "",
     target: true,
     key: 1,
     selectedStation: null,
@@ -35,7 +35,6 @@ class App extends React.Component {
   svgRef = React.createRef();
 
   changeData(data: TripId | undefined) {
-    console.log("change data happens");
     this.setState({ data });
   }
   toggleTarget(target: boolean, key: number) {

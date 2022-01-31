@@ -428,7 +428,7 @@ function TestEnv() : JSX.Element{
   var someDate = new Date('Mon, 25 Oct 2021 09:15:00 GMT+2');
   var theUnixTime = someDate.getTime() / 1000;
   const startTime = theUnixTime-theUnixTime%1800; // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-  const endTime = startTime + 60*60; // dd-mm-yy 9:30
+  const endTime = startTime + 15*60; // dd-mm-yy 9:30
   const StationInterchangesDisplayItem = station !== undefined?<StationInterchangesDisplay
                                           stationId={station}
                                           startTime={startTime}
