@@ -259,6 +259,11 @@ export default class StationUtils {
     // #####################################################################################
     let calculatedlinks: Link[] = [];
 
+    // Ändern der Link ID zu Zahlen, um später eine geordnete Reihenfolgesicherstellen zu können.
+    for (let i = 0; i < links.length; i++) {
+      links[i].id = i;
+    }
+
     // Gruppieren der Links nach der Quelle
     const groupedLinksMinimal = this.groupBy(links, (l) => l.source);
 
@@ -311,6 +316,9 @@ export default class StationUtils {
         (leftNodes[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
+
+    // Sortieren der Links für eine einheitliche Ordnung.
+    calculatedlinks.sort((a, b) => (a.id as number) - (b.id as number));
 
     // Gruppieren nach target und anpassen der y1-Koordinate
     const groupedLinks = this.groupBy(calculatedlinks, (l) => l.target);
