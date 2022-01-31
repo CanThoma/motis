@@ -151,21 +151,25 @@ export default class StationUtils {
 
       const colour = this.colour(i / nodes.length);
 
-      let nodeTime = nodes[i].time;
-      const date = new Date(nodeTime * 1000);
-      const hour = date.getHours();
-      const minute = "0"+date.getMinutes();
+      let nodeArrivalTime = nodes[i].arrival_time;
+      const adate = new Date(nodeArrivalTime * 1000);
+      const ahour = adate.getHours();
+      const aminute = "0"+adate.getMinutes();
+      let nodeDepartureTime = nodes[i].departure_time;
+      const ddate = new Date(nodeDepartureTime * 1000);
+      const dhour = ddate.getHours();
+      const dminute = "0"+ddate.getMinutes();
 
       leftNodes.push({
         id: nodes[i].id,
-        name: nodes[i].name+" - Abfahrt: "+hour+":"+minute.substr(-2),
+        name: nodes[i].name+" - Ankunft: "+ahour+":"+aminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: leftLinkSum,
       });
       rightNodes.push({
         id: nodes[i].id,
-        name: "Kapazität: " + nodes[i].capacity + " Personen",
+        name: "Abfahrt: "+dhour+":"+dminute.substr(-2),
         colour,
         nodeMaxCapacity,
         totalNodeValue: rightLinkSum,

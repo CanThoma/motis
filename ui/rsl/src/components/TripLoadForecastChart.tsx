@@ -624,7 +624,6 @@ function TripLoadForecastChartVertical({
   const systemTime = status.system_time;
   const edges = data.edges;
   const graphHeight = edges.length * 50;
-  console.log("Graph Height: " + graphHeight)
   // get maximum amount of passengers from all infos
   const maxPax = edges.reduce((max, ef) => Math.max(max, ef.max_pax || 0), 0);
   const maxCapacity = edges.reduce(
