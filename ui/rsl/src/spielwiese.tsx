@@ -1,16 +1,15 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
 import "./index.css";
 import SankeyGraph from "./components/SankeyGraph";
 import SankeyPicker from "./components/SankeyPicker";
-import { graphDefault } from "./components/SankeyTypes";
-import {QueryClient, QueryClientProvider} from "react-query";
+import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
 import MeasureInput from "./components/measures/MeasureInput";
 import TripPicker from "./components/TripPicker";
-import {TripId} from "./api/protocol/motis";
+import { TripId } from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
 import TripDetails from "./components/TripDetails";
 const queryClient = new QueryClient({
@@ -29,7 +28,7 @@ class App extends React.Component {
     target: true,
     key: 1,
     selectedTrip: null,
-    simActive: false
+    simActive: false,
   };
   svgRef = React.createRef();
 
@@ -49,8 +48,6 @@ class App extends React.Component {
     // nodes und links sind arrays aus Objects index: 0
     // ==> diese gilt es anschließend dynamisch zu erstellen.
     //     Bzw einfach die json (oder eine ähnliche Funktion) von d3 zu nutzen.
-
-    this.setState({ data: graphDefault });
   }
 
   componentWillUnmount() {
@@ -82,14 +79,18 @@ class App extends React.Component {
       target,
       key,
       selectedTrip,
-      simActive
+      simActive,
     } = this.state;
     const sankeyDisplay = null;
     const tripDisplay =
-      selectedTrip !== null? <TripDetails tripId={selectedTrip} onSectionDetailClick={(trip ) => setSelectedTrip(trip)} /> : null;
+      selectedTrip !== null ? (
+        <TripDetails
+          tripId={selectedTrip}
+          onSectionDetailClick={(trip) => setSelectedTrip(trip)}
+        />
+      ) : null;
     return (
       <QueryClientProvider client={queryClient}>
-
         <div
           className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
             bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
@@ -100,7 +101,7 @@ class App extends React.Component {
             <button
               type="button"
               className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
-              onClick={() => this.setState({simActive: !simActive})}
+              onClick={() => this.setState({ simActive: !simActive })}
             >
               Maßnahmensimulation
             </button>
@@ -120,7 +121,7 @@ class App extends React.Component {
             <div className="mt-6 flex items-center justify-center gap-2">
               <span>Trip:</span>
               <TripPicker
-                onTripPicked={(trip ) => this.setState({selectedTrip: trip})}
+                onTripPicked={(trip) => this.setState({ selectedTrip: trip })}
                 clearOnPick={false}
                 longDistanceOnly={true}
                 className="w-96"

@@ -1,14 +1,19 @@
 import React, { MouseEvent } from "react";
 import * as d3 from "d3";
-import { select as d3Select, easeLinear } from "d3";
+// import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
-import {Node, Link, SankeyInterfaceMinimal, NodeMinimal, LinkMinimal} from "./SankeyTypes";
+// ungenutze Imports auskommentiert.
+import {
+  Node,
+  Link,
+  SankeyInterfaceMinimal /*NodeMinimal, LinkMinimal*/,
+} from "./SankeyStationTypes";
 import Utils from "./SankeyStationUtils";
-import {TripId} from "../api/protocol/motis";
-import {useAtom} from "jotai";
-import {universeAtom} from "../data/simulation";
-import {usePaxMonGroupsInTripQuery} from "../api/paxmon";
+//import {TripId} from "../api/protocol/motis";
+//import {useAtom} from "jotai";
+//import {universeAtom} from "../data/simulation";
+//import {usePaxMonGroupsInTripQuery} from "../api/paxmon";
 
 type Props = {
   data: SankeyInterfaceMinimal;
@@ -20,13 +25,13 @@ type Props = {
 };
 
 const SankeyStationGraph = ({
-                    data,
-                    width = 600,
-                    height = 600,
-                    nodeWidth = 25,
-                    nodePadding = 15,
-                    duration = 250,
-                  }: Props): JSX.Element => {
+  data,
+  width = 600,
+  height = 600,
+  nodeWidth = 25,
+  nodePadding = 15,
+  duration = 250,
+}: Props): JSX.Element => {
   // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
   const svgRef = React.useRef(null);
 
@@ -180,8 +185,8 @@ const SankeyStationGraph = ({
       const sourceName = graph.nodes.find((n) => n.id == d.source)?.name;
       const targetName = graph.nodes.find((n) => n.id == d.target)?.name;
       return Utils.formatTextLink(
-        sourceName || " – ",
-        targetName || " – ",
+        sourceName || " - ",
+        targetName || " - ",
         d.value
       );
     });
@@ -260,7 +265,9 @@ const SankeyStationGraph = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
   }, [data, height, width, nodeWidth, nodePadding, duration]);
 
-  return <svg ref={svgRef} width={width} height={height+150} className="m-auto" />;
+  return (
+    <svg ref={svgRef} width={width} height={height + 150} className="m-auto" />
+  );
 };
 
 export default SankeyStationGraph;
