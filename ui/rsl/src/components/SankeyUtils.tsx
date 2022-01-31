@@ -94,8 +94,13 @@ export default class Utils {
     // Die "rote Funktion"
     //return Math.ceil(25 * Math.log2(nodeValue + 20) - 110) + 4;
 
-    // Der orangene Knick™
-    return Math.ceil(0.2953 * nodeValue + 4.7);
+    // Der orangene Funktion™
+    /**
+     * Die AGs wollten einen linaren Verlauf.
+     * Die jetzige Funktion ist eine Gerade, bei der 1 Passagier 5 Pixeln entspricht
+     * und 1000 Passagiere 200 Pixeln.
+     */
+    return Math.ceil(0.1952 * nodeValue + 4.8);
   };
 
   /**
