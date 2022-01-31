@@ -162,14 +162,14 @@ export default class StationUtils {
 
       leftNodes.push({
         id: nodes[i].id,
-        name: nodes[i].name+" - Ankunft: "+ahour+":"+aminute.substr(-2),
+        name: nodes[i].name+" - Ankunft: "+((nodeArrivalTime != 0)?(ahour+":"+aminute.substr(-2)):"--:--"),
         colour,
         nodeMaxCapacity,
         totalNodeValue: leftLinkSum,
       });
       rightNodes.push({
         id: nodes[i].id,
-        name: "Abfahrt: "+dhour+":"+dminute.substr(-2),
+        name: "Abfahrt: "+((nodeDepartureTime != 0)?(dhour+":"+dminute.substr(-2)):"--:--"),
         colour,
         nodeMaxCapacity,
         totalNodeValue: rightLinkSum,
