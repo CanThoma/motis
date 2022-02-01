@@ -1,11 +1,10 @@
 /**
- * Die angepasste Version der SankeyUtils für die Semi Absolute Darstellung.
- * Die mit der Teilweisen Min-Link Height.
+ * Die angepasste Version der SankeyUtils für die komplett Absolute Darstellung
  *
- * es wird eine Gesamthöhe basierend auf einer Skalierungsfunktion berechnet und
- * danach die Höhe auf die einzelnen Nodes basierend auf dem Pasagieranteil aufgeteilt.
+ * Die Höhe der Nodes entspricht dem Ergebnis der skalierungsfunktion.
+ * Im standard 1/5.
  *
- * Nutze diese Komponente, falls die AGs sich für eine Semi absolute Darstellung entscheiden
+ * Nutze diese Komponente, falls die AGs sich für eine komplett absolute Darstellung entscheiden
  */
 import { interpolateRainbow } from "d3";
 import {
@@ -61,6 +60,7 @@ export default class Utils {
    * Gesamtvalue (= gesamte Passagieranzahl),
    * dem Knotenvalue (= Passagiere am jeweiligen Bahnhof)
    * und der effektiv nutzbaren Höhe (= Gesamthöhe - NodePadding * (NodeCount - 1))
+   * TODO: Die beiden relativen Funktionen sind mittlerweile unnötig!
    */
   static calcNodeRelativeHeight = (
     nodeValue: number | undefined,
@@ -68,7 +68,7 @@ export default class Utils {
     effectiveHeight: number
   ): number => {
     const height = ((nodeValue || 0) / totalValue) * effectiveHeight;
-    return height > 0 ? Math.max(height, config.minNodeHeight) : 0;
+    return height > 0 ? Math.max(height, 1) : 0;
   };
 
   static calcLinkRelativeHeight = (
@@ -82,7 +82,7 @@ export default class Utils {
   /**
    * Berechnen der Höhe eines Knotens basierend auf der Pasagieranzahl.
    * Das Value ist die Anzahl der Passagiere.
-   * TODO: optional einen Skalierungsfaktor wählen.
+   * TODO: Die Funktion ist mittlerweile unnötig.
    */
   static calcLogNodeHeight = (nodeValue: number): number => {
     if (nodeValue < 1) return 0;
@@ -122,10 +122,12 @@ export default class Utils {
    * Das Value ist die Anzahl der Passagiere.
    */
   static calcNodeHeight = (nodeValue: number): number => {
-    return Math.max(
-      Math.ceil(nodeValue / config.scaleFactor),
-      config.minNodeHeight
-    );
+    const height = nodeValue / config.scaleFactor;
+    return height > 0 ? Math.max(height, config.minNodeHeight) : 0;
+  };
+
+  static calcLinkHeight = (linkValue: number): number => {
+    return linkValue / config.scaleFactor;
   };
 
   /**
@@ -209,25 +211,6 @@ export default class Utils {
       });
     }
 
-    // Wie viele Passagiere sind im gesamten Zug?
-    const totalValue = leftNodes.reduce(
-      (sum, current) => sum + (current.biggerNodeTotalValue || 0),
-      0
-    );
-
-    // Berechnung der Gesamthöhe, für eine spätere Berechnung der
-    // Höhe einzelner Nodes.
-    // Bei einer absoluten Höhe gabs es immer Probleme mit der
-    // Höhe der Links.
-    // Jetzt entsprechen bei einem Skalierungsfaktor von 5
-    // 500 Passagiere nicht exakt 100 pixeln, sondern 101.49937
-    // und 250 50.7667
-    const totalNodeHeight = leftNodes.reduce(
-      (sum, current) =>
-        sum + this.calcNodeHeight(current.biggerNodeTotalValue || 0),
-      0
-    );
-
     // Eigentliche Nutzfläche für die Nodes.
     // const effectiveHeight = height - (leftNodes.length - 1) * nodePadding;
 
@@ -235,25 +218,17 @@ export default class Utils {
     // und Zuweisung der entsprechenden Koordinaten
     for (let i = 0; i < nodes.length; i++) {
       rightNodes[i].backdropHeight = Math.max(
-        this.calcNodeRelativeHeight(
-          leftNodes[i].biggerNodeTotalValue,
-          totalValue,
-          totalNodeHeight
-        ),
-        1
+        this.calcNodeHeight(leftNodes[i].biggerNodeTotalValue || 0),
+        config.minNodeHeight
       );
       leftNodes[i].backdropHeight = rightNodes[i].backdropHeight;
 
-      rightNodes[i].nodeHeight = this.calcNodeRelativeHeight(
-        rightNodes[i].totalNodeValue,
-        totalValue,
-        totalNodeHeight
+      rightNodes[i].nodeHeight = this.calcNodeHeight(
+        rightNodes[i].totalNodeValue || 0
       );
 
-      leftNodes[i].nodeHeight = this.calcNodeRelativeHeight(
-        leftNodes[i].totalNodeValue,
-        totalValue,
-        totalNodeHeight
+      leftNodes[i].nodeHeight = this.calcNodeHeight(
+        leftNodes[i].totalNodeValue || 0
       );
 
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
@@ -289,6 +264,14 @@ export default class Utils {
       rightNodes[i].x1 = width;
     }
 
+    // Berechnung der Gesamthöhe, um die Höhe der .svg anzupassen
+    const totalNodeHeight = leftNodes.reduce(
+      (sum, current) =>
+        sum + this.calcNodeHeight(current.biggerNodeTotalValue || 0),
+      0
+    );
+
+    // Setzen der .svg-Höhe in der aufrufenden Koponenten
     onSvgResize(totalNodeHeight + (leftNodes.length + 1) * nodePadding);
 
     // #####################################################################################
@@ -327,11 +310,7 @@ export default class Utils {
           value: currentLink.value,
         };
 
-        l.width = this.calcLinkRelativeHeight(
-          currentLink.value,
-          currentNode.totalNodeValue || 1,
-          currentNode.nodeHeight || 0
-        );
+        l.width = this.calcLinkHeight(currentLink.value);
 
         // Die linke Position des Linkes bestimmen
         // Startpunkt ist der Ausgangspunkt des Knotens

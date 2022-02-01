@@ -3,7 +3,7 @@ import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
-import Utils from "./SankeyUtils";
+import Utils from "./SankeyUtilsAbsolute";
 import { TripId } from "../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
