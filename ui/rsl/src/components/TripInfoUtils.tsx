@@ -1,6 +1,9 @@
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
-import { usePaxMonGroupsInTripQuery } from "../api/paxmon";
+import {
+  sendPaxMonTripLoadInfosRequest,
+  usePaxMonGroupsInTripQuery,
+} from "../api/paxmon";
 import { TripId } from "../api/protocol/motis";
 
 import {
@@ -8,6 +11,7 @@ import {
   NodeMinimal,
   LinkMinimal,
 } from "./SankeyTypes";
+import { addEdgeStatistics } from "../util/statistics";
 
 interface EdgeInfo {
   enterStationID: string;
@@ -147,4 +151,13 @@ export function ExtractGroupInfoForThisTrain(
   for (let i = 0; i < sankeyInterface.nodes.length; i++)
     sankeyInterface.nodes[i].id = i.toString();
   return sankeyInterface;
+}
+
+export async function loadAndProcessTripInfo(universe: number, trip: TripId) {
+  const res = await sendPaxMonTripLoadInfosRequest({
+    universe,
+    trips: [trip],
+  });
+  const tli = res.load_infos[0];
+  return addEdgeStatistics(tli);
 }
