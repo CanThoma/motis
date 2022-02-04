@@ -58,9 +58,30 @@ type LinkMinimal = {
 
 const stationGraphDefault: SankeyInterfaceMinimal = {
   nodes: [
-    { name: "S3 Bad Soden(Taunus) - 8890",arrival_time: 1639487100,departure_time: 1639487100, capacity: 600, id: "4",sId:"TBI" },
-    { name: "ICE 1576 - 6489", arrival_time: 1639488240,departure_time: 1639488240, capacity: 900, id: "2",sId:"TBI" },
-    { name: "S3 Bad Soden(Taunus) - 7832", arrival_time: 1639488900, departure_time: 1639488900, capacity: 600, id: "3",sId:"TBI" }
+    {
+      name: "S3 Bad Soden(Taunus) - 8890",
+      arrival_time: 1639487100,
+      departure_time: 1639487100,
+      capacity: 600,
+      id: "4",
+      sId: "TBI",
+    },
+    {
+      name: "ICE 1576 - 6489",
+      arrival_time: 1639488240,
+      departure_time: 1639488240,
+      capacity: 900,
+      id: "2",
+      sId: "TBI",
+    },
+    {
+      name: "S3 Bad Soden(Taunus) - 7832",
+      arrival_time: 1639488900,
+      departure_time: 1639488900,
+      capacity: 600,
+      id: "3",
+      sId: "TBI",
+    },
   ],
   links: [
     { source: "boarding", target: "4", value: 150, id: "link5" },
@@ -112,9 +133,30 @@ const graphDefault: SankeyInterfaceMinimal = {
     { id: "8504221", name: "Neuchâtel" },
     { id: "8504200", name: "Yverdon-les-Bains" },
     { id: "8501120", name: "Lausanne" },
-    { name: "S3 Bad Soden(Taunus) - 8890",arrival_time: 1639487100,departure_time: 1639487100, capacity: 600, id: "4",sId:"TBI" },
-    { name: "ICE 1576 - 6489", arrival_time: 1639488240,departure_time: 1639488240, capacity: 900, id: "2",sId:"TBI" },
-    { name: "S3 Bad Soden(Taunus) - 7832", arrival_time: 1639488900, departure_time: 1639488900, capacity: 600, id: "3",sId:"TBI" }
+    {
+      name: "S3 Bad Soden(Taunus) - 8890",
+      arrival_time: 1639487100,
+      departure_time: 1639487100,
+      capacity: 600,
+      id: "4",
+      sId: "TBI",
+    },
+    {
+      name: "ICE 1576 - 6489",
+      arrival_time: 1639488240,
+      departure_time: 1639488240,
+      capacity: 900,
+      id: "2",
+      sId: "TBI",
+    },
+    {
+      name: "S3 Bad Soden(Taunus) - 7832",
+      arrival_time: 1639488900,
+      departure_time: 1639488900,
+      capacity: 600,
+      id: "3",
+      sId: "TBI",
+    },
   ],
   links: [
     { source: "boarding", target: "4", value: 150, id: "link5" },
@@ -143,6 +185,7 @@ interface createGraphInterface {
   nodePadding: number;
 }
 
+export { stationGraphDefault, graphDefault };
 export type {
   Link,
   Node,

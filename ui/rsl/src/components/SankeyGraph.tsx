@@ -1,9 +1,9 @@
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useRef, useState } from "react";
 import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
-import Utils from "./SankeyUtils";
+import Utils from "./SankeyUtilsAbsolute";
 import { TripId } from "../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
@@ -20,14 +20,12 @@ type Props = {
 const SankeyGraph = ({
   tripId,
   width = 600,
-  height = 600,
   nodeWidth = 25,
   nodePadding = 15,
   duration = 250,
-  minNodeHeight = 15, // Nicht die Höhe in Pixel, glaube ich
 }: Props): JSX.Element => {
-  // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
-  const svgRef = React.useRef(null);
+  const svgRef = useRef(null);
+  const [svgHeight, setSvgHeight] = useState(600);
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -39,25 +37,24 @@ const SankeyGraph = ({
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
+
   const graphData = ExtractGroupInfoForThisTrain(tripId);
+
   React.useEffect(() => {
     if (!graphData) return;
 
-    // TODO: Berechnung der Größe der svg
-    // Gedanke Nr. 1: Gehe von einer Mindesthöhe von 20px pro Node aus.
-    // und vergrößere die Höhe, wenn [Nodes] * (Mindesthöhe + Padding) > Höhe
-    const potentialNewHeight =
-      graphData.nodes.length * (minNodeHeight + nodePadding);
-    const svgHeight = Math.max(potentialNewHeight, height);
-    const graph = Utils.createGraph(
-      graphData.nodes,
-      graphData.links,
-      svgHeight,
+    const handleSvgResize = (newSize: number) => {
+      setSvgHeight(newSize);
+    };
+
+    const graph = Utils.createGraph({
+      nodes: graphData.nodes,
+      links: graphData.links,
+      onSvgResize: handleSvgResize,
       width,
       nodeWidth,
       nodePadding,
-      minNodeHeight
-    );
+    });
 
     const svg = d3Select(svgRef.current);
     // Säubern von potentiellen svg Inhalt
@@ -297,21 +294,19 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [
-    graphData,
-    height,
-    width,
-    nodeWidth,
-    nodePadding,
-    duration,
-    minNodeHeight,
-  ]);
+  }, [graphData, svgHeight, width, nodeWidth, nodePadding, duration]);
 
   return (
     <>
       {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
       {graphData && (
-        <svg ref={svgRef} width={width} height={height} className="m-auto" />
+        <svg
+          ref={svgRef}
+          width={width}
+          height={svgHeight}
+          className="m-auto"
+          style={{ marginBottom: "1.45rem" }} // TODO: das ist nur testweise wegen der besseren Lesbarkeit.
+        />
       )}
     </>
   );
