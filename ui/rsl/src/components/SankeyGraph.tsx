@@ -39,9 +39,7 @@ const SankeyGraph = ({
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
-
   const graphData = ExtractGroupInfoForThisTrain(tripId);
-
   React.useEffect(() => {
     if (!graphData) return;
 

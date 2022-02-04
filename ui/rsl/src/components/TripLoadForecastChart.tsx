@@ -20,6 +20,7 @@ import {
 } from "../api/paxmon";
 import { addEdgeStatistics } from "../util/statistics";
 import { universeAtom } from "../data/simulation";
+import { loadAndProcessTripInfo } from "./TripInfoUtils";
 
 function getSvgLinePath(
   edges: PaxMonEdgeLoadInfoWithStats[],
@@ -69,14 +70,14 @@ function getYLabels(maxVal: number) {
     maxVal >= 20000
       ? 2000
       : maxVal >= 10000
-        ? 1000
-        : maxVal >= 3000
-          ? 500
-          : maxVal >= 1500
-            ? 200
-            : maxVal >= 700
-              ? 100
-              : 50;
+      ? 1000
+      : maxVal >= 3000
+      ? 500
+      : maxVal >= 1500
+      ? 200
+      : maxVal >= 700
+      ? 100
+      : 50;
   const labels = [];
   for (let pax = stepSize; pax < maxVal; pax += stepSize) {
     labels.push({
@@ -91,14 +92,14 @@ function getXLabels(maxVal: number) {
     maxVal >= 20000
       ? 2000
       : maxVal >= 10000
-        ? 1000
-        : maxVal >= 3000
-          ? 500
-          : maxVal >= 1500
-            ? 200
-            : maxVal >= 700
-              ? 100
-              : 50;
+      ? 1000
+      : maxVal >= 3000
+      ? 500
+      : maxVal >= 1500
+      ? 200
+      : maxVal >= 700
+      ? 100
+      : 50;
   const labels = [];
   for (let pax = stepSize; pax < maxVal; pax += stepSize) {
     labels.push({
@@ -197,15 +198,6 @@ function getBaseFileName(
   return parts.join("_");
 }
 
-async function loadAndProcessTripInfo(universe: number, trip: TripId) {
-  const res = await sendPaxMonTripLoadInfosRequest({
-    universe,
-    trips: [trip],
-  });
-  const tli = res.load_infos[0];
-  return addEdgeStatistics(tli);
-}
-
 type TripLoadForecastChartProps = {
   tripId: TripId;
   mode: "Interactive" | "Tooltip";
@@ -213,10 +205,10 @@ type TripLoadForecastChartProps = {
 };
 
 function TripLoadForecastChart({
-                                 tripId,
-                                 mode,
-                                 onSectionClick,
-                               }: TripLoadForecastChartProps): JSX.Element | null {
+  tripId,
+  mode,
+  onSectionClick,
+}: TripLoadForecastChartProps): JSX.Element | null {
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery();
 
@@ -274,14 +266,14 @@ function TripLoadForecastChart({
     const y100 = 200 - Math.round((e.capacity / maxVal) * 200);
     const y80 = 200 - Math.round(((e.capacity * 0.8) / maxVal) * 200);
 
-    const yDarkRed  = 0;
-    const hDarkRed  = y200;
-    const yRed      = y200;
-    const hRed      = y100 - y200;
-    const yYellow   = y100;
-    const hYellow   = y80 - y100;
-    const yGreen    = y80;
-    const hGreen    = 200 - y80;
+    const yDarkRed = 0;
+    const hDarkRed = y200;
+    const yRed = y200;
+    const hRed = y100 - y200;
+    const yYellow = y100;
+    const hYellow = y80 - y100;
+    const yGreen = y80;
+    const hGreen = 200 - y80;
     return (
       <g key={idx.toString()}>
         <rect
@@ -419,7 +411,7 @@ function TripLoadForecastChart({
     const arrivalDelayed =
       idx > 0 &&
       edges[idx - 1].arrival_current_time >
-      edges[idx - 1].arrival_schedule_time;
+        edges[idx - 1].arrival_schedule_time;
     const departureScheduleTime =
       idx < edges.length ? edges[idx].departure_schedule_time : null;
     const departureCurrentTime =
@@ -517,21 +509,21 @@ function TripLoadForecastChart({
 
   const clickRegions = onSectionClick
     ? edges.map((e, idx) => {
-      return (
-        <rect
-          key={idx.toString()}
-          x={idx * 50}
-          y="0"
-          width="50"
-          height="200"
-          fill="transparent"
-          className="cursor-pointer"
-          onClick={() => {
-            onSectionClick(e);
-          }}
-        />
-      );
-    })
+        return (
+          <rect
+            key={idx.toString()}
+            x={idx * 50}
+            y="0"
+            width="50"
+            height="200"
+            fill="transparent"
+            className="cursor-pointer"
+            onClick={() => {
+              onSectionClick(e);
+            }}
+          />
+        );
+      })
     : [];
 
   const chart = (
@@ -594,10 +586,10 @@ function TripLoadForecastChart({
 }
 
 function TripLoadForecastChartVertical({
-                                         tripId,
-                                         mode,
-                                         onSectionClick
-                                       }: TripLoadForecastChartProps): JSX.Element | null {
+  tripId,
+  mode,
+  onSectionClick,
+}: TripLoadForecastChartProps): JSX.Element | null {
   const [universe] = useAtom(universeAtom); // get parallel universe
   const { data: status } = usePaxMonStatusQuery();
 
@@ -660,17 +652,16 @@ function TripLoadForecastChartVertical({
     const x100 = 200 - Math.round((e.capacity / maxVal) * 200);
     const x80 = 200 - Math.round(((e.capacity * 0.8) / maxVal) * 200);
 
-    const xDarkRed  = 200;
-    const wDarkRed  = x200;
-    const xRed      = 200 - x100;
-    const wRed      = x100-x200;
-    const xYellow   = 200 - x80;
-    const wYellow   = x80-x100;
-    const xGreen    = 0;
-    const wGreen    = 200 - x80;
+    const xDarkRed = 200;
+    const wDarkRed = x200;
+    const xRed = 200 - x100;
+    const wRed = x100 - x200;
+    const xYellow = 200 - x80;
+    const wYellow = x80 - x100;
+    const xGreen = 0;
+    const wGreen = 200 - x80;
     return (
       <g key={idy.toString()}>
-
         <rect
           x={xGreen}
           y={y}
@@ -706,7 +697,6 @@ function TripLoadForecastChartVertical({
       </g>
     );
   });
-
 
   const overCapProbs = edges.map((e, idy) => {
     const classes = ["over-cap-prob"];
@@ -750,7 +740,7 @@ function TripLoadForecastChartVertical({
   for (const ef of edges) {
     const topLoad = ef.q_95 || 0;
     const bottomLoad = ef.q_5 || 0;
-    const topX =  0 - Math.round((topLoad / maxVal) * 200);
+    const topX = 0 - Math.round((topLoad / maxVal) * 200);
     const bottomX = 0 - Math.round((bottomLoad / maxVal) * 200);
     spreadTopPoints.push(`${-topX} ${y}`);
     spreadBottomPoints.unshift(`${-bottomX} ${y}`);
@@ -768,7 +758,11 @@ function TripLoadForecastChartVertical({
 
   const expectedPath = (
     <path
-      d={getSvgLinePathVertical(edges, maxVal, (ef) => ef.expected_passengers || 0)}
+      d={getSvgLinePathVertical(
+        edges,
+        maxVal,
+        (ef) => ef.expected_passengers || 0
+      )}
       className="planned"
     />
   );
@@ -806,7 +800,7 @@ function TripLoadForecastChartVertical({
     const arrivalDelayed =
       idy > 0 &&
       edges[idy - 1].arrival_current_time >
-      edges[idy - 1].arrival_schedule_time;
+        edges[idy - 1].arrival_schedule_time;
     const departureScheduleTime =
       idy < edges.length ? edges[idy].departure_schedule_time : null;
     const departureCurrentTime =
@@ -834,7 +828,7 @@ function TripLoadForecastChartVertical({
         scheduleTimeLabels.push(
           <text
             x="33"
-            y={y-2}
+            y={y - 2}
             textAnchor="end"
             className="time schedule"
             key={`${idy}.sched.arr`}
@@ -846,7 +840,7 @@ function TripLoadForecastChartVertical({
       currentTimeLabels.push(
         <text
           x="16"
-          y={y-2}
+          y={y - 2}
           textAnchor="end"
           className={`time current${arrivalDelayed ? " delayed" : ""}`}
           key={`${idy}.curr.arr`}
@@ -905,21 +899,21 @@ function TripLoadForecastChartVertical({
 
   const clickRegions = onSectionClick
     ? edges.map((e, idy) => {
-      return (
-        <rect
-          key={idy.toString()}
-          x="0"
-          y={idy * 50}
-          width="200"
-          height="50"
-          fill="transparent"
-          className="cursor-pointer"
-          onClick={() => {
-            onSectionClick(e);
-          }}
-        />
-      );
-    })
+        return (
+          <rect
+            key={idy.toString()}
+            x="0"
+            y={idy * 50}
+            width="200"
+            height="50"
+            fill="transparent"
+            className="cursor-pointer"
+            onClick={() => {
+              onSectionClick(e);
+            }}
+          />
+        );
+      })
     : [];
 
   const chart = (
@@ -979,4 +973,4 @@ function TripLoadForecastChartVertical({
     return chart;
   }
 }
-export default {TripLoadForecastChart, TripLoadForecastChartVertical};
+export default { TripLoadForecastChart, TripLoadForecastChartVertical };
