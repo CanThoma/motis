@@ -3,7 +3,7 @@ import {
   LinkMinimal,
   NodeMinimal,
   SankeyInterfaceMinimal,
-} from "./SankeyTypes";
+} from "./SankeyStationTypes";
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
 import { PaxMonGetInterchangesRequest } from "../api/protocol/motis/paxmon";
@@ -22,8 +22,9 @@ export type StationInterchangeParameters = {
   maxCount: number;
 };
 type ExtTripId = TripId & {
-  arrival_time: number | null;
-  departure_time: number | null;
+  pax: number;
+  cap: number;
+  interstation_time: number;
 };
 type NodeCapacityInfo = {
   cap: number;
@@ -61,8 +62,9 @@ function ToExtTripId(tripId: TripId): ExtTripId {
     station_id: tripId.station_id,
     line_id: tripId.line_id,
     target_time: tripId.target_time,
-    arrival_time: null,
-    departure_time: null,
+    pax: 0,
+    cap: 0,
+    interstation_time: 0,
   };
   return extTripId;
 }
@@ -139,8 +141,9 @@ export function ExtractThisStationTripInfo(
 export function ExtractStationData(
   params: StationInterchangeParameters
 ): SankeyInterfaceMinimal {
-  let graph: SankeyInterfaceMinimal = {
-    nodes: [],
+  const graph: SankeyInterfaceMinimal = {
+    fromNodes: [],
+    toNodes: [],
     links: [],
   };
   const [universe] = useAtom(universeAtom);
@@ -154,9 +157,25 @@ export function ExtractStationData(
     universe: universe,
   };
   const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
-  let interchangingTripsInStation: ExtTripId[] = [];
+  const arrivingTripsInStation: ExtTripId[] = [];
+  const departuringTripsInStation: ExtTripId[] = [];
+  const SpecialNode = (name: string) => {
+    const node: NodeMinimal = {
+      id: name,
+      cap: 0,
+      pax: 0,
+      time: 0,
+      name: "",
+    };
+    return node;
+  };
+  const boardingNode: NodeMinimal = SpecialNode("boarding");
+  const previousNode: NodeMinimal = SpecialNode("previous");
+  const futureNode: NodeMinimal = SpecialNode("future");
+  const exitingNode: NodeMinimal = SpecialNode("exiting");
+
   if (data) {
-    for (let interchange of data.interchanges) {
+    for (const interchange of data.interchanges) {
       let arrivingStationIndex = -1;
       let departureStationIndex = -1;
 
@@ -177,22 +196,26 @@ export function ExtractStationData(
         if (arrivalInfo.trips.length != 1) continue;
         //"boarding" group, when arrival train is out of time range
         if (arrivalInfo.schedule_time < params.startTime) {
+          arrivingStationIndex = -2;
         } else {
           let trip = arrivalInfo.trips[0];
-          arrivingStationIndex = interchangingTripsInStation.findIndex(
-            (tripId) => {
-              return SameExtTripId(tripId, ToExtTripId(trip.trip));
-            }
+          arrivingStationIndex = arrivingTripsInStation.findIndex((tripId) =>
+            SameExtTripId(tripId, ToExtTripId(trip.trip))
           );
           let foundTripsInStation =
-            interchangingTripsInStation[arrivingStationIndex];
+            arrivingTripsInStation[arrivingStationIndex];
           if (!foundTripsInStation) {
             let exttid = ToExtTripId(trip.trip);
-            exttid.arrival_time = arrivalInfo.schedule_time;
-            arrivingStationIndex = interchangingTripsInStation.length;
-            interchangingTripsInStation.push(exttid);
+            exttid.interstation_time = arrivalInfo.schedule_time;
+
+            //TODO: move pax and cap to other query?
+            exttid.pax = interchange.groups.max_passenger_count;
+            exttid.cap = 500; //TBI
+
+            arrivingStationIndex = arrivingTripsInStation.length;
+            arrivingTripsInStation.push(exttid);
           } else {
-            foundTripsInStation.arrival_time = arrivalInfo.schedule_time;
+            foundTripsInStation.pax += interchange.groups.max_passenger_count;
           }
         }
       } else {
@@ -212,92 +235,120 @@ export function ExtractStationData(
         //"exiting" group, when arrival train is out of time range. this shouldn't happen from how the query works though
         if (departureInfo.schedule_time > params.endTime) {
           // formatLongDateTime(departureInfo.schedule_time) + " params.endTime " + formatLongDateTime(params.endTime));
+          departureStationIndex = -2;
         } else {
           let trip = departureInfo.trips[0];
-          departureStationIndex = interchangingTripsInStation.findIndex(
-            (tripId) => {
-              return SameExtTripId(tripId, ToExtTripId(trip.trip));
-            }
+          departureStationIndex = departuringTripsInStation.findIndex(
+            (tripId) => SameExtTripId(tripId, ToExtTripId(trip.trip))
           );
           let foundTripsInStation =
-            interchangingTripsInStation[departureStationIndex];
+            departuringTripsInStation[departureStationIndex];
           if (!foundTripsInStation) {
-            let exttid = ToExtTripId(trip.trip);
-            exttid.departure_time = departureInfo.schedule_time;
-            departureStationIndex = interchangingTripsInStation.length;
-            interchangingTripsInStation.push(exttid);
+            const exttid = ToExtTripId(trip.trip);
+            exttid.interstation_time = departureInfo.schedule_time;
+
+            //TODO: move pax and cap to other query?
+            exttid.pax = interchange.groups.max_passenger_count;
+            exttid.cap = 500; //TBI
+
+            departureStationIndex = departuringTripsInStation.length;
+            departuringTripsInStation.push(exttid);
           } else {
-            foundTripsInStation.departure_time = departureInfo.schedule_time;
+            foundTripsInStation.pax += interchange.groups.max_passenger_count;
           }
         }
       } else {
         // error!!
         continue;
       }
+      /* If there is boarding/exiting previous/future */
+      if (arrivingStationIndex === -1) {
+        //boarding
+        boardingNode.pax += interchange.groups.max_passenger_count;
+        boardingNode.cap += interchange.groups.max_passenger_count;
+      } else if (arrivingStationIndex === -2) {
+        // previous
+        previousNode.pax += interchange.groups.max_passenger_count;
+        previousNode.cap += interchange.groups.max_passenger_count;
+      }
+
+      if (departureStationIndex === -1) {
+        //exiting
+        exitingNode.pax += interchange.groups.max_passenger_count;
+        exitingNode.cap += interchange.groups.max_passenger_count;
+      } else if (departureStationIndex === -2) {
+        // future
+        futureNode.pax += interchange.groups.max_passenger_count;
+        futureNode.cap += interchange.groups.max_passenger_count;
+      }
 
       /* take care of the links from the data we now gained */
       let src =
         arrivingStationIndex === -1
           ? "boarding"
-          : arrivingStationIndex.toString();
+          : arrivingStationIndex === -2
+          ? "previous"
+          : ToTripId(arrivingTripsInStation[arrivingStationIndex]);
       let trgt =
         departureStationIndex === -1
           ? "exiting"
-          : departureStationIndex.toString();
+          : departureStationIndex === -2
+          ? "future"
+          : ToTripId(departuringTripsInStation[departureStationIndex]);
       let val = interchange.groups.max_passenger_count;
+      // in case of several groups going the same interchange
       let foundLink = graph.links.find(
-        (link) => link.source == src && link.target == trgt
+        (link) => link.fNId === src && link.tNId === trgt
       );
       if (foundLink) {
         foundLink.value += val;
       } else {
-        let link: LinkMinimal = {
+        const link: LinkMinimal = {
           id: graph.links.length,
           value: val,
-          source:
-            arrivingStationIndex === -1
-              ? "boarding"
-              : arrivingStationIndex.toString(),
-          target:
-            departureStationIndex === -1
-              ? "exiting"
-              : departureStationIndex.toString(),
+          fNId: src, // tripId if stationindex found, else string identifier
+          tNId: trgt, // tripId if stationindex found, else string identifier
         };
         graph.links.push(link);
       }
     }
   }
-  for (let trips of interchangingTripsInStation) {
-    let node: NodeMinimal = {
-      id: graph.nodes.length.toString(),
-      name: trips.train_nr.toString(),
-      sId: "TBI",
-      arrival_time: trips.arrival_time ? trips.arrival_time : 0,
-      departure_time: trips.departure_time ? trips.departure_time : 0,
-      capacity: 200, // TODO: TBI
+  /* Push elements to graph node arrays */
+  graph.fromNodes.push(boardingNode);
+  graph.fromNodes.push(previousNode);
+  for (let arrivingTrip of arrivingTripsInStation) {
+    const tripId = ToTripId(arrivingTrip);
+    const node: NodeMinimal = {
+      id: tripId,
+      pax: arrivingTrip.pax,
+      cap: arrivingTrip.cap,
+      name: tripId.train_nr.toString(),
+      time: arrivingTrip.interstation_time,
     };
-    graph.nodes.push(node);
+    graph.fromNodes.push(node);
   }
+  for (let departuringTrip of departuringTripsInStation) {
+    const tripId = ToTripId(departuringTrip);
+    const node: NodeMinimal = {
+      id: tripId,
+      pax: departuringTrip.pax,
+      cap: departuringTrip.cap,
+      name: tripId.train_nr.toString(),
+      time: departuringTrip.interstation_time,
+    };
+    graph.toNodes.push(node);
+  }
+  graph.toNodes.push(futureNode);
+  graph.toNodes.push(exitingNode);
 
-  graph.nodes.sort((a, b) => {
-    /* null comparators (out of time range of search) / new arriving/just exiting journey */
-    if (a.arrival_time == null && b.arrival_time == null) return 0;
-    else if (a.arrival_time == null) return -1;
-    else if (b.arrival_time == null) return 1;
-    /* number comparators */ else if (a.arrival_time < b.arrival_time)
-      return -1;
-    else if (a.arrival_time > b.arrival_time) return 1;
+  /* Sort elements as output from MOTIS is not sorted */
+  const TimeSort = (a: NodeMinimal, b: NodeMinimal) => {
+    /* number comparators */
+    if (a.time < b.time) return -1;
+    else if (a.time > b.time) return 1;
     else return 0;
-  });
-  graph.nodes.sort((a, b) => {
-    /* null comparators (out of time range of search) / new arriving/just exiting journey */
-    if (a.departure_time == null && b.departure_time == null) return 0;
-    else if (a.departure_time == null) return -1;
-    else if (b.departure_time == null) return 1;
-    /* number comparators */ else if (a.departure_time < b.departure_time)
-      return -1;
-    else if (a.departure_time > b.departure_time) return 1;
-    else return 0;
-  });
+  };
+  graph.fromNodes.sort(TimeSort);
+  graph.toNodes.sort(TimeSort);
   return graph;
 }

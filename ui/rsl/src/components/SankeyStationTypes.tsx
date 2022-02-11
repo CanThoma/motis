@@ -1,10 +1,16 @@
+import { TripId } from "../api/protocol/motis";
+
 type Node = {
+  id: TripId | string;
   name: string;
-  id: string;
+  pax: number;
+  cap: number;
+  time: number;
+
   offset?: number;
   colour?: string;
   biggerNodeTotalValue?: number;
-  totalNodeValue?: number;
+  // totalNodeValue?: number;
   backdropHeight?: number;
   nodeHeight?: number;
   y0_backdrop?: number;
@@ -15,136 +21,139 @@ type Node = {
   y1?: number;
   sourceLinks?: Link[];
   targetLinks?: Link[];
+  full?: boolean;
 };
 
 type Link = {
-  id: string | number;
-  source: string;
-  target: string;
+  id: number;
+  fNId: TripId | string;
+  tNId: TripId | string;
   value: number;
+
   index?: number;
   colour?: string;
-  oppacityScale?: number;
+  opacityScale?: number;
   y0?: number;
   y1?: number;
   width?: number;
 };
 
 interface SankeyInterface {
-  nodes: Node[];
+  fromNodes: Node[];
+  toNodes: Node[];
   links: Link[];
 }
 
 interface SankeyInterfaceMinimal {
-  nodes: NodeMinimal[];
+  fromNodes: NodeMinimal[];
+  toNodes: NodeMinimal[];
   links: LinkMinimal[];
 }
 
 type NodeMinimal = {
-  id: string;
-  sId: string;
+  id: TripId | string;
   name: string;
+  pax: number;
+  cap: number;
   time: number;
-  capacity: number;
 };
 
 type LinkMinimal = {
-  id: string | number;
-  source: string;
-  target: string;
+  id: number;
+  fNId: TripId | string; // fromNodeID
+  tNId: TripId | string; // toNodeID
   value: number;
 };
 
+const tempID0: TripId = {
+  station_id: "0",
+  train_nr: 0,
+  time: 0,
+  target_station_id: "",
+  target_time: 0,
+  line_id: "",
+};
+const tempID1: TripId = {
+  station_id: "1",
+  train_nr: 0,
+  time: 0,
+  target_station_id: "",
+  target_time: 0,
+  line_id: "",
+};
+const tempID2: TripId = {
+  station_id: "2",
+  train_nr: 0,
+  time: 0,
+  target_station_id: "",
+  target_time: 0,
+  line_id: "",
+};
+
 const stationGraphDefault: SankeyInterfaceMinimal = {
-  nodes: [
+  fromNodes: [
+    { name: "", id: "boarding", pax: 596, cap: 596, time: 0 },
+    { name: "", id: "previous", pax: 44, cap: 44, time: 1 },
     {
       name: "S3 Bad Soden(Taunus) - 8890",
+      id: tempID0,
+      pax: 220,
+      cap: 600,
       time: 1639487100,
-      capacity: 600,
-      id: "node1",
     },
-    { name: "ICE 1576 - 6489", time: 1639488240, capacity: 900, id: "node2" },
+    {
+      name: "ICE 1576 - 6489",
+      id: tempID1,
+      pax: 600,
+      cap: 900 + 300,
+      time: 1639488240,
+    },
     {
       name: "S3 Bad Soden(Taunus) - 7832",
+      id: tempID2,
+      pax: 900,
+      cap: 600,
       time: 1639488900,
-      capacity: 600,
-      id: "node3",
     },
   ],
+  toNodes: [
+    {
+      name: "S3 Bad Soden(Taunus) - 8890",
+      id: tempID0,
+      pax: 120 + 96,
+      cap: 600,
+      time: 1639487100 + 300000,
+    },
+    {
+      name: "ICE 1576 - 6489",
+      id: tempID1,
+      pax: 600 + 104,
+      cap: 900,
+      time: 1639488240 + 300000,
+    },
+    {
+      name: "S3 Bad Soden(Taunus) - 7832",
+      id: tempID2,
+      pax: 740,
+      cap: 600 + 300,
+      time: 1639488900 + 300000,
+    },
+    { name: "", id: "future", pax: 100, cap: 100, time: 9999999998 },
+    { name: "", id: "exiting", pax: 0, cap: 0, time: 9999999999 },
+  ],
   links: [
-    { source: "boarding", target: "node1", value: 150, id: "link5" },
-    { source: "boarding", target: "node2", value: 200, id: "link10" },
-    { source: "boarding", target: "node3", value: 189, id: "link11" },
-
-    { source: "node1", target: "node1", value: 0, id: "link51" },
-    { source: "node1", target: "node1", value: 0, id: "link6" },
-    { source: "node1", target: "node2", value: 40, id: "link7" },
-    { source: "node1", target: "node3", value: 0, id: "link8" },
-
-    { source: "node2", target: "node2", value: 380, id: "link16" },
-    { source: "node2", target: "node3", value: 180, id: "link165" },
-
-    { source: "node1", target: "exiting", value: 300, id: "link50" },
-    { source: "node2", target: "exiting", value: 210, id: "link60" },
-    { source: "node3", target: "exiting", value: 110, id: "link161" },
+    { id: 0, fNId: "boarding", tNId: tempID0, value: 196 },
+    { id: 1, fNId: "boarding", tNId: tempID2, value: 400 },
+    { id: 3, fNId: tempID0, tNId: tempID1, value: 100 },
+    { id: 5, fNId: tempID0, tNId: tempID2, value: 100 },
+    { id: 4, fNId: tempID2, tNId: "future", value: 100 },
+    { id: 2, fNId: "previous", tNId: tempID1, value: 4 },
+    { id: 6, fNId: "previous", tNId: tempID2, value: 40 },
   ],
 };
 
-const graphDefault: SankeyInterfaceMinimal = {
-  nodes: [
-    { id: "8503000", name: "Zürich HB" },
-    { id: "8500218", name: "Olten" },
-    { id: "8500212", name: "Oensingen" },
-    { id: "8500207", name: "Solothurn" },
-    { id: "9999999", name: "---------" },
-    { id: "888888", name: "---------" },
-    { id: "7", name: "---------" },
-    { id: "77", name: "---------" },
-    { id: "777", name: "---------" },
-    { id: "7777", name: "---------" },
-    { id: "6", name: "---------" },
-    { id: "66", name: "---------" },
-    { id: "666", name: "---------" },
-    { id: "6666", name: "---------" },
-    { id: "5", name: "---------" },
-    { id: "55", name: "---------" },
-    { id: "555", name: "---------" },
-    { id: "5555", name: "---------" },
-    { id: "4", name: "---------" },
-    { id: "44", name: "---------" },
-    { id: "444", name: "---------" },
-    { id: "4444", name: "---------" },
-    { id: "3", name: "---------" },
-    { id: "44", name: "---------" },
-    { id: "8500202", name: "Grenchen Süd" },
-    { id: "8504300", name: "Biel/Bienne" },
-    { id: "8504221", name: "Neuchâtel" },
-    { id: "8504200", name: "Yverdon-les-Bains" },
-    { id: "8501120", name: "Lausanne" },
-  ],
-  links: [
-    { id: "link0", source: "8503000", target: "8500218", value: 80 },
-    { id: "link1", source: "8503000", target: "8500212", value: 80 },
-    { id: "link2", source: "8503000", target: "8504300", value: 80 },
-    { id: "link3", source: "8503000", target: "8504221", value: 80 },
-    { id: "link4", source: "8503000", target: "8504200", value: 80 },
-    { id: "link5", source: "8503000", target: "8501120", value: 80 },
-    { id: "link6", source: "8500218", target: "8504221", value: 80 },
-    { id: "link7", source: "8500218", target: "8504200", value: 80 },
-    { id: "link8", source: "8500218", target: "8501120", value: 80 },
-    { id: "link9", source: "8500212", target: "8500207", value: 80 },
-    { id: "link10", source: "8500207", target: "8504200", value: 80 },
-    { id: "link11", source: "8500207", target: "8501120", value: 80 },
-    { id: "link12", source: "8500202", target: "8501120", value: 80 },
-    { id: "link13", source: "8504300", target: "8504200", value: 80 },
-    { id: "link14", source: "8504300", target: "8501120", value: 80 },
-    { id: "link15", source: "8504221", target: "8504200", value: 80 },
-    { id: "link16", source: "8504221", target: "8501120", value: 80 },
-    { id: "link17", source: "8504200", target: "8501120", value: 80 },
-  ],
-};
+export { stationGraphDefault };
 
-export { graphDefault, stationGraphDefault };
 export type {
   Link,
   Node,
