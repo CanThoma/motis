@@ -33,7 +33,7 @@ type NodeCapacityInfo = {
 function SameExtTripId(extTripIdA: ExtTripId, extTripIdB: ExtTripId): boolean {
   return SameTripId(ToTripId(extTripIdA), ToTripId(extTripIdB));
 }
-function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
+export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
   return (
     tripIdA.time == tripIdB.time &&
     tripIdA.train_nr == tripIdB.train_nr &&

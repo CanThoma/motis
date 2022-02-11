@@ -35,6 +35,7 @@ import {
 } from "./components/SankeyTypes";
 import {
   ExtractStationData,
+  SameTripId,
   StationInterchangeParameters,
 } from "./components/StationInfoUtils";
 const queryClient = new QueryClient({
@@ -46,9 +47,41 @@ function StationInterchangesDisplay(
   params: StationInterchangeParameters
 ): JSX.Element {
   const graph = ExtractStationData(params);
+  const fromel = graph.fromNodes.find(
+    (a) => typeof a.id !== "string" && a.id.train_nr === 1810
+  );
+  const toel = graph.toNodes.find(
+    (a) => typeof a.id !== "string" && a.id.train_nr === 1810
+  );
+  const showTripId = (tripId: TripId) => (
+    <div>
+      TIME {tripId.time}
+      <br />
+      SID {tripId.station_id}
+      <br />
+      TSID {tripId.target_station_id}
+      <br />
+      NR {tripId.train_nr}
+      <br />
+      LINE {tripId.line_id}
+      <br />
+      TTIME {tripId.target_time}
+    </div>
+  );
   return (
     <div>
       <div>
+        <h2>
+          {fromel && toel && SameTripId(fromel.id, toel.id)
+            ? "SAME"
+            : "NOTSAME"}
+          {fromel && toel && (
+            <div>
+              {showTripId(fromel.id)}
+              {showTripId(toel.id)}
+            </div>
+          )}
+        </h2>
         <h1>FromNode count: {graph.fromNodes.length}</h1>
         {graph.fromNodes.map((val) => (
           <div>

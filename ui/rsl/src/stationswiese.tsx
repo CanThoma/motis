@@ -1,14 +1,14 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
 import "./index.css";
 import SankeyStationGraph from "./components/SankeyStationGraph";
 import { stationGraphDefault } from "./components/SankeyTypes";
-import {QueryClient, QueryClientProvider} from "react-query";
+import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
 import MeasureInput from "./components/measures/MeasureInput";
-import {TripId} from "./api/protocol/motis";
+import { TripId } from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
 import TripDetails from "./components/TripDetails";
 import StationPicker from "./components/StationPicker";
@@ -30,7 +30,7 @@ class App extends React.Component {
     selectedStation: null,
     startTime: 0,
     endTime: 0,
-    simActive: false
+    simActive: false,
   };
   svgRef = React.createRef();
 
@@ -82,16 +82,15 @@ class App extends React.Component {
       target,
       key,
       selectedStation,
-      simActive
+      simActive,
     } = this.state;
-    var someDate = new Date('Mon, 25 Oct 2021 09:15:00 GMT+2');
+    var someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
     var theUnixTime = someDate.getTime() / 1000;
-    const startTime = theUnixTime-theUnixTime%1800; // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-    const endTime = startTime + 30*60; // dd-mm-yy 9:30
+    const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
+    const endTime = startTime + 60 * 60; // dd-mm-yy 9:30
     const sankeyDisplay = null;
     return (
       <QueryClientProvider client={queryClient}>
-
         <div
           className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
             bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
@@ -102,7 +101,7 @@ class App extends React.Component {
             <button
               type="button"
               className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
-              onClick={() => this.setState({simActive: !simActive})}
+              onClick={() => this.setState({ simActive: !simActive })}
             >
               Maßnahmensimulation
             </button>
@@ -122,7 +121,9 @@ class App extends React.Component {
             <div className="mt-6 flex items-center justify-center gap-2">
               <span>Station:</span>
               <StationPicker
-                onStationPicked={(station ) => this.setState({selectedStation: station?.id})}
+                onStationPicked={(station) =>
+                  this.setState({ selectedStation: station?.id })
+                }
                 clearOnPick={false}
               />
             </div>
@@ -131,7 +132,15 @@ class App extends React.Component {
         <div className="App mt-16 text-center">
           <h1>{subHeadline}</h1>
           <h2 className="text-gray-500">{headline}</h2>
-          {selectedStation && <SankeyStationGraph stationId={selectedStation} startTime={startTime} endTime={endTime} maxCount={0} width={width} />}
+          {selectedStation && (
+            <SankeyStationGraph
+              stationId={selectedStation}
+              startTime={startTime}
+              endTime={endTime}
+              maxCount={0}
+              width={width}
+            />
+          )}
         </div>
       </QueryClientProvider>
     );

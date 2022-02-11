@@ -1,6 +1,6 @@
 import React, { MouseEvent } from "react";
 import * as d3 from "d3";
-import { select as d3Select, easeLinear } from "d3";
+// import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import {
@@ -9,8 +9,10 @@ import {
   SankeyInterfaceMinimal,
   NodeMinimal,
   LinkMinimal,
-} from "./SankeyTypes";
+  stationGraphDefault,
+} from "./SankeyStationTypes";
 import Utils from "./SankeyStationUtils";
+import { interpolate } from "d3";
 import { TripId } from "../api/protocol/motis";
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
@@ -50,7 +52,7 @@ const SankeyStationGraph = ({
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
 
-  const linkOppacity = 0.25;
+  const linkOppacity = 0.5;
   const linkOppacityFocus = 0.7;
   const linkOppacityClear = 0.01;
 
@@ -58,24 +60,19 @@ const SankeyStationGraph = ({
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0.0; // AG wollte nicht die 0.2 die vom Team bevorzugt werden
 
-  let data = ExtractStationData({
+  const data = ExtractStationData({
     stationId: stationId,
     startTime: startTime,
     endTime: endTime,
     maxCount: 0,
   });
-  // /*  for(let node of data.nodes)
-  //   {
-  //     //console.log("<node id=" + node.id + " name="+node.name +" arrival_time="+node.arrival_time +" departure_time="+node.departure_time+ " capacity="+ node.capacity + ">")
-  //   }
-  //   for(let link of data.links)
-  //   {
-  //     //console.log("<link id=" + link.id + " source="+link.source +" target="+link.target +" value="+link.value + ">")
-  //   }*/
+
+  //console.log(data); // for debug purposes
 
   React.useEffect(() => {
     const graph = Utils.createGraph(
-      data.nodes,
+      data.fromNodes,
+      data.toNodes,
       data.links,
       height,
       width,
@@ -83,20 +80,36 @@ const SankeyStationGraph = ({
       nodePadding
     );
 
+    const graphTemp = {
+      nodes: [...graph.toNodes, ...graph.fromNodes],
+      links: graph.links,
+    };
+
     const svg = d3.select(svgRef.current);
     // Säubern von potentiellen svg Inhalt
     svg.selectAll("*").remove();
 
     const defs = svg.append("defs");
+    /*
+            // Add definitions for all of the linear gradients.
+            const gradients = defs
+              .selectAll("linearGradient")
+              .data(graphTemp.links)
+              .join("linearGradient")
+              .attr("id", (d) => "gradient_" + d.id);
+            gradients.append("stop").attr("offset", 0.0);
+            gradients.append("stop").attr("offset", 1.0);
+      */
+    const hatches = defs
+      .append("path")
+      .attr("id", "diagonalHatch")
+      .attr("width", 4)
+      .attr("height", 4)
+      .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
+      .attr("stroke", "red")
+      .attr("stroke-width", 1);
 
-    // Add definitions for all of the linear gradients.
-    const gradients = defs
-      .selectAll("linearGradient")
-      .data(graph.links)
-      .join("linearGradient")
-      .attr("id", (d) => "gradient_" + d.id);
-    gradients.append("stop").attr("offset", 0.0);
-    gradients.append("stop").attr("offset", 1.0);
+    //
 
     // Add a g.view for holding the sankey diagram.
     const view = svg.append("g").classed("view", true);
@@ -104,7 +117,7 @@ const SankeyStationGraph = ({
     // Define the row backgrounds of every row
     view
       .selectAll("rect.rowBackground")
-      .data(graph.nodes)
+      .data(graphTemp.nodes)
       .join("rect")
       .classed("rowBackground", true)
       .filter((d) => (d.x0 || width) < width)
@@ -121,7 +134,7 @@ const SankeyStationGraph = ({
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     view
       .selectAll("rect.nodeBackdrop")
-      .data(graph.nodes)
+      .data(graphTemp.nodes.filter((n) => n.pax !== 0)) // filter out empty nodes
       .join("rect")
       .classed("backdrop", true)
       .attr("id", (d) => d.id + "_backdrop")
@@ -137,26 +150,53 @@ const SankeyStationGraph = ({
     // Define the nodes.
     const nodes = view
       .selectAll("rect.node")
-      .data(graph.nodes)
+      .data(graphTemp.nodes)
       .join("rect")
       .classed("node", true)
-      .attr("id", (d) => d.id)
+      .attr("id", (d) => String(d.id))
       .attr("x", (d) => d.x0 || 0)
-      .attr("y", (d) => d.y0 || 0)
+      .attr("y", (d) => (d.full ? d.y0_backdrop || 0 : d.y0 || 0))
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
-      .attr("height", (d) => Math.max(0, (d.y1 || 0) - (d.y0 || 0)))
+      .attr("height", (d) =>
+        Math.max(
+          0,
+          d.full
+            ? (d.y1 || 0) - (d.y0_backdrop || 0)
+            : (d.y1 || 0) - (d.y0 || 0)
+        )
+      )
       .attr("fill", (d) => d.colour || rowBackgroundColour)
       .attr("opacity", nodeOppacity);
 
+    //Define the Overflow
+    const overflow = view
+      .selectAll("rect.nodeOverflow")
+      .data(graphTemp.nodes.filter((n) => n.full))
+      .join("rect")
+      .classed("node", true)
+      .attr("id", (n) => String(n.id) + "a")
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0 || 0)
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) => Math.max(0, (d.y0_backdrop || 0) - (d.y0 || 0)))
+      .attr(
+        "fill",
+        (d) =>
+          d3.interpolateRgb.gamma(0.1)("orange", "red")(d.cap / d.pax) ||
+          rowBackgroundColour
+      )
+      .attr("opacity", nodeOppacity);
+
     // Add titles for node hover effects.
-    nodes
-      .append("title")
-      .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax || 0));
+
+    // Add titles for node hover effects.
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax || 0));
 
     // Define the links.
     const links = view
       .selectAll("path.link")
-      .data(graph.links)
+      .data(graphTemp.links)
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
@@ -167,25 +207,28 @@ const SankeyStationGraph = ({
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
-    const gradientLinks = view
-      .selectAll("path.gradient-link")
-      .data(graph.links)
-      .join("path")
-      .classed("gradient-link", true)
-      .attr("id", (d) => "path_" + d.id)
-      .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
-      )
-      .attr("stroke", (d) => d.colour || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacityFocus)
-      .attr("stroke-width", (d) => d.width || 1)
-      .attr("fill", "none")
-      .each(setDash);
+    /*
+          const gradientLinks = view
+            .selectAll("path.gradient-link")
+            .data(graphTemp.links)
+            .join("path")
+            .classed("gradient-link", true)
+            .attr("id", (d) => "path_" + d.id)
+            .attr("d", (d) =>
+              Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+            )
+            .attr("stroke", (d) => d.colour || rowBackgroundColour)
+            .attr("stroke-opacity", linkOppacityFocus)
+            .attr("stroke-width", (d) => d.width || 1)
+            .attr("fill", "none")
+            .each(setDash);
+
+       */
 
     // Add text labels.
     view
       .selectAll("text.node")
-      .data(graph.nodes)
+      .data(graphTemp.nodes)
       .join("text")
       .classed("node", true)
       .attr("x", (d) => d.x1 || -1)
@@ -209,8 +252,8 @@ const SankeyStationGraph = ({
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
-      const sourceName = graph.nodes.find((n) => n.id == d.source)?.name;
-      const targetName = graph.nodes.find((n) => n.id == d.target)?.name;
+      const sourceName = graph.fromNodes.find((n) => n.id === d.fNId)?.name;
+      const targetName = graph.toNodes.find((n) => n.id === d.tNId)?.name;
       return Utils.formatTextLink(
         sourceName || " – ",
         targetName || " – ",
@@ -225,16 +268,17 @@ const SankeyStationGraph = ({
       path
         .attr("stroke-dasharray", `${length} ${length}`)
         .attr("stroke-dashoffset", length);
+    }
 
-      /* Das brauche ich eigentlich nicht, ist unnötig, oder?
+    /* Das brauche ich eigentlich nicht, ist unnötig, oder?
       path
         .append("title")
         .text((d) => `${d.source.name} -> ${d.target.name}\n${d.value}`);
         */
-    }
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
+    /*
     function branchAnimate(_: MouseEvent, node: Node) {
       view
         .selectAll("path.link")
@@ -276,27 +320,31 @@ const SankeyStationGraph = ({
       view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
     }
 
-    nodes.on("mouseover", branchAnimate).on("mouseout", branchClear);
+    nodes.on("mouseover", branchAnimate)
+    nodes.on("mouseout", branchClear);
 
-    function linkAnimate(_: MouseEvent, link: Link) {
-      const links = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id === link.id;
-      });
+       */
+    /*
+          function linkAnimate(_: MouseEvent, link: Link) {
+            const links = view.selectAll("path.link").filter((l) => {
+              return (l as Link).id === link.id;
+            });
 
-      links.attr("stroke-opacity", linkOppacityFocus);
-    }
-    function linkClear() {
-      links.attr("stroke-opacity", linkOppacity);
-    }
+            links.attr("stroke-opacity", linkOppacityFocus);
+          }
+          function linkClear() {
+            links.attr("stroke-opacity", linkOppacity);
+          }
 
-    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
+          links.on("mouseover", linkAnimate).on("mouseout", linkClear);
+       */
   }, [data, height, width, nodeWidth, nodePadding, duration]);
 
   return (
     <svg
       ref={svgRef}
       width={width}
-      height={height + 150 + 5000}
+      height={height + 15000}
       className="m-auto"
     />
   );
