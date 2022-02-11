@@ -33,7 +33,7 @@ type NodeCapacityInfo = {
 function SameExtTripId(extTripIdA: ExtTripId, extTripIdB: ExtTripId): boolean {
   return SameTripId(ToTripId(extTripIdA), ToTripId(extTripIdB));
 }
-function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
+export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
   return (
     tripIdA.time == tripIdB.time &&
     tripIdA.train_nr == tripIdB.train_nr &&
@@ -159,20 +159,23 @@ export function ExtractStationData(
   const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
   const arrivingTripsInStation: ExtTripId[] = [];
   const departuringTripsInStation: ExtTripId[] = [];
-  const SpecialNode = (name: string) => {
+  const SpecialNode = (name: string, time: number) => {
     const node: NodeMinimal = {
       id: name,
       cap: 0,
       pax: 0,
-      time: 0,
+      time: time,
       name: "",
     };
     return node;
   };
-  const boardingNode: NodeMinimal = SpecialNode("boarding");
-  const previousNode: NodeMinimal = SpecialNode("previous");
-  const futureNode: NodeMinimal = SpecialNode("future");
-  const exitingNode: NodeMinimal = SpecialNode("exiting");
+  const boardingNode: NodeMinimal = SpecialNode("boarding", Number.MIN_VALUE);
+  const previousNode: NodeMinimal = SpecialNode(
+    "previous",
+    Number.MIN_VALUE * 2
+  );
+  const futureNode: NodeMinimal = SpecialNode("future", Number.MAX_VALUE - 1);
+  const exitingNode: NodeMinimal = SpecialNode("exiting", Number.MAX_VALUE);
 
   if (data) {
     for (const interchange of data.interchanges) {
@@ -266,10 +269,16 @@ export function ExtractStationData(
         //boarding
         boardingNode.pax += interchange.groups.max_passenger_count;
         boardingNode.cap += interchange.groups.max_passenger_count;
+        console.log(
+          "ADDING BOARDING " + interchange.groups.max_passenger_count
+        );
       } else if (arrivingStationIndex === -2) {
         // previous
         previousNode.pax += interchange.groups.max_passenger_count;
         previousNode.cap += interchange.groups.max_passenger_count;
+        console.log(
+          "ADDING previousNode " + interchange.groups.max_passenger_count
+        );
       }
 
       if (departureStationIndex === -1) {
