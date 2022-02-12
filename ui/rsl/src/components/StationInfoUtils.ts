@@ -1,4 +1,4 @@
-import { Trip, TripId } from "../api/protocol/motis";
+import { Trip, TripId, TripServiceInfo } from "../api/protocol/motis";
 import {
   LinkMinimal,
   NodeMinimal,
@@ -9,11 +9,14 @@ import { universeAtom } from "../data/simulation";
 import { PaxMonGetInterchangesRequest } from "../api/protocol/motis/paxmon";
 import {
   queryKeys,
+  sendPaxMonTripLoadInfosRequest,
   usePaxMonGetInterchangesQuery,
   usePaxMonStatusQuery,
 } from "../api/paxmon";
 import { useQuery, useQueryClient } from "react-query";
 import { loadAndProcessTripInfo } from "./TripInfoUtils";
+import { addEdgeStatistics } from "../util/statistics";
+import { formatLongDateTime } from "../util/dateFormat";
 
 export type StationInterchangeParameters = {
   stationId: string;
@@ -42,6 +45,17 @@ export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
     tripIdA.line_id == tripIdB.line_id &&
     tripIdA.target_time == tripIdB.target_time
   );
+}
+export async function loadAndProcessTripInfos(
+  universe: number,
+  trips: TripId[]
+) {
+  const res = await sendPaxMonTripLoadInfosRequest({
+    universe,
+    trips: trips,
+  });
+  const tlis = res.load_infos;
+  return tlis.map((tli) => addEdgeStatistics(tli));
 }
 function ToTripId(extTripId: ExtTripId): TripId {
   const tripId: TripId = {
@@ -147,6 +161,8 @@ export function ExtractStationData(
     links: [],
   };
   const [universe] = useAtom(universeAtom);
+  const queryClient = useQueryClient();
+
   const interchangeRequest: PaxMonGetInterchangesRequest = {
     start_time: params.startTime, // 25.10.2021 - 9:00
     end_time: params.endTime, // 25.10.2021 - 9:30
@@ -158,7 +174,7 @@ export function ExtractStationData(
   };
   const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
   const arrivingTripsInStation: ExtTripId[] = [];
-  const departuringTripsInStation: ExtTripId[] = [];
+  const departingTripsInStation: ExtTripId[] = [];
   const SpecialNode = (name: string, time: number) => {
     const node: NodeMinimal = {
       id: name,
@@ -213,7 +229,7 @@ export function ExtractStationData(
 
             //TODO: move pax and cap to other query?
             exttid.pax = interchange.groups.max_passenger_count;
-            exttid.cap = 500; //TBI
+            exttid.cap = 1; //TBI
 
             arrivingStationIndex = arrivingTripsInStation.length;
             arrivingTripsInStation.push(exttid);
@@ -241,11 +257,11 @@ export function ExtractStationData(
           departureStationIndex = -2;
         } else {
           let trip = departureInfo.trips[0];
-          departureStationIndex = departuringTripsInStation.findIndex(
-            (tripId) => SameExtTripId(tripId, ToExtTripId(trip.trip))
+          departureStationIndex = departingTripsInStation.findIndex((tripId) =>
+            SameExtTripId(tripId, ToExtTripId(trip.trip))
           );
           let foundTripsInStation =
-            departuringTripsInStation[departureStationIndex];
+            departingTripsInStation[departureStationIndex];
           if (!foundTripsInStation) {
             const exttid = ToExtTripId(trip.trip);
             exttid.interstation_time = departureInfo.schedule_time;
@@ -254,8 +270,8 @@ export function ExtractStationData(
             exttid.pax = interchange.groups.max_passenger_count;
             exttid.cap = 500; //TBI
 
-            departureStationIndex = departuringTripsInStation.length;
-            departuringTripsInStation.push(exttid);
+            departureStationIndex = departingTripsInStation.length;
+            departingTripsInStation.push(exttid);
           } else {
             foundTripsInStation.pax += interchange.groups.max_passenger_count;
           }
@@ -269,16 +285,10 @@ export function ExtractStationData(
         //boarding
         boardingNode.pax += interchange.groups.max_passenger_count;
         boardingNode.cap += interchange.groups.max_passenger_count;
-        console.log(
-          "ADDING BOARDING " + interchange.groups.max_passenger_count
-        );
       } else if (arrivingStationIndex === -2) {
         // previous
         previousNode.pax += interchange.groups.max_passenger_count;
         previousNode.cap += interchange.groups.max_passenger_count;
-        console.log(
-          "ADDING previousNode " + interchange.groups.max_passenger_count
-        );
       }
 
       if (departureStationIndex === -1) {
@@ -294,21 +304,35 @@ export function ExtractStationData(
       /* take care of the links from the data we now gained */
       let src =
         arrivingStationIndex === -1
-          ? "boarding"
+          ? boardingNode.id
           : arrivingStationIndex === -2
-          ? "previous"
+          ? previousNode.id
           : ToTripId(arrivingTripsInStation[arrivingStationIndex]);
       let trgt =
         departureStationIndex === -1
-          ? "exiting"
+          ? exitingNode.id
           : departureStationIndex === -2
-          ? "future"
-          : ToTripId(departuringTripsInStation[departureStationIndex]);
+          ? futureNode.id
+          : ToTripId(departingTripsInStation[departureStationIndex]);
       let val = interchange.groups.max_passenger_count;
       // in case of several groups going the same interchange
-      let foundLink = graph.links.find(
-        (link) => link.fNId === src && link.tNId === trgt
-      );
+      let foundLink = graph.links.find((link) => {
+        // to prevent [object] === [object] comparison, compare each side with different functions
+        let left = false;
+        let right = false;
+        if (typeof link.fNId === "string" && typeof src === "string") {
+          left = link.fNId === src;
+        } else if (typeof link.fNId !== "string" && typeof src !== "string") {
+          left = SameTripId(link.fNId, src);
+        }
+
+        if (typeof link.tNId === "string" && typeof trgt === "string") {
+          right = link.tNId === trgt;
+        } else if (typeof link.tNId !== "string" && typeof trgt !== "string") {
+          right = SameTripId(link.tNId, trgt);
+        }
+        return left && right;
+      });
       if (foundLink) {
         foundLink.value += val;
       } else {
@@ -323,6 +347,7 @@ export function ExtractStationData(
     }
   }
   /* Push elements to graph node arrays */
+
   graph.fromNodes.push(boardingNode);
   graph.fromNodes.push(previousNode);
   for (let arrivingTrip of arrivingTripsInStation) {
@@ -336,19 +361,127 @@ export function ExtractStationData(
     };
     graph.fromNodes.push(node);
   }
-  for (let departuringTrip of departuringTripsInStation) {
-    const tripId = ToTripId(departuringTrip);
+  for (let departingTrip of departingTripsInStation) {
+    const tripId = ToTripId(departingTrip);
     const node: NodeMinimal = {
       id: tripId,
-      pax: departuringTrip.pax,
-      cap: departuringTrip.cap,
+      pax: departingTrip.pax,
+      cap: departingTrip.cap,
       name: tripId.train_nr.toString(),
-      time: departuringTrip.interstation_time,
+      time: departingTrip.interstation_time,
     };
     graph.toNodes.push(node);
   }
   graph.toNodes.push(futureNode);
   graph.toNodes.push(exitingNode);
+
+  // get all trip ids from arriving and make another query
+  const NameTrip = (tsi: TripServiceInfo) => {
+    const names = [
+      ...new Set(
+        tsi.service_infos.map((si) =>
+          si.line ? `${si.train_nr} [${si.name}]` : si.name
+        )
+      ),
+    ];
+    const title = `${names.join(", ")} (${tsi.primary_station.name} - ${
+      tsi.secondary_station.name
+    })`;
+    return title;
+  };
+  const arrivingTripIds: TripId[] = graph.fromNodes.flatMap(({ id }) => {
+    return typeof id === "string" ? [] : id;
+  });
+  const previousData = data;
+  const { data: status } = usePaxMonStatusQuery();
+  {
+    const { data /*, isLoading, error*/ } = useQuery(
+      queryKeys.tripsLoad(universe, arrivingTripIds),
+      async () => loadAndProcessTripInfos(universe, arrivingTripIds),
+      {
+        enabled: !!previousData && !!status && arrivingTripIds.length > 0,
+        placeholderData: () => {
+          return universe != 0
+            ? queryClient.getQueryData(queryKeys.tripsLoad(0, arrivingTripIds))
+            : undefined;
+        },
+      }
+    );
+    if (data) {
+      console.assert(data.length + 2 == graph.fromNodes.length);
+      for (let i = 0; i < data.length; i++) {
+        const tsi = data[i];
+        const edge = tsi.edges.find((edge) => edge.to.id == params.stationId);
+        graph.fromNodes[i + 2].name = NameTrip(tsi.tsi);
+        // it will not find an edge, if the trip is nahverkehr but station is fernverkehr (?)
+        if (edge) {
+          graph.fromNodes[i + 2].cap = edge.capacity;
+          graph.fromNodes[i + 2].pax = edge.max_pax;
+        } else {
+          // situation: we do not have information about the train at params.stationId, because the trip we have found searching
+          // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
+          // this is a backend problem :shrug:
+          const maxCapacity = tsi.edges.reduce(
+            (max, ef) => (ef.capacity ? Math.max(max, ef.capacity) : max),
+            0
+          );
+          const maxPax = tsi.edges.reduce(
+            (max, ef) => Math.max(max, ef.max_pax || 0),
+            0
+          );
+
+          graph.fromNodes[i + 2].cap = maxCapacity;
+          graph.fromNodes[i + 2].pax = maxPax;
+        }
+      }
+    }
+  }
+  // get all trip ids from arriving and make another query
+  const departingTripIds: TripId[] = graph.toNodes.flatMap(({ id }) => {
+    return typeof id === "string" ? [] : id;
+  });
+  {
+    const { data /*, isLoading, error*/ } = useQuery(
+      queryKeys.tripsLoad(universe, departingTripIds),
+      async () => loadAndProcessTripInfos(universe, departingTripIds),
+      {
+        enabled: !!previousData && !!status && departingTripIds.length > 0,
+        placeholderData: () => {
+          return universe != 0
+            ? queryClient.getQueryData(queryKeys.tripsLoad(0, departingTripIds))
+            : undefined;
+        },
+      }
+    );
+    if (data) {
+      console.assert(data.length + 2 == graph.toNodes.length);
+      for (let i = 0; i < data.length; i++) {
+        const tsi = data[i];
+        const edge = tsi.edges.find((edge) => edge.from.id == params.stationId);
+        graph.toNodes[i].name = NameTrip(tsi.tsi);
+        // it will not find an edge, if the trip is nahverkehr but station is fernverkehr (?)
+        if (edge) {
+          graph.toNodes[i].cap = edge.capacity;
+          graph.toNodes[i].pax = edge.max_pax;
+        } else {
+          // situation: we do not have information about the train at params.stationId, because the trip we have found searching
+          // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
+          // this is a backend problem :shrug:
+          const maxCapacity = tsi.edges.reduce(
+            (max, ef) => (ef.capacity ? Math.max(max, ef.capacity) : max),
+            0
+          );
+          const maxPax = tsi.edges.reduce(
+            (max, ef) => Math.max(max, ef.max_pax || 0),
+            0
+          );
+
+          graph.toNodes[i].cap = maxCapacity;
+          graph.toNodes[i].pax = maxPax;
+        }
+      }
+    }
+  }
 
   /* Sort elements as output from MOTIS is not sorted */
   const TimeSort = (a: NodeMinimal, b: NodeMinimal) => {
