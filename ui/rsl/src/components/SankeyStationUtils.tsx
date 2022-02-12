@@ -266,36 +266,26 @@ export default class StationUtils {
       else return 0;
     });
 
-    const nodeIdArray: (string | TripId)[] = fNodesFinished.map((a) => a.id);
-
-    for (let i in fNodesFinished) {
-      console.log("indexes:", i, nodeIdArray[i], fNodesFinished[i].id);
-    }
-
     const indexOfTripId = (
       idArray: (string | TripId)[],
       id: string | TripId
     ) => {
-      for (const i in idArray) {
-        if (this.sameId(idArray[i], id)) return i;
-      }
-      return -1;
+      return idArray.findIndex((idX) => StationUtils.sameId(idX, id));
     };
 
-    tNodesFinished.sort((a, b) => {
-      const aIndex = indexOfTripId(nodeIdArray, a.id);
-      const bIndex = indexOfTripId(nodeIdArray, b.id);
-      console.log("aindex:", aIndex, "bindex:", bIndex);
-      if (aIndex < bIndex) return -1;
-      if (aIndex > bIndex) return 1;
-      else return 0;
-    });
+    const nodeIdArray: (string | TripId)[] = tNodesFinished.map((a) => a.id);
 
-    for (let i in tNodesFinished) {
-      console.log("OTHER indexes:", i, nodeIdArray[i], tNodesFinished[i].id);
-    }
-    for (const node of tNodesFinished) {
-      console.log(node.name, " - ", node.id);
+    //swap indices where they differ in tNodeArray
+    for (let i = 0; i < tNodesFinished.length; i++) {
+      const currentFNode = fNodesFinished[i];
+      const tNodeIndex = indexOfTripId(nodeIdArray, currentFNode.id);
+      if (tNodeIndex != i) {
+        const currentTNode = tNodesFinished[i];
+        tNodesFinished[i] = tNodesFinished[tNodeIndex];
+        tNodesFinished[tNodeIndex] = currentTNode;
+        nodeIdArray[i] = tNodesFinished[i].id;
+        nodeIdArray[tNodeIndex] = currentTNode.id;
+      }
     }
 
     for (const i in fNodesFinished) {
