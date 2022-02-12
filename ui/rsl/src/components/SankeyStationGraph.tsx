@@ -52,9 +52,9 @@ const SankeyStationGraph = ({
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
 
-  const linkOppacity = 0.5;
+  const linkOppacity = 0.4;
   const linkOppacityFocus = 0.7;
-  const linkOppacityClear = 0.01;
+  const linkOppacityClear = 0.05;
 
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
@@ -132,7 +132,7 @@ const SankeyStationGraph = ({
       .attr("opacity", rowBackgroundOppacity);
 
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
-    view
+    const backdrop = view
       .selectAll("rect.nodeBackdrop")
       .data(graphTemp.nodes.filter((n) => n.pax !== 0)) // filter out empty nodes
       .join("rect")
@@ -174,7 +174,7 @@ const SankeyStationGraph = ({
       .data(graphTemp.nodes.filter((n) => n.full))
       .join("rect")
       .classed("node", true)
-      .attr("id", (n) => String(n.id) + "a")
+      .attr("id", (n) => String(n.id))
       .attr("x", (d) => d.x0 || 0)
       .attr("y", (d) => d.y0 || 0)
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
@@ -182,16 +182,19 @@ const SankeyStationGraph = ({
       .attr(
         "fill",
         (d) =>
-          d3.interpolateRgb.gamma(0.1)("orange", "red")(d.cap / d.pax) ||
+          d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
           rowBackgroundColour
       )
       .attr("opacity", nodeOppacity);
 
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax || 0));
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
-    // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax || 0));
+    // Add titles for backdrop hover effects.
+    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
+
+    // Add titles for backdrop hover effects.
+    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
     // Define the links.
     const links = view
@@ -206,24 +209,6 @@ const SankeyStationGraph = ({
       .attr("stroke-opacity", linkOppacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
-
-    /*
-          const gradientLinks = view
-            .selectAll("path.gradient-link")
-            .data(graphTemp.links)
-            .join("path")
-            .classed("gradient-link", true)
-            .attr("id", (d) => "path_" + d.id)
-            .attr("d", (d) =>
-              Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
-            )
-            .attr("stroke", (d) => d.colour || rowBackgroundColour)
-            .attr("stroke-opacity", linkOppacityFocus)
-            .attr("stroke-width", (d) => d.width || 1)
-            .attr("fill", "none")
-            .each(setDash);
-
-       */
 
     // Add text labels.
     view
@@ -261,90 +246,79 @@ const SankeyStationGraph = ({
       );
     });
 
-    // Define the default dash behavior for colored gradients.
-    function setDash(link: Link) {
-      const path = view.select(`#path_${link.id}`);
-      const length = (path.node() as SVGGeometryElement).getTotalLength();
-      path
-        .attr("stroke-dasharray", `${length} ${length}`)
-        .attr("stroke-dashoffset", length);
-    }
-
-    /* Das brauche ich eigentlich nicht, ist unnötig, oder?
-      path
-        .append("title")
-        .text((d) => `${d.source.name} -> ${d.target.name}\n${d.value}`);
-        */
-
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-    /*
+
+    const tripIdCompare = (a: TripId, b: TripId) => {
+      return (
+        a.station_id === b.station_id &&
+        a.train_nr === b.train_nr &&
+        a.time === b.time &&
+        a.target_station_id === b.target_station_id &&
+        a.line_id === b.line_id &&
+        a.target_time === b.target_time
+      );
+    };
+
+    const sameId = (a: TripId | string, b: TripId | string) => {
+      if (typeof a !== "string" && typeof b !== "string")
+        return tripIdCompare(a, b);
+      if (typeof a !== typeof b) return false;
+      else return a === b;
+    };
+
     function branchAnimate(_: MouseEvent, node: Node) {
-      view
-        .selectAll("path.link")
-        .transition()
-        .duration(duration)
-        .ease(d3.easeLinear)
-        .attr("stroke-opacity", linkOppacityClear);
+      const focusLinks = view.selectAll("path.link").filter((l) => {
+        return (
+          sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
+        );
+      });
+      focusLinks.attr("stroke-opacity", linkOppacityFocus);
 
-      let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
-
-      if (node.sourceLinks && node.sourceLinks.length > 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.sourceLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .transition()
-          .duration(duration)
-          .ease(d3.easeLinear)
-          .attr("stroke-dashoffset", 0);
-      } else if (node.sourceLinks && node.sourceLinks.length === 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.targetLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .transition()
-          .duration(duration)
-          .ease((t) => -t)
-          .attr("stroke-dashoffset", 0);
-      }
+      const clearLinks = view.selectAll("path.link").filter((l) => {
+        return (
+          !sameId((l as Link).tNId, node.id) &&
+          !sameId((l as Link).fNId, node.id)
+        );
+      });
+      clearLinks.attr("stroke-opacity", linkOppacityClear);
     }
 
     function branchClear() {
-      gradientLinks.transition();
-      gradientLinks.attr("stroke-opactiy", 0).each(setDash);
-      view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOppacity);
     }
 
-    nodes.on("mouseover", branchAnimate)
+    backdrop.on("mouseover", branchAnimate);
+    backdrop.on("mouseout", branchClear);
+    nodes.on("mouseover", branchAnimate);
     nodes.on("mouseout", branchClear);
+    overflow.on("mouseover", branchAnimate);
+    overflow.on("mouseout", branchClear);
 
-       */
-    /*
-          function linkAnimate(_: MouseEvent, link: Link) {
-            const links = view.selectAll("path.link").filter((l) => {
-              return (l as Link).id === link.id;
-            });
+    function linkAnimate(_: MouseEvent, link: Link) {
+      const focusLinks = view.selectAll("path.link").filter((l) => {
+        return (l as Link).id === link.id;
+      });
+      focusLinks.attr("stroke-opacity", linkOppacityFocus);
 
-            links.attr("stroke-opacity", linkOppacityFocus);
-          }
-          function linkClear() {
-            links.attr("stroke-opacity", linkOppacity);
-          }
+      const clearLinks = view.selectAll("path.link").filter((l) => {
+        return (l as Link).id !== link.id;
+      });
+      clearLinks.attr("stroke-opacity", linkOppacityClear);
+    }
 
-          links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-       */
+    function linkClear() {
+      links.attr("stroke-opacity", linkOppacity);
+    }
+
+    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
   }, [data, height, width, nodeWidth, nodePadding, duration]);
 
   return (
     <svg
       ref={svgRef}
       width={width}
-      height={height + 15000}
+      height={height + 60000}
       className="m-auto"
     />
   );

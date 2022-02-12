@@ -27,6 +27,7 @@ export default class StationUtils {
     if (typeof a !== typeof b) return false;
     else return a === b;
   };
+
   static getNodeValue = <K extends keyof NodeMinimal>(
     nodes: NodeMinimal[],
     id: string,
@@ -64,8 +65,8 @@ export default class StationUtils {
    * Konvertiert einen Link in einen Pfad-String
    */
 
-  static formatTextNode = (name: string, nodeValue: number): string => {
-    return `${name}\n${nodeValue} Personen Steigen um.`;
+  static formatTextNode = (name: string, node: Node): string => {
+    return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
   };
   static formatTextLink = (
     sourceName: string,
@@ -135,7 +136,7 @@ export default class StationUtils {
     const exPaxColour = "#f27e93";
     const fuPaxColour = "#f20544";
 
-    const minNodeHeight = 10;
+    const minNodeHeight = 4;
 
     // #####################################################################################
     // Berechnung der Nodes
@@ -308,22 +309,18 @@ export default class StationUtils {
 
       if (!(currentFNode && currentTNode)) continue;
 
-      currentTNode.backdropHeight = this.calcNodeHeight(
-        currentTNode.cap,
-        minNodeHeight
+      currentTNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
+        currentTNode.cap
       );
-      currentFNode.backdropHeight = this.calcNodeHeight(
-        currentFNode.cap,
-        minNodeHeight
+      currentFNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
+        currentFNode.cap
       );
 
-      currentTNode.nodeHeight = this.calcNodeHeight(
-        currentTNode.pax,
-        minNodeHeight
+      currentTNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
+        currentTNode.pax
       );
-      currentFNode.nodeHeight = this.calcNodeHeight(
-        currentFNode.pax,
-        minNodeHeight
+      currentFNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
+        currentFNode.pax
       );
 
       // vergrößere Nodes falls links wegen minimaler link größe vergrößert wurden
@@ -443,13 +440,20 @@ export default class StationUtils {
       const currentNodeIndex = fNodesFinished.findIndex((n) =>
         this.sameId(n.id, fNodeId)
       );
+
       const currentLinks = [
         ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
       ]
         .sort((a, b) => {
-          if (nodeIdArray.indexOf(a.tNId) < nodeIdArray.indexOf(b.tNId))
+          if (
+            indexOfTripId(nodeIdArray, a.tNId) <
+            indexOfTripId(nodeIdArray, b.tNId)
+          )
             return -1;
-          if (nodeIdArray.indexOf(a.tNId) > nodeIdArray.indexOf(b.tNId))
+          if (
+            indexOfTripId(nodeIdArray, a.tNId) <
+            indexOfTripId(nodeIdArray, b.tNId)
+          )
             return 1;
           else return 0;
         })
@@ -486,13 +490,20 @@ export default class StationUtils {
         ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
       ]
         .sort((a, b) => {
-          if (nodeIdArray.indexOf(a.fNId) < nodeIdArray.indexOf(b.fNId))
+          if (
+            indexOfTripId(nodeIdArray, a.fNId) <
+            indexOfTripId(nodeIdArray, b.fNId)
+          )
             return -1;
-          if (nodeIdArray.indexOf(a.fNId) > nodeIdArray.indexOf(b.fNId))
+          if (
+            indexOfTripId(nodeIdArray, a.fNId) <
+            indexOfTripId(nodeIdArray, b.fNId)
+          )
             return 1;
           else return 0;
         })
         .reverse();
+
       // initialisieren des targetLink arrays, da vorher undefined
       tNodesFinished[currentNodeIndex].targetLinks = [];
 
@@ -513,7 +524,6 @@ export default class StationUtils {
       }
     }
 
-    //console.log(calculatedLinks)
     return {
       toNodes: tNodesFinished,
       fromNodes: fNodesFinished,
