@@ -7,11 +7,13 @@ import { useStationGuesserQuery } from "../api/guesser";
 type StationPickerProps = {
   onStationPicked: (station: Station | undefined) => void;
   clearOnPick: boolean;
+  placeHolder?: string;
 };
 
 function StationPicker({
   onStationPicked,
   clearOnPick,
+  placeHolder = "",
 }: StationPickerProps): JSX.Element {
   const [input, setInput] = useState("");
   const { data } = useStationGuesserQuery({ input, guess_count: 10 });
@@ -52,6 +54,7 @@ function StationPicker({
           {...getInputProps()}
           type="text"
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+          placeholder={placeHolder}
         />
         <button
           type="button"

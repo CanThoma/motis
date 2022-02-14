@@ -1,4 +1,4 @@
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useState } from "react";
 import * as d3 from "d3";
 // import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
@@ -28,6 +28,7 @@ type Props = {
   startTime: number;
   endTime: number;
   maxCount: number;
+  onTripSelected: (id: TripId | string, name: string) => void;
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -40,7 +41,8 @@ const SankeyStationGraph = ({
   startTime,
   endTime,
   maxCount,
-  width = 600,
+  onTripSelected,
+  width = 1200,
   height = 600,
   nodeWidth = 25,
   nodePadding = 15,
@@ -90,26 +92,33 @@ const SankeyStationGraph = ({
     svg.selectAll("*").remove();
 
     const defs = svg.append("defs");
-    /*
-            // Add definitions for all of the linear gradients.
-            const gradients = defs
-              .selectAll("linearGradient")
-              .data(graphTemp.links)
-              .join("linearGradient")
-              .attr("id", (d) => "gradient_" + d.id);
-            gradients.append("stop").attr("offset", 0.0);
-            gradients.append("stop").attr("offset", 1.0);
-      */
-    const hatches = defs
-      .append("path")
-      .attr("id", "diagonalHatch")
-      .attr("width", 4)
-      .attr("height", 4)
-      .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
-      .attr("stroke", "red")
-      .attr("stroke-width", 1);
 
-    //
+    const hatchPattern = defs
+      .append("pattern")
+      .attr("id", "diagonalHash")
+      .attr("patternUnits", "userSpaceOnUse")
+      .attr("width", "10")
+      .attr("height", "10")
+      .attr("patternTransform", "rotate(45)")
+      .append("g")
+      .style("stroke", "#f01414")
+      .style("stroke-width", 5);
+
+    hatchPattern
+      .append("line")
+      .attr("x1", 5)
+      .attr("y", 0)
+      .attr("x2", 5)
+      .attr("y2", 10);
+
+    // Animation der Strichfarbe
+    hatchPattern
+      .append("animate")
+      .attr("attributeName", "stroke")
+      .attr("dur", "5s")
+      .attr("repeatCount", "indefinite")
+      .attr("keyTimes", "0;0.5;1")
+      .attr("values", "#ECE81A;#f01414;#ECE81A;");
 
     // Add a g.view for holding the sankey diagram.
     const view = svg.append("g").classed("view", true);
@@ -129,7 +138,9 @@ const SankeyStationGraph = ({
         Math.max(10, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", rowBackgroundOppacity);
+      .attr("opacity", rowBackgroundOppacity)
+      .attr("cursor", "pointer")
+      .on("click", (_, i) => onTripSelected(i.id, i.name));
 
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrop = view
@@ -166,14 +177,15 @@ const SankeyStationGraph = ({
         )
       )
       .attr("fill", (d) => d.colour || rowBackgroundColour)
-      .attr("opacity", nodeOppacity);
+      .attr("cursor", "pointer")
+      .attr("opacity", nodeOppacity)
+      .on("click", (_, i) => onTripSelected(i.id, i.name));
 
-    //Define the Overflow
-    const overflow = view
-      .selectAll("rect.nodeOverflow")
+    view
+      .selectAll("rect.nodeOverflowBack")
       .data(graphTemp.nodes.filter((n) => n.full))
       .join("rect")
-      .classed("node", true)
+      .classed("nodeOverflowBack", true)
       .attr("id", (n) => String(n.id))
       .attr("x", (d) => d.x0 || 0)
       .attr("y", (d) => d.y0 || 0)
@@ -187,14 +199,44 @@ const SankeyStationGraph = ({
       )
       .attr("opacity", nodeOppacity);
 
+    //Define the Overflow
+    const overflow = view
+      .selectAll("rect.nodeOverflow")
+      .data(graphTemp.nodes.filter((n) => n.full))
+      .join("rect")
+      .classed("nodeOverflow", true)
+      .attr("id", (n) => String(n.id))
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0 || 0)
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) => Math.max(0, (d.y0_backdrop || 0) - (d.y0 || 0)))
+      .attr(
+        "fill",
+        (d) =>
+          d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
+          rowBackgroundColour
+      )
+      .attr("opacity", nodeOppacity)
+      .attr("cursor", "pointer")
+      .on("click", (_, i) => onTripSelected(i.id, i.name))
+      .style("fill", "url(#diagonalHash)");
+    // Zeug für die Animation
+    /*
+      .append("animate")
+      .attr("attributeName", "opacity")
+      .attr("from", 0.2)
+      .attr("to", nodeOppacity)
+      .attr("dur", "2s")
+      .attr("repeatCount", "indefinite");
+*/
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
 
     // Add titles for backdrop hover effects.
-    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
 
     // Add titles for backdrop hover effects.
-    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
 
     // Define the links.
     const links = view
@@ -230,10 +272,14 @@ const SankeyStationGraph = ({
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
       .text((d) => d.name)
+      .on("click", (_, i) => onTripSelected(i.id, i.name))
+      .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
-      .attr("text-anchor", "end");
+      .attr("text-anchor", "end")
+      .on("click", (_, i) => onTripSelected(i.id, i.name))
+      .attr("cursor", "pointer");
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
@@ -312,7 +358,7 @@ const SankeyStationGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [data, height, width, nodeWidth, nodePadding, duration]);
+  }, [data, height, width, nodeWidth, nodePadding, duration, onTripSelected]);
 
   return (
     <svg
