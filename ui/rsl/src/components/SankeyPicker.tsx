@@ -2,12 +2,24 @@ import React from "react";
 import { useCombobox } from "downshift";
 import { ChevronDownIcon, XIcon } from "@heroicons/react/solid";
 
-import {LinkMinimal, NodeMinimal, SankeyInterface, SankeyInterfaceMinimal} from "./SankeyTypes";
-import {TripId} from "../api/protocol/motis";
-import {useAtom} from "jotai";
-import {universeAtom} from "../data/simulation";
-import {usePaxMonFindTripsQuery, usePaxMonGroupsInTripQuery} from "../api/paxmon";
-
+import {
+  LinkMinimal,
+  NodeMinimal,
+  SankeyInterface,
+  SankeyInterfaceMinimal,
+} from "./SankeyTypes";
+import { TripId } from "../api/protocol/motis";
+import { useAtom } from "jotai";
+import { universeAtom } from "../data/simulation";
+import {
+  usePaxMonFindTripsQuery,
+  usePaxMonGroupsInTripQuery,
+} from "../api/paxmon";
+interface InfoRenameThis {
+  enterStationID: string;
+  exitStationID: string;
+  passengers: number;
+}
 const graph2: SankeyInterfaceMinimal = {
   nodes: [
     { name: "Wiesbaden Hbf Bussteige und so halt", id: "node9" },
@@ -115,43 +127,9 @@ const graph1: SankeyInterfaceMinimal = {
     { source: "node7", target: "node8", value: 70, id: "link36" },
   ],
 };
-const graphDefault: SankeyInterfaceMinimal = {
-  nodes: [
-    { id: "id1", name: "Zürich HB" },
-    { id: "id2", name: "Olten" },
-    { id: "id3", name: "Oensingen" },
-    { id: "id4", name: "Solothurn" },
-    { id: "id5", name: "Grenchen Süd" },
-    { id: "id6", name: "Biel/Bienne" },
-    { id: "id7", name: "Neuchâtel" },
-    { id: "id8", name: "Yverdon-les-Bains" },
-    { id: "id9", name: "Lausanne" },
-  ],
-  links: [
-    { id: "link0", source: "id1", target: "id2", value: 80 },
-    { id: "link1", source: "id1", target: "id3", value: 80 },
-    { id: "link2", source: "id1", target: "id6", value: 80 },
-    { id: "link3", source: "id1", target: "id7", value: 80 },
-    { id: "link4", source: "id1", target: "id8", value: 80 },
-    { id: "link5", source: "id1", target: "id9", value: 80 },
-    { id: "link6", source: "id2", target: "id7", value: 80 },
-    { id: "link7", source: "id2", target: "id8", value: 80 },
-    { id: "link8", source: "id2", target: "id9", value: 80 },
-    { id: "link9", source: "id3", target: "id4", value: 80 },
-    { id: "link10", source: "id4", target: "id8", value: 80 },
-    { id: "link11", source: "id4", target: "id9", value: 80 },
-    { id: "link12", source: "id5", target: "id9", value: 80 },
-    { id: "link13", source: "id6", target: "id8", value: 80 },
-    { id: "link14", source: "id6", target: "id9", value: 80 },
-    { id: "link15", source: "id7", target: "id8", value: 80 },
-    { id: "link16", source: "id7", target: "id9", value: 80 },
-    { id: "link17", source: "id8", target: "id9", value: 80 },
-  ],
-};
-
 
 type TripPickerProps = {
-  tripId:TripId;
+  tripId: TripId;
   onTripPicked: (trip: TripId | undefined) => void;
   className?: string;
   onTripPickedHeadline: (
@@ -165,6 +143,7 @@ function SankeyPicker({
   onTripPickedHeadline,
   className,
 }: TripPickerProps): JSX.Element {
+  const graph = ExtractGroupInfoForThisTrain(tripId);
   const tripList = [
     {
       text: "Rückfahrt HLB RB75 (61962)",
@@ -174,7 +153,7 @@ function SankeyPicker({
     },
     {
       text: "Hinfahrt HLB RB75 (61962)",
-      link: graphDefault,
+      link: graph,
       headline:
         'Die Strecke von Aschaffenburg Hbf nach Wiesbaden Hbf. Meine "Lieblingsstrecke".',
     },

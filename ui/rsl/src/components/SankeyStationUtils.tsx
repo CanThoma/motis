@@ -1,50 +1,47 @@
-import { format, interpolateRainbow, scaleLinear } from "d3";
+import { format, interpolateRainbow, reduce, scaleLinear } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
-  stationGraphDefault,
   NodeMinimal,
   LinkMinimal,
-  SankeyInterfaceMinimal,
+  stationGraphDefault,
 } from "./SankeyStationTypes";
+import { TripId } from "../api/protocol/motis";
 
 export default class StationUtils {
-  static createNode = (id: string, name: string): Node => {
-    return {
-      id,
-      name,
-      x0: 0,
-      x1: 0,
-      y0: 0,
-      y1: 0,
-    };
+  static tripIdCompare = (a: TripId, b: TripId) => {
+    return (
+      a.station_id === b.station_id &&
+      a.train_nr === b.train_nr &&
+      a.time === b.time &&
+      a.target_station_id === b.target_station_id &&
+      a.line_id === b.line_id &&
+      a.target_time === b.target_time
+    );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static groupBy = <T, K extends keyof any>(
-    list: T[],
-    getKey: (item: T) => K
-  ): Record<K, T[]> =>
-    list.reduce((previous, currentItem) => {
-      const group = getKey(currentItem);
-      if (!previous[group]) previous[group] = [];
-      previous[group].push(currentItem);
-      return previous;
-    }, {} as Record<K, T[]>);
+  static sameId = (a: TripId | string, b: TripId | string) => {
+    if (typeof a !== "string" && typeof b !== "string")
+      return this.tripIdCompare(a, b);
+    if (typeof a !== typeof b) return false;
+    else return a === b;
+  };
+
+  static getNodeValue = <K extends keyof NodeMinimal>(
+    nodes: NodeMinimal[],
+    id: string,
+    selector: K
+  ) => {
+    return nodes.filter((node: NodeMinimal) => node.id === id)[0][selector];
+  };
+
+  static getNode = (nodes: NodeMinimal[], id: string | TripId) => {
+    return nodes.filter((node) => this.sameId(node.id, id))[0];
+  };
 
   static colour = (value: number): string => {
     return interpolateRainbow(value);
-  };
-
-  static calcLinkSum = (
-    nodeID: string | number,
-    links: LinkMinimal[],
-    selector: "source" | "target"
-  ): number => {
-    return links
-      .filter((link: LinkMinimal) => link[selector] === nodeID)
-      .reduce((sum, current) => sum + current.value, 0);
   };
 
   /**
@@ -53,17 +50,32 @@ export default class StationUtils {
    * dem Knotenvalue (= Passagiere am jeweiligen Bahnhof)
    * und der effektiv nutzbaren Höhe (= Gesamthöhe - NodePadding * (NodeCount - 1))
    */
-  static calcNodeRelativeHeight = (
-    nodeValue: number | undefined,
-    totalValue: number,
-    effectiveHeight: number
-  ): number => {
-    return ((nodeValue || 0) / totalValue) * effectiveHeight;
+  static calcNodeHeight = (nodeValue: number, minHeight: number): number => {
+    if (nodeValue <= 0) return 0;
+    const calcHeight = this.calcNodeHeightWithoutMinHeight(nodeValue);
+    if (calcHeight <= minHeight) return minHeight;
+    return calcHeight;
+  };
+
+  static calcNodeHeightWithoutMinHeight = (value: number): number => {
+    return value / 4;
   };
 
   /**
    * Konvertiert einen Link in einen Pfad-String
    */
+
+  static formatTextNode = (name: string, node: Node): string => {
+    return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
+  };
+  static formatTextLink = (
+    sourceName: string,
+    targetName: string,
+    value: number
+  ): string => {
+    return `${value} Personen \n ${sourceName} \u2192 ${targetName}`;
+  };
+
   static createSankeyLink = (
     nodeWidth: number,
     width: number,
@@ -84,270 +96,438 @@ export default class StationUtils {
     },${y1}`;
   };
 
-  static formatTextNode = (name: string, nodeValue: number): string => {
-    return `${name}\n${nodeValue} Leutchen am Gleis.`;
-  };
-  static formatTextLink = (
-    sourceName: string,
-    targetName: string,
-    value: number
-  ): string => {
-    return `${sourceName} \u2192 ${targetName}\n${value} Peoplezz`;
+  static createNode = (
+    id: string,
+    name: string,
+    pax: number,
+    cap: number,
+    time: number
+  ): Node => {
+    return {
+      id,
+      name,
+      pax,
+      cap,
+      time,
+      x0: 0,
+      x1: 0,
+      y0: 0,
+      y1: 0,
+    };
   };
 
   /**
    * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
    */
   static createGraph = (
-    nodes: NodeMinimal[],
+    fNodes: NodeMinimal[],
+    tNodes: NodeMinimal[],
     links: LinkMinimal[],
     height = 600,
     width = 600,
     nodeWidth = 20,
     nodePadding = 20
   ): SankeyInterface => {
+    const fNodesFinished: Node[] = [];
+    const tNodesFinished: Node[] = [];
+
+    const prPaxColour = "#f20544";
+    const boPaxColour = "#f27e93";
+    const exPaxColour = "#f27e93";
+    const fuPaxColour = "#f20544";
+
+    const minNodeHeight = 4;
+
     // #####################################################################################
     // Berechnung der Nodes
     // #####################################################################################
 
-    const timeStart = 1639486800;
-    const leftNodes: Node[] = [];
-    const rightNodes: Node[] = [];
+    // fügt previous node zu falls umsteiger existieren und gibt ihr die farbe
 
-    var nodeMaxCapacity;
-    var colour;
+    const prNode: Node = {
+      ...this.getNode(fNodes, "previous"),
+      colour: prPaxColour,
+    };
 
-    // berechnen der menge an Zusteigern
-    const boardingSum = this.calcLinkSum("boarding", links, "source");
-    const boarderColour = "#ffaec9";
+    if (prNode.pax > 0) {
+      fNodesFinished.push({ ...prNode, name: "previous" });
+      tNodesFinished.push({ ...prNode, pax: 0 });
+    }
 
-    colour = boarderColour;
-    nodeMaxCapacity = boardingSum;
+    // fügt boarding node zu falls umsteiger existieren und gibt ihr die farbe
 
-    leftNodes.push({
-      id: "boarding",
-      name: "Einsteiger",
-      colour,
-      nodeMaxCapacity,
-      totalNodeValue: boardingSum,
-    });
-    rightNodes.push({
-      id: "boarding",
-      name: " ",
-      colour,
-      nodeMaxCapacity,
-      totalNodeValue: 0,
-    });
+    const boNode: Node = {
+      ...this.getNode(fNodes, "boarding"),
+      colour: boPaxColour,
+    };
 
-    // Zuordnen der Links zu den passenden Stationen
-    // Gleichzeitiges sammeln der Values – Hier die Passagieranzahl.
+    if (boNode.pax > 0) {
+      fNodesFinished.push({ ...boNode, name: "boarding" });
+      tNodesFinished.push({ ...boNode, pax: 0 });
+    }
 
-    for (let i = 0; i < nodes.length; i++) {
-      const leftLinkSum = this.calcLinkSum(nodes[i].id, links, "source");
-      const rightLinkSum = this.calcLinkSum(nodes[i].id, links, "target");
-      nodeMaxCapacity = nodes[i].capacity;
-      //const biggerNodeTotalValue = Math.max(leftLinkSum, rightLinkSum);
+    // fügt reguläre Nodes hinzu un bereitet daten vor
+    // beginnt nach previous und board node
 
-      const colour = this.colour(i / nodes.length);
+    for (const cNode of fNodes) {
+      if (typeof cNode.id === "string") continue;
 
-      let nodeTime = nodes[i].time;
-      const date = new Date(nodeTime * 1000);
-      const hour = date.getHours();
-      const minute = "0" + date.getMinutes();
+      const nodeArrivalTime = cNode.time;
+      const aDate = new Date(nodeArrivalTime * 1000);
+      const aHour = aDate.getHours();
+      const aMinute = "0" + aDate.getMinutes();
 
-      leftNodes.push({
-        id: nodes[i].id,
-        name: nodes[i].name + " - Abfahrt: " + hour + ":" + minute.substr(-2),
-        colour,
-        nodeMaxCapacity,
-        totalNodeValue: leftLinkSum,
+      fNodesFinished.push({
+        ...cNode,
+        name:
+          cNode.name +
+          " - Ankunft: " +
+          (cNode.time != 0 ? aHour + ":" + aMinute.substr(-2) : "--:--"),
+        full: cNode.cap < cNode.pax,
       });
-      rightNodes.push({
-        id: nodes[i].id,
-        name: "Kapazität: " + nodes[i].capacity + " Personen",
-        colour,
-        nodeMaxCapacity,
-        totalNodeValue: rightLinkSum,
+      tNodesFinished.push({
+        ...cNode,
+        pax: 0,
+        full: false,
       });
     }
 
-    // berechnen der menge an Aussteigern
-    const exitingSum = this.calcLinkSum("exiting", links, "target");
-    const exitingColour = "#ffaec9";
+    for (const cNode of tNodes) {
+      if (typeof cNode.id === "string") continue;
 
-    colour = exitingColour;
-    nodeMaxCapacity = exitingSum;
+      const nodeDepartureTime = cNode.time;
+      const dDate = new Date(nodeDepartureTime * 1000);
+      const dHour = dDate.getHours();
+      const dMinute = "0" + dDate.getMinutes();
 
-    leftNodes.push({
-      id: "exiting",
-      name: " ",
-      colour,
-      nodeMaxCapacity,
-      totalNodeValue: 0,
+      const tempArray = fNodesFinished.filter((n) =>
+        this.sameId(cNode.id, n.id)
+      );
+      if (tempArray !== undefined && tempArray.length > 0) {
+        const i = fNodesFinished.indexOf(
+          fNodesFinished.find((n) => this.sameId(cNode.id, n.id))
+        );
+        // fNodesFinished[i] = ;
+        tNodesFinished[i] = {
+          ...cNode,
+          full: cNode.cap < cNode.pax,
+          name:
+            cNode.name +
+            " - Abfahrt: " +
+            (nodeDepartureTime != 0
+              ? dHour + ":" + dMinute.substr(-2)
+              : "--:--"),
+        };
+      } else {
+        fNodesFinished.push({
+          ...cNode,
+          pax: 0,
+          full: false,
+        });
+        tNodesFinished.push({
+          ...cNode,
+          name:
+            cNode.name +
+            " - Abfahrt: " +
+            (cNode.time != 0 ? dHour + ":" + dMinute.substr(-2) : "--:--"),
+          full: cNode.cap < cNode.pax,
+        });
+      }
+    }
+
+    // fügt exiting node zu falls umsteiger existieren und gibt ihr die farbe
+
+    const exNode: Node = {
+      ...this.getNode(tNodes, "exiting"),
+      colour: exPaxColour,
+    };
+
+    if (exNode.pax > 0) {
+      fNodesFinished.push({ ...exNode, pax: 0 });
+      tNodesFinished.push({ ...exNode, name: "exit" });
+    }
+
+    // fügt future node zu falls umsteiger existieren und gibt ihr die farbe
+
+    const fuNode: Node = {
+      ...this.getNode(tNodes, "future"),
+      colour: fuPaxColour,
+    };
+
+    if (fuNode.pax > 0) {
+      fNodesFinished.push({ ...fuNode, pax: 0 });
+      tNodesFinished.push({ ...fuNode, name: "future" });
+    }
+
+    // sort nodes by arival time first, then by departure time
+
+    fNodesFinished.sort((a, b) => {
+      if (a.time < b.time) return -1;
+      if (a.time > b.time) return 1;
+      else return 0;
     });
-    rightNodes.push({
-      id: "exiting",
-      name: "Aussteiger",
-      colour,
-      nodeMaxCapacity,
-      totalNodeValue: exitingSum,
-    });
 
-    // Wie viele Passagiere steigen insgesammt um?
-    const totalValue = leftNodes.reduce((sum, current) => sum + (600 || 0), 0);
+    const indexOfTripId = (
+      idArray: (string | TripId)[],
+      id: string | TripId
+    ) => {
+      return idArray.findIndex((idX) => StationUtils.sameId(idX, id));
+    };
 
-    // Eigentliche Nutzfläche für die Nodes.
-    const effectiveHeight = height - (leftNodes.length - 1) * nodePadding;
+    const nodeIdArray: (string | TripId)[] = tNodesFinished.map((a) => a.id);
 
-    // Berechnen des prozentualen Anteils der einzelnen Stationen
-    // und Zuweisung der entsprechenden Koordinaten.
-    for (let i = 0; i < rightNodes.length; i++) {
-      console.log(leftNodes[i].nodeMaxCapacity);
-      rightNodes[i].backdropHeight = this.calcNodeRelativeHeight(
-        leftNodes[i].nodeMaxCapacity,
-        totalValue,
-        effectiveHeight
+    //swap indices where they differ in tNodeArray
+    for (let i = 0; i < tNodesFinished.length; i++) {
+      const currentFNode = fNodesFinished[i];
+      const tNodeIndex = indexOfTripId(nodeIdArray, currentFNode.id);
+      if (tNodeIndex != i) {
+        const currentTNode = tNodesFinished[i];
+        tNodesFinished[i] = tNodesFinished[tNodeIndex];
+        tNodesFinished[tNodeIndex] = currentTNode;
+        nodeIdArray[i] = tNodesFinished[i].id;
+        nodeIdArray[tNodeIndex] = currentTNode.id;
+      }
+    }
+
+    for (const i in fNodesFinished) {
+      if (typeof fNodesFinished[i].id === "string") continue;
+      fNodesFinished[i] = {
+        ...fNodesFinished[i],
+        colour: this.colour((Number(i) + 1) / fNodesFinished.length),
+      };
+      tNodesFinished[i] = {
+        ...tNodesFinished[i],
+        colour: this.colour((Number(i) + 1) / tNodesFinished.length),
+      };
+    }
+
+    // Berechnen der Höhe der Nodes und Zuweisung der entsprechenden Koordinaten.
+
+    for (let i = 0; i < tNodesFinished.length; i++) {
+      const currentTNode = tNodesFinished[i];
+      const currentFNode = fNodesFinished[i];
+
+      if (!(currentFNode && currentTNode)) continue;
+
+      currentTNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
+        currentTNode.cap
       );
-      leftNodes[i].backdropHeight = rightNodes[i].backdropHeight;
+      currentFNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
+        currentFNode.cap
+      );
 
-      rightNodes[i].nodeHeight = this.calcNodeRelativeHeight(
-        rightNodes[i].totalNodeValue,
-        totalValue,
-        effectiveHeight
+      currentTNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
+        currentTNode.pax
       );
-      leftNodes[i].nodeHeight = this.calcNodeRelativeHeight(
-        leftNodes[i].totalNodeValue,
-        totalValue,
-        effectiveHeight
+      currentFNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
+        currentFNode.pax
       );
+
+      // vergrößere Nodes falls links wegen minimaler link größe vergrößert wurden
+
+      const currentFLinks = links.filter((a) =>
+        this.sameId(a.fNId, currentFNode.id)
+      );
+      for (const cLink of currentFLinks) {
+        if (this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight) {
+          const heightDiff =
+            this.calcNodeHeight(cLink.value, minNodeHeight) -
+            this.calcNodeHeightWithoutMinHeight(cLink.value);
+          currentFNode.backdropHeight += heightDiff;
+          currentFNode.nodeHeight += heightDiff;
+          currentTNode.backdropHeight += heightDiff;
+        }
+      }
+
+      const currentTLinks = links.filter((a) =>
+        this.sameId(a.tNId, currentTNode.id)
+      );
+      for (const cLink of currentTLinks) {
+        if (this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight) {
+          const heightDiff =
+            this.calcNodeHeight(cLink.value, minNodeHeight) -
+            this.calcNodeHeightWithoutMinHeight(cLink.value);
+          currentTNode.backdropHeight += heightDiff;
+          currentTNode.nodeHeight += heightDiff;
+          currentFNode.backdropHeight += heightDiff;
+        }
+      }
+
+      // TODO
+      let fDif = 0;
+      if (currentFNode.backdropHeight < currentTNode.backdropHeight) {
+        fDif = currentTNode.backdropHeight - currentFNode.backdropHeight;
+      }
+
+      let tDif = 0;
+      if (currentFNode.cap > currentTNode.cap) {
+        tDif = currentFNode.backdropHeight - currentTNode.backdropHeight;
+      }
+
+      // calc height difference between the extra nodes generated in case of a train having reached > 100% cap
+      let fullPadding = 0;
+      let fNodeFullPadding = 0;
+      let tNodeFullPadding = 0;
+      if (currentFNode.full || currentTNode.full) {
+        fNodeFullPadding =
+          currentFNode.nodeHeight - currentFNode.backdropHeight;
+        tNodeFullPadding =
+          currentTNode.nodeHeight - currentTNode.backdropHeight;
+        fullPadding =
+          Math.max(
+            fNodeFullPadding + currentFNode.backdropHeight / 2,
+            tNodeFullPadding + currentTNode.backdropHeight / 2
+          ) -
+          Math.max(
+            currentFNode.backdropHeight / 2,
+            currentTNode.backdropHeight / 2
+          );
+      }
 
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
-      const y1_start = rightNodes[Math.max(0, i - 1)].y1_backdrop || 0;
+      const y1_start =
+        Math.max(
+          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0,
+          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0
+        ) + fullPadding;
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
-      rightNodes[i].y0_backdrop = y1_start + (i === 0 ? 0 : nodePadding);
+      currentTNode.y0_backdrop =
+        y1_start + (i === 0 ? 0 : nodePadding) + tDif / 2;
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
-      rightNodes[i].y1_backdrop =
-        (rightNodes[i].y0_backdrop || 0) + (rightNodes[i].backdropHeight || 0);
+      currentTNode.y1_backdrop =
+        (currentTNode.y0_backdrop || 0) + (currentTNode.backdropHeight || 0);
+
       // Die y-Koordinaten beider Backdrops sind identisch
-      leftNodes[i].y0_backdrop = rightNodes[i].y0_backdrop;
-      leftNodes[i].y1_backdrop = rightNodes[i].y1_backdrop;
+      currentFNode.y0_backdrop =
+        y1_start + (i === 0 ? 0 : nodePadding) + fDif / 2;
+      currentFNode.y1_backdrop =
+        (currentFNode.y0_backdrop || 0) + (currentFNode.backdropHeight || 0);
 
       // Das untere Ende von Backdrop und dem eigentlich Knoten stimmen überein
-      rightNodes[i].y1 = rightNodes[i].y1_backdrop;
+      currentTNode.y1 = currentTNode.y1_backdrop;
       // Das obere Ende des eigentlichen Knotens ist das untere Ende plus die Knotenhöhe
-      rightNodes[i].y0 =
-        (rightNodes[i].y1 || 0) - (rightNodes[i].nodeHeight || 0);
+      currentTNode.y0 = Math.max(
+        (currentTNode.y1 || 0) - (currentTNode.nodeHeight || 0),
+        0
+      ); //currentTNode.y0_backdrop
 
       // Das gleiche nochmal für die linke Seite
-      leftNodes[i].y1 = leftNodes[i].y1_backdrop;
-      leftNodes[i].y0 = (leftNodes[i].y1 || 0) - (leftNodes[i].nodeHeight || 0);
+      currentFNode.y1 = currentFNode.y1_backdrop;
+      currentFNode.y0 = Math.max(
+        (currentFNode.y1 || 0) - (currentFNode.nodeHeight || 0),
+        0
+      ); //currentFNode.y0_backdrop
 
-      leftNodes[i].x0 = 0;
-      leftNodes[i].x1 = 0 + nodeWidth;
+      currentFNode.x0 = 0;
+      currentFNode.x1 = 0 + nodeWidth;
 
-      rightNodes[i].x0 = width - nodeWidth;
-      rightNodes[i].x1 = width;
+      currentTNode.x0 = width - nodeWidth;
+      currentTNode.x1 = width;
+
+      tNodesFinished[i] = currentTNode;
+      fNodesFinished[i] = currentFNode;
     }
 
     // #####################################################################################
     // Berechnung der Links für diesen Knoten, ggf später auslagern.
     // #####################################################################################
-    let calculatedlinks: Link[] = [];
 
-    // Ändern der Link ID zu Zahlen, um später eine geordnete Reihenfolgesicherstellen zu können.
-    for (let i = 0; i < links.length; i++) {
-      links[i].id = i;
-    }
+    const calculatedLinks: Link[] = [];
 
-    // Gruppieren der Links nach der Quelle
-    const groupedLinksMinimal = this.groupBy(links, (l) => l.source);
+    for (const cNode of fNodesFinished) {
+      const fNodeId = cNode.id;
+      const currentNodeIndex = fNodesFinished.findIndex((n) =>
+        this.sameId(n.id, fNodeId)
+      );
 
-    // Bestimmen der Dicke der Links, sowie die dazugehörige y0-Koordinate
-    for (const key in groupedLinksMinimal) {
-      const currentLinks = groupedLinksMinimal[key];
-      const currentNodeIndex = leftNodes.findIndex((n) => n.id === key);
-      const currentNode = leftNodes[currentNodeIndex];
-      //let currentNode = leftNodes.filter((n) => n.id === key)[0];
-
-      // Nur nötig, wenn in der Datengenerierung etwas schief gelaufen ist
-      if (currentNode === undefined) continue;
+      const currentLinks = [
+        ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
+      ]
+        .sort((a, b) => {
+          if (
+            indexOfTripId(nodeIdArray, a.tNId) <
+            indexOfTripId(nodeIdArray, b.tNId)
+          )
+            return -1;
+          if (
+            indexOfTripId(nodeIdArray, a.tNId) <
+            indexOfTripId(nodeIdArray, b.tNId)
+          )
+            return 1;
+          else return 0;
+        })
+        .reverse();
 
       // initialisieren des sourceLink arrays, da vorher undefined
-      leftNodes[currentNodeIndex].sourceLinks = [];
-      leftNodes[currentNodeIndex].targetLinks = [];
+      fNodesFinished[currentNodeIndex].sourceLinks = [];
+
       let offset = 0;
-      for (let j = 0; j < currentLinks.length; j++) {
-        const currentLink = currentLinks[j];
-
+      for (const i in currentLinks) {
+        const cLink: Link = currentLinks[i];
+        const width = this.calcNodeHeight(cLink.value, minNodeHeight);
         const l: Link = {
-          id: currentLink.id as string,
-          source: currentLink.source as string,
-          target: currentLink.target as string,
-          value: currentLink.value,
+          ...cLink,
+          width: width,
+          y0: (cNode.y1 || 0) - offset - width / 2,
+          colour: cNode.colour,
         };
+        offset += width;
 
-        l.width = this.calcNodeRelativeHeight(
-          currentLink.value,
-          currentNode.totalNodeValue || 1,
-          currentNode.nodeHeight || 0
-        );
-
-        // Die linke Position des Linkes bestimmen
-        // Startpunkt ist der Ausgangspunkt des Knotens
-        // plus die vorangekommenen Knoten und die Hälte der
-        // Breite des Knotens
-        l.y0 = (currentNode.y0 || 0) + offset + l.width / 2;
-        offset += l.width;
-
-        // blende die links zwischen dem gleichen Zug aus welche Passagiere darstellen die weder ein- noch aussteigen
-        //if(currentLink.source === currentLink.target){continue;};
-
-        // Start bestimmt die Farbe der Knoten
-        l.colour = currentNode.colour;
-        calculatedlinks.push(l);
-
-        // Dieses or-Statement ist leider nur nötig, wegen dem Linter
-        // sonst kreidet er mir das als angeblichen "possibly undefined"-Fehler an. :(
-        (leftNodes[currentNodeIndex].sourceLinks || []).push(l);
+        calculatedLinks.push(l);
+        (fNodesFinished[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
 
-    // Sortieren der Links für eine einheitliche Ordnung.
-    calculatedlinks.sort((a, b) => (a.id as number) - (b.id as number));
+    const finishedLinks: Link[] = [];
 
-    // Gruppieren nach target und anpassen der y1-Koordinate
-    const groupedLinks = this.groupBy(calculatedlinks, (l) => l.target);
-    calculatedlinks = [];
+    for (const cNode of tNodesFinished) {
+      const tNodeId = cNode.id;
+      const currentNodeIndex = fNodesFinished.findIndex((n) =>
+        this.sameId(n.id, tNodeId)
+      );
+      const currentLinks = [
+        ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
+      ]
+        .sort((a, b) => {
+          if (
+            indexOfTripId(nodeIdArray, a.fNId) <
+            indexOfTripId(nodeIdArray, b.fNId)
+          )
+            return -1;
+          if (
+            indexOfTripId(nodeIdArray, a.fNId) <
+            indexOfTripId(nodeIdArray, b.fNId)
+          )
+            return 1;
+          else return 0;
+        })
+        .reverse();
 
-    for (const key in groupedLinks) {
-      const currentLinks = groupedLinks[key];
-      const currentNodeIndex = rightNodes.findIndex((n) => n.id === key);
-      const currentNode = rightNodes[currentNodeIndex];
+      // initialisieren des targetLink arrays, da vorher undefined
+      tNodesFinished[currentNodeIndex].targetLinks = [];
 
-      // Nur nötig, wenn in der Datengenerierung etwas schief gelaufen ist
-      if (currentNode === undefined) continue;
-
-      rightNodes[currentNodeIndex].sourceLinks = [];
-      rightNodes[currentNodeIndex].targetLinks = [];
       let offset = 0;
-      for (let j = 0; j < currentLinks.length; j++) {
-        const currentLink = currentLinks[j];
-
-        currentLink.y1 =
-          (currentNode.y0 || 0) + offset + (currentLink.width || 0) / 2;
-        offset += currentLink.width || 0;
-
-        // Alle 0-Links entfernen
-        if (currentLink.width) {
+      for (const i in currentLinks) {
+        const cLink: Link = currentLinks[i];
+        const l: Link = {
+          ...cLink,
+          y1: (cNode.y1 || 0) - offset - (cLink.width || 0) / 2,
+        };
+        offset += cLink.width || 0;
+        if (cLink.width) {
           // Ziel bestimmt die Farbe der Knoten
           // currentLink.colour = currentNode.colour;
-          calculatedlinks.push(currentLink);
-          (rightNodes[currentNodeIndex].targetLinks || []).push(currentLink);
+          finishedLinks.push(l);
+          (tNodesFinished[currentNodeIndex].targetLinks || []).push(l);
         }
       }
     }
 
-    return { nodes: [...leftNodes, ...rightNodes], links: calculatedlinks };
+    return {
+      toNodes: tNodesFinished,
+      fromNodes: fNodesFinished,
+      links: finishedLinks,
+    };
   };
 }

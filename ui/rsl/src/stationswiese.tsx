@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import "./index.css";
 import SankeyStationGraph from "./components/SankeyStationGraph";
-import { stationGraphDefault } from "./components/SankeyStationTypes";
+import { stationGraphDefault } from "./components/SankeyTypes";
 import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
@@ -21,7 +21,7 @@ const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 class App extends React.Component {
   state = {
     data: null,
-    width: 600,
+    width: 1200,
     height: 600,
     headline: "",
     subHeadline: "",
@@ -87,7 +87,7 @@ class App extends React.Component {
     var someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
     var theUnixTime = someDate.getTime() / 1000;
     const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-    const endTime = startTime + 15 * 60; // dd-mm-yy 9:30
+    const endTime = startTime + 12 * 60 * 60; // dd-mm-yy 9:30
     const sankeyDisplay = null;
     return (
       <QueryClientProvider client={queryClient}>
