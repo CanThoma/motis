@@ -1,5 +1,5 @@
 import React, { MouseEvent, useRef, useState } from "react";
-import { select as d3Select, easeLinear } from "d3";
+import { select as d3Select } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
@@ -9,6 +9,7 @@ import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
 type Props = {
   tripId: TripId;
+  onStationSelected: (sId: string, name: string) => void;
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -19,12 +20,14 @@ type Props = {
 
 const SankeyGraph = ({
   tripId,
+  onStationSelected,
   width = 600,
   nodeWidth = 25,
   nodePadding = 15,
-  duration = 250,
+  duration = 250, // deprecated
 }: Props): JSX.Element => {
   const svgRef = useRef(null);
+
   const [svgHeight, setSvgHeight] = useState(600);
 
   //const bahnRot = "#f01414";
@@ -71,6 +74,20 @@ const SankeyGraph = ({
     gradients.append("stop").attr("offset", 0.0);
     gradients.append("stop").attr("offset", 1.0);
 
+    const hatchPattern = defs
+      .append("pattern")
+      .attr("id", "diagonalHash")
+      .attr("patternUnits", "userSpaceOnUse")
+      .attr("width", "4")
+      .attr("height", "4")
+      .append("g")
+      .style("fill", "none")
+      .style("stroke", "#cacaca")
+      .style("stroke-width", 1.5);
+    hatchPattern.append("path").attr("d", "M-1,1 l2,-2");
+    hatchPattern.append("path").attr("d", "M0,4 l4,-4");
+    hatchPattern.append("path").attr("d", "M3,5 l2,-2");
+
     // Add a g.view for holding the sankey diagram.
     const view = svg.append("g").classed("view", true);
 
@@ -92,7 +109,7 @@ const SankeyGraph = ({
       .attr("opacity", rowBackgroundOppacity);
 
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
-    view
+    const backdrops = view
       .selectAll("rect.nodeBackdrop")
       .data(graph.nodes)
       .join("rect")
@@ -105,7 +122,11 @@ const SankeyGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity);
+      .attr("opacity", backdropOppacity)
+      .attr("cursor", "pointer");
+
+    // Add the onClick Action for Backdrops
+    backdrops.on("click", (_, i) => onStationSelected(i.sId, i.name));
 
     // Define the nodes.
     const nodes = view
@@ -113,7 +134,8 @@ const SankeyGraph = ({
       .data(graph.nodes)
       .join("rect")
       .classed("node", true)
-      .attr("id", (d) => d.id)
+      .attr("cursor", "pointer")
+      .attr("id", (d) => d.id) // TODO: Das habe ich zu sId geändert, um das clicken einfacher zu maken.
       .attr("x", (d) => d.x0 || 0)
       .attr("y", (d) => d.y0 || 0)
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
@@ -125,6 +147,9 @@ const SankeyGraph = ({
     nodes
       .append("title")
       .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
+
+    // Add the onClick Action
+    nodes.on("click", (_, i) => onStationSelected(i.sId, i.name));
 
     // Define the links.
     const links = view
@@ -139,7 +164,7 @@ const SankeyGraph = ({
       .attr("stroke-opacity", linkOppacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
-
+    /*
     const gradientLinks = view
       .selectAll("path.gradient-link")
       .data(graph.links)
@@ -154,7 +179,7 @@ const SankeyGraph = ({
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none")
       .each(setDash);
-
+*/
     // Add text labels.
     view
       .selectAll("text.node")
@@ -175,10 +200,14 @@ const SankeyGraph = ({
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
       .text((d) => d.name)
+      .on("click", (_, d) => Utils.stationNameClicked(d))
+      .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
-      .attr("text-anchor", "end");
+      .attr("text-anchor", "end")
+      .attr("cursor", "pointer")
+      .on("click", (_, d) => Utils.stationNameClicked(d));
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
@@ -191,60 +220,6 @@ const SankeyGraph = ({
       );
     });
 
-    // Define the default dash behavior for colored gradients.
-    function setDash(link: Link) {
-      const path = view.select(`#path_${link.id}`);
-      const length = (path.node() as SVGGeometryElement).getTotalLength();
-      path
-        .attr("stroke-dasharray", `${length} ${length}`)
-        .attr("stroke-dashoffset", length);
-
-      /* Das brauche ich eigentlich nicht, ist unnötig, oder?
-      path
-        .append("title")
-        .text((d) => `${d.source.name} -> ${d.target.name}\n${d.value}`);
-        */
-    }
-
-    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
-    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    function branchAnimate(_: MouseEvent, node: Node) {
-      branchClear();
-      view
-        .selectAll("path.link")
-        .transition()
-        .duration(duration)
-        .ease(easeLinear)
-        .attr("stroke-opacity", linkOppacityClear);
-
-      let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
-
-      if (node.sourceLinks && node.sourceLinks.length > 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.sourceLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .transition()
-          .duration(duration)
-          .ease(easeLinear)
-          .attr("stroke-dashoffset", 0);
-      } else if (node.sourceLinks && node.sourceLinks.length === 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
-          return (node.targetLinks || []).indexOf(link as Link) !== -1;
-        });
-
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .transition()
-          .duration(duration)
-          .ease((t) => -t)
-          .attr("stroke-dashoffset", 0);
-      }
-    }
-
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
     function branchShow(_: MouseEvent, node: Node) {
@@ -253,26 +228,24 @@ const SankeyGraph = ({
       let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
 
       if (node.sourceLinks && node.sourceLinks.length > 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
+        links = view.selectAll("path.link").filter((link) => {
           return (node.sourceLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .attr("stroke-dashoffset", 0);
+        links.attr("stroke-opacity", linkOppacityFocus);
+        //.attr("stroke-dashoffset", 0);
       } else if (node.sourceLinks && node.sourceLinks.length === 0) {
-        links = view.selectAll("path.gradient-link").filter((link) => {
+        links = view.selectAll("path.link").filter((link) => {
           return (node.targetLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links
-          .attr("stroke-opacity", linkOppacityFocus)
-          .attr("stroke-dashoffset", 0);
+        links.attr("stroke-opacity", linkOppacityFocus);
+        //.attr("stroke-dashoffset", 0);
       }
     }
 
     function branchClear() {
-      gradientLinks.attr("stroke-opactiy", 0).each(setDash);
+      links.attr("stroke-opactiy", 0); //.each(setDash);
       view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
     }
 
@@ -294,7 +267,15 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [graphData, svgHeight, width, nodeWidth, nodePadding, duration]);
+  }, [
+    graphData,
+    svgHeight,
+    width,
+    nodeWidth,
+    nodePadding,
+    duration,
+    onStationSelected,
+  ]);
 
   return (
     <>

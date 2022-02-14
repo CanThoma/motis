@@ -18,17 +18,6 @@ import {
 import config from "./SankeyTripConfig";
 
 export default class Utils {
-  static createNode = (id: string, name: string): Node => {
-    return {
-      id,
-      name,
-      x0: 0,
-      x1: 0,
-      y0: 0,
-      y1: 0,
-    };
-  };
-
   static groupBy = <T, K extends string>(
     list: T[],
     getKey: (item: T) => K
@@ -130,6 +119,10 @@ export default class Utils {
     return linkValue / config.scaleFactor;
   };
 
+  static stationNameClicked = (d: Node): void => {
+    console.log(d);
+  };
+
   /**
    * Konvertiert einen Link in einen Pfad-String
    */
@@ -145,10 +138,10 @@ export default class Utils {
     // M nodeWidth, y0 C Width/2, y0 , Width/2, y1, Width-nodeWidth, y1
 
     /* ++++++ Ausführlich +++++
-    M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below). 
-
-    C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s). 
-     */
+     M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below). 
+ 
+     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s). 
+      */
     return `M${nodeWidth},${y0}C${width / 2},${y0},${width / 2},${y1},${
       width - nodeWidth
     },${y1}`;
@@ -197,6 +190,7 @@ export default class Utils {
 
       leftNodes.push({
         id: nodes[i].id,
+        sId: nodes[i].sId,
         name: nodes[i].name,
         colour,
         biggerNodeTotalValue,
@@ -204,6 +198,7 @@ export default class Utils {
       });
       rightNodes.push({
         id: nodes[i].id,
+        sId: nodes[i].sId,
         name: nodes[i].name,
         colour,
         biggerNodeTotalValue,

@@ -3,7 +3,7 @@ import { useCombobox } from "downshift";
 import { ChevronDownIcon, XIcon } from "@heroicons/react/solid";
 
 import { PaxMonTripInfo } from "../api/protocol/motis/paxmon";
-import {TripId, TripServiceInfo} from "../api/protocol/motis";
+import { TripId, TripServiceInfo } from "../api/protocol/motis";
 import { ServiceClass } from "../api/constants";
 import { usePaxMonFindTripsQuery } from "../api/paxmon";
 
@@ -37,6 +37,7 @@ type TripPickerProps = {
   onTripPicked: (tripID: TripId | undefined) => void;
   clearOnPick: boolean;
   longDistanceOnly: boolean;
+  placeHolder?: string;
   className?: string;
 };
 
@@ -44,6 +45,7 @@ function TripPicker({
   onTripPicked,
   clearOnPick,
   longDistanceOnly,
+  placeHolder = "",
   className,
 }: TripPickerProps): JSX.Element {
   const [universe] = useAtom(universeAtom);
@@ -93,6 +95,7 @@ function TripPicker({
           {...getInputProps()}
           type="text"
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+          placeholder={placeHolder}
         />
         {selectedItem ? (
           <button

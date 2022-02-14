@@ -267,10 +267,10 @@ export default class StationUtils {
     });
 
     const nodeIdArray: (string | TripId)[] = fNodesFinished.map((a) => a.id);
-
+    /*
     for (let i in fNodesFinished) {
       console.log("indexes:", i, nodeIdArray[i], fNodesFinished[i].id);
-    }
+    } */
 
     const indexOfTripId = (
       idArray: (string | TripId)[],
@@ -285,18 +285,20 @@ export default class StationUtils {
     tNodesFinished.sort((a, b) => {
       const aIndex = indexOfTripId(nodeIdArray, a.id);
       const bIndex = indexOfTripId(nodeIdArray, b.id);
-      console.log("aindex:", aIndex, "bindex:", bIndex);
+      //console.log("aindex:", aIndex, "bindex:", bIndex);
       if (aIndex < bIndex) return -1;
       if (aIndex > bIndex) return 1;
       else return 0;
     });
 
+    /*
     for (let i in tNodesFinished) {
       console.log("OTHER indexes:", i, nodeIdArray[i], tNodesFinished[i].id);
     }
     for (const node of tNodesFinished) {
       console.log(node.name, " - ", node.id);
     }
+*/
 
     for (const i in fNodesFinished) {
       if (typeof fNodesFinished[i].id === "string") continue;

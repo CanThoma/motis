@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import "./index.css";
 import SankeyStationGraph from "./components/SankeyStationGraph";
-import { stationGraphDefault } from "./components/SankeyTypes";
+import { stationGraphDefault } from "./components/SankeyStationTypes";
 import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
