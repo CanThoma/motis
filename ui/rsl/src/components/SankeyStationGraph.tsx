@@ -123,23 +123,6 @@ const SankeyStationGraph = ({
     // Add a g.view for holding the sankey diagram.
     const view = svg.append("g").classed("view", true);
 
-    // Define the row backgrounds of every row
-    view
-      .selectAll("rect.rowBackground")
-      .data(graphTemp.nodes)
-      .join("rect")
-      .classed("rowBackground", true)
-      .filter((d) => (d.x0 || width) < width)
-      .attr("id", (d) => d.id + "_background")
-      .attr("x", 0)
-      .attr("y", (d) => d.y0_backdrop || 0)
-      .attr("width", width)
-      .attr("height", (d) =>
-        Math.max(10, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
-      )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", rowBackgroundOppacity)
-
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrop = view
       .selectAll("rect.nodeBackdrop")
@@ -177,8 +160,11 @@ const SankeyStationGraph = ({
         )
       )
       .attr("fill", (d) => d.colour || rowBackgroundColour)
+      .attr("opacity", nodeOppacity);
+
+    nodes
+      .filter((n)=>typeof n.id !== "string")
       .attr("cursor", "pointer")
-      .attr("opacity", nodeOppacity)
       .on("click", (_, i) => onTripSelected(i.id, i.name));
 
     view
@@ -230,13 +216,13 @@ const SankeyStationGraph = ({
       .attr("repeatCount", "indefinite");
 */
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
     // Add titles for backdrop hover effects.
-    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
+    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
     // Add titles for backdrop hover effects.
-    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d.pax));
+    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
     // Define the links.
     const links = view
