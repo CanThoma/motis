@@ -130,7 +130,7 @@ class App extends React.Component {
     const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
     const theUnixTime = someDate.getTime() / 1000;
     const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-    const endTime = startTime + 60 * 60; // dd-mm-yy 9:30
+    const endTime = startTime + 30 * 60; // dd-mm-yy 9:30
 
     return (
       <QueryClientProvider client={queryClient}>
@@ -156,9 +156,9 @@ class App extends React.Component {
             type="button"
             //className="inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 hover:bg-db-red-600 text-white"
             className={
-              showStation
-                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 hover:bg-db-red-600 text-white"
-                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 cursor-not-allowed"
+              !showStation
+                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 text-white cursor-not-allowed"
+                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 hover:bg-db-red-600"
             }
             disabled={!showStation}
             onClick={this.toggleStationDisplay.bind(this)}
@@ -168,9 +168,9 @@ class App extends React.Component {
           <button
             type="button"
             className={
-              !showStation
-                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 hover:bg-db-red-600 text-white"
-                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 cursor-not-allowed"
+              showStation
+                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 text-white cursor-not-allowed"
+                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 hover:bg-db-red-600"
             }
             disabled={showStation}
             onClick={this.toggleStationDisplay.bind(this)}

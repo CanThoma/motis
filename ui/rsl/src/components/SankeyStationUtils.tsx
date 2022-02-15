@@ -443,21 +443,20 @@ export default class StationUtils {
 
       const currentLinks = [
         ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
-      ]
-        .sort((a, b) => {
-          if (
-            indexOfTripId(nodeIdArray, a.tNId) <
-            indexOfTripId(nodeIdArray, b.tNId)
-          )
-            return -1;
-          if (
-            indexOfTripId(nodeIdArray, a.tNId) <
-            indexOfTripId(nodeIdArray, b.tNId)
-          )
-            return 1;
-          else return 0;
-        })
-        .reverse();
+      ].sort((a, b) => {
+        if (
+          indexOfTripId(nodeIdArray, a.tNId) >
+          indexOfTripId(nodeIdArray, b.tNId)
+        )
+          return -1;
+        if (
+          indexOfTripId(nodeIdArray, a.tNId) <
+          indexOfTripId(nodeIdArray, b.tNId)
+        )
+          return 1;
+        else return 0;
+      });
+      // .reverse();
 
       // initialisieren des sourceLink arrays, da vorher undefined
       fNodesFinished[currentNodeIndex].sourceLinks = [];
@@ -488,21 +487,20 @@ export default class StationUtils {
       );
       const currentLinks = [
         ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
-      ]
-        .sort((a, b) => {
-          if (
-            indexOfTripId(nodeIdArray, a.fNId) <
-            indexOfTripId(nodeIdArray, b.fNId)
-          )
-            return -1;
-          if (
-            indexOfTripId(nodeIdArray, a.fNId) <
-            indexOfTripId(nodeIdArray, b.fNId)
-          )
-            return 1;
-          else return 0;
-        })
-        .reverse();
+      ].sort((a, b) => {
+        if (
+          indexOfTripId(nodeIdArray, a.fNId) >
+          indexOfTripId(nodeIdArray, b.fNId)
+        )
+          return -1;
+        if (
+          indexOfTripId(nodeIdArray, a.fNId) <
+          indexOfTripId(nodeIdArray, b.fNId)
+        )
+          return 1;
+        else return 0;
+      });
+      //.reverse();
 
       // initialisieren des targetLink arrays, da vorher undefined
       tNodesFinished[currentNodeIndex].targetLinks = [];

@@ -15,7 +15,8 @@ const Modal = ({ setIsOpen, node }: Props): JSX.Element => {
       <div className="container">
         <div className="modalContent">
           <img
-            src="https://img.pr0gramm.com/2019/11/07/92c6aaca8934bea7.jpg"
+            //src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flogos-world.net%2Fwp-content%2Fuploads%2F2021%2F02%2FDeutsche-Bahn-Logo.png&f=1&nofb=1"
+            src="https://img.pr0gramm.com/2016/09/11/2b7c3fefe833e987.jpg"
             alt="Bierdurst!!!!"
           />
           <a href="https://de.wikipedia.org/wiki/Steinieform">

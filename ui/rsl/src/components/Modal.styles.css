@@ -32,7 +32,8 @@
 .modalContent a {
   margin-bottom: 5px;
   font-size: 18px;
-  color: #cacaca;
+  color: #ed6755;
+  font-weight: bold;
 }
 .modalContent button.accept {
   background-color: #ed6755;
