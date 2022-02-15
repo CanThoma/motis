@@ -231,17 +231,17 @@ const SankeyStationGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        Utils.createSankeyLink(nodeWidth, width,d.y0 || 0, d.y1 || 0)
       )
       .attr("stroke", (d) => d.colour || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
-    // Add text labels.
+    // Add text labels for Names
     view
       .selectAll("text.node")
-      .data(graphTemp.nodes)
+      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
       .join("text")
       .classed("node", true)
       .attr("x", (d) => d.x1 || -1)
@@ -257,7 +257,7 @@ const SankeyStationGraph = ({
       .attr("text-anchor", "start")
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
-      .text((d) => d.name)
+      .text((d) => {if (typeof d.id === "string") {return d.name} else {return d.name }})
       .on("click", (_, i) => onTripSelected(i.id, i.name))
       .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
@@ -267,14 +267,39 @@ const SankeyStationGraph = ({
       .on("click", (_, i) => onTripSelected(i.id, i.name))
       .attr("cursor", "pointer");
 
+    // Add text labels for time.
+    view
+      .selectAll("text.nodeTime")
+      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
+      .join("text")
+      .classed("node", true)
+      .attr("x", 0)
+      .attr("dx", 0)
+      .attr(
+        "y",
+        (d) =>
+          (d.y0_backdrop || 0) +
+          ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+      )
+      .attr("dy", "0.35em")
+      .attr("fill", "black")
+      .attr("text-anchor", "start")
+      .attr("font-size", 10)
+      .attr("font-family", "Arial, sans-serif")
+      .text((d) => {if (typeof d.id === "string") {return ""} else {return Utils.formatTextTime(d)}})
+      .filter((d) => (d.x1 || 0) > width / 2)
+      .attr("x", width)
+      .attr("dx", 0)
+      .attr("text-anchor", "end")
+
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
-      const sourceName = graph.fromNodes.find((n) => n.id === d.fNId)?.name;
-      const targetName = graph.toNodes.find((n) => n.id === d.tNId)?.name;
+      const sourceName = graph.fromNodes.find((n) => Utils.sameId(n.id, d.fNId))?.name;
+      const targetName = graph.toNodes.find((n) => Utils.sameId(n.id, d.tNId))?.name;
       return Utils.formatTextLink(
         sourceName || " – ",
         targetName || " – ",
-        d.value
+        d
       );
     });
 

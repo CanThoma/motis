@@ -65,15 +65,22 @@ export default class StationUtils {
    * Konvertiert einen Link in einen Pfad-String
    */
 
+  static formatTextTime = (n: Node) => {
+    const nodeArrivalTime = n.time;
+    const aDate = new Date(nodeArrivalTime * 1000);
+    const aHour = aDate.getHours()<10?"0"+aDate.getHours():aDate.getHours()
+    const aMinute = aDate.getMinutes()<10?"0"+aDate.getMinutes():aDate.getMinutes();
+    return aHour+":"+aMinute+" Uhr";
+  };
   static formatTextNode = (name: string, node: Node): string => {
     return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
   };
   static formatTextLink = (
-    sourceName: string,
-    targetName: string,
-    value: number
+    fNodeName: string,
+    tNodeName: string,
+    link: Link
   ): string => {
-    return `${value} Personen \n ${sourceName} \u2192 ${targetName}`;
+    return `${link.value} Personen \n ${fNodeName.includes("\u2192")?fNodeName.substr(0,fNodeName.indexOf(" \u2192")):fNodeName} \u2192 ${tNodeName.includes("\u2192")?tNodeName.substr(0,tNodeName.indexOf(" \u2192")):tNodeName}}`;
   };
 
   static createSankeyLink = (
@@ -91,8 +98,8 @@ export default class StationUtils {
     M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
      */
-    return `M${nodeWidth},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth
+    return `M${nodeWidth+50},${y0}C${width / 2},${y0},${width / 2},${y1},${
+      width - nodeWidth-50
     },${y1}`;
   };
 
@@ -172,17 +179,12 @@ export default class StationUtils {
     for (const cNode of fNodes) {
       if (typeof cNode.id === "string") continue;
 
-      const nodeArrivalTime = cNode.time;
-      const aDate = new Date(nodeArrivalTime * 1000);
-      const aHour = aDate.getHours();
-      const aMinute = "0" + aDate.getMinutes();
-
       fNodesFinished.push({
         ...cNode,
         name:
-          cNode.name +
-          " - Ankunft: " +
-          (cNode.time != 0 ? aHour + ":" + aMinute.substr(-2) : "--:--"),
+          cNode.name.substr(0, cNode.name.indexOf(" ("))
+          + " \u2192 "
+          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
         full: cNode.cap < cNode.pax,
       });
       tNodesFinished.push({
@@ -212,11 +214,9 @@ export default class StationUtils {
           ...cNode,
           full: cNode.cap < cNode.pax,
           name:
-            cNode.name +
-            " - Abfahrt: " +
-            (nodeDepartureTime != 0
-              ? dHour + ":" + dMinute.substr(-2)
-              : "--:--"),
+            cNode.name.substr(0, cNode.name.indexOf(" ("))
+            + " \u2192 "
+            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
         };
       } else {
         fNodesFinished.push({
@@ -227,9 +227,9 @@ export default class StationUtils {
         tNodesFinished.push({
           ...cNode,
           name:
-            cNode.name +
-            " - Abfahrt: " +
-            (cNode.time != 0 ? dHour + ":" + dMinute.substr(-2) : "--:--"),
+            cNode.name.substr(0, cNode.name.indexOf(" ("))
+            + " \u2192 "
+            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
           full: cNode.cap < cNode.pax,
         });
       }
@@ -419,11 +419,11 @@ export default class StationUtils {
         0
       ); //currentFNode.y0_backdrop
 
-      currentFNode.x0 = 0;
-      currentFNode.x1 = 0 + nodeWidth;
+      currentFNode.x0 = 50;
+      currentFNode.x1 = 0 + nodeWidth + 50;
 
-      currentTNode.x0 = width - nodeWidth;
-      currentTNode.x1 = width;
+      currentTNode.x0 = width - nodeWidth - 50;
+      currentTNode.x1 = width - 50;
 
       tNodesFinished[i] = currentTNode;
       fNodesFinished[i] = currentFNode;
