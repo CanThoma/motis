@@ -7,10 +7,7 @@ type Node = {
   cap: number;
   time: number;
 
-  offset?: number;
   colour?: string;
-  biggerNodeTotalValue?: number;
-  // totalNodeValue?: number;
   backdropHeight?: number;
   nodeHeight?: number;
   y0_backdrop?: number;

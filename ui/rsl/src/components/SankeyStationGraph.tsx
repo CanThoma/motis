@@ -139,8 +139,6 @@ const SankeyStationGraph = ({
       )
       .attr("fill", rowBackgroundColour)
       .attr("opacity", rowBackgroundOppacity)
-      .attr("cursor", "pointer")
-      .on("click", (_, i) => onTripSelected(i.id, i.name));
 
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrop = view
@@ -156,7 +154,9 @@ const SankeyStationGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity);
+      .attr("opacity", backdropOppacity)
+      .attr("cursor", "pointer")
+      .on("click", (_, i) => onTripSelected(i.id, i.name));
 
     // Define the nodes.
     const nodes = view
