@@ -217,7 +217,7 @@ class App extends React.Component {
                 </div>
               </div>
             </div>
-            <div className="App mt-16 text-center">
+            <div className="app mt-16 text-center" >
               <h1>{subHeadline}</h1>
               <h2 className="text-gray-500">{headline}</h2>
               {selectedTrip && (

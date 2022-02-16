@@ -6,6 +6,7 @@ import {
   NodeMinimal,
   LinkMinimal,
   stationGraphDefault,
+  createGraphInterface
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
 
@@ -126,14 +127,15 @@ export default class StationUtils {
   /**
    * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
    */
-  static createGraph = (
-    fNodes: NodeMinimal[],
-    tNodes: NodeMinimal[],
-    links: LinkMinimal[],
-    height = 600,
-    width = 600,
-    nodeWidth = 20,
-    nodePadding = 20
+  static createGraph = ({
+                          fNodes,
+                          tNodes,
+                          links,
+                          onSvgResize,
+                          width = 600,
+                          nodeWidth = 20,
+                          nodePadding = 20,
+                        }: createGraphInterface
   ): SankeyInterface => {
     const fNodesFinished: Node[] = [];
     const tNodesFinished: Node[] = [];
@@ -184,7 +186,7 @@ export default class StationUtils {
         name:
           cNode.name.substr(0, cNode.name.indexOf(" ("))
           + " \u2192 "
-          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
+          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
         full: cNode.cap < cNode.pax,
       });
       tNodesFinished.push({
@@ -196,11 +198,6 @@ export default class StationUtils {
 
     for (const cNode of tNodes) {
       if (typeof cNode.id === "string") continue;
-
-      const nodeDepartureTime = cNode.time;
-      const dDate = new Date(nodeDepartureTime * 1000);
-      const dHour = dDate.getHours();
-      const dMinute = "0" + dDate.getMinutes();
 
       const tempArray = fNodesFinished.filter((n) =>
         this.sameId(cNode.id, n.id)
@@ -216,7 +213,7 @@ export default class StationUtils {
           name:
             cNode.name.substr(0, cNode.name.indexOf(" ("))
             + " \u2192 "
-            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
+            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
         };
       } else {
         fNodesFinished.push({
@@ -229,7 +226,7 @@ export default class StationUtils {
           name:
             cNode.name.substr(0, cNode.name.indexOf(" ("))
             + " \u2192 "
-            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.indexOf(")") - cNode.name.indexOf(" - ")-2) ,
+            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
           full: cNode.cap < cNode.pax,
         });
       }
@@ -302,6 +299,8 @@ export default class StationUtils {
     }
 
     // Berechnen der Höhe der Nodes und Zuweisung der entsprechenden Koordinaten.
+
+    let finalHeight = 0;
 
     for (let i = 0; i < tNodesFinished.length; i++) {
       const currentTNode = tNodesFinished[i];
@@ -427,7 +426,11 @@ export default class StationUtils {
 
       tNodesFinished[i] = currentTNode;
       fNodesFinished[i] = currentFNode;
+
+      finalHeight = currentFNode.y0;
     }
+
+    onSvgResize( finalHeight + 20); // set height of svg to the bottom of the last node + 20
 
     // #####################################################################################
     // Berechnung der Links für diesen Knoten, ggf später auslagern.

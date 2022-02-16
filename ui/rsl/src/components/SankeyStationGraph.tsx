@@ -1,4 +1,4 @@
-import React, { MouseEvent, useState } from "react";
+import React, {MouseEvent, useRef, useState} from "react";
 import * as d3 from "d3";
 // import { select as d3Select, easeLinear } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
@@ -48,8 +48,12 @@ const SankeyStationGraph = ({
   nodePadding = 15,
   duration = 250,
 }: Props): JSX.Element => {
+
   // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
-  const svgRef = React.useRef(null);
+  const svgRef = useRef(null);
+
+  const [svgHeight, setSvgHeight] = useState(600);
+
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -72,14 +76,21 @@ const SankeyStationGraph = ({
   //console.log(data); // for debug purposes
 
   React.useEffect(() => {
+    const handleSvgResize = (newSize: number) => {
+      setSvgHeight(newSize);
+    };
+
     const graph = Utils.createGraph(
-      data.fromNodes,
-      data.toNodes,
-      data.links,
-      height,
-      width,
-      nodeWidth,
-      nodePadding
+      {
+        fNodes: data.fromNodes,
+        tNodes: data.toNodes,
+        links: data.links,
+        onSvgResize: handleSvgResize,
+        width,
+        nodeWidth,
+        nodePadding,
+      }
+
     );
 
     const graphTemp = {
@@ -369,13 +380,13 @@ const SankeyStationGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [data, height, width, nodeWidth, nodePadding, duration, onTripSelected]);
+  }, [data, height, width, nodeWidth, nodePadding, duration, onTripSelected, svgHeight]);
 
   return (
     <svg
       ref={svgRef}
       width={width}
-      height={height + 60000}
+      height={svgHeight}
       className="m-auto"
     />
   );

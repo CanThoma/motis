@@ -47,6 +47,16 @@ interface SankeyInterfaceMinimal {
   links: LinkMinimal[];
 }
 
+interface createGraphInterface {
+  fNodes: NodeMinimal[];
+  tNodes: NodeMinimal[];
+  links: LinkMinimal[];
+  onSvgResize(newSvgSize: number): void;
+  width: number;
+  nodeWidth: number;
+  nodePadding: number;
+}
+
 type NodeMinimal = {
   id: TripId | string;
   name: string;
@@ -158,4 +168,5 @@ export type {
   LinkMinimal,
   NodeMinimal,
   SankeyInterfaceMinimal,
+  createGraphInterface,
 };
