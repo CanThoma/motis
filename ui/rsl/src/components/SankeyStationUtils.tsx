@@ -196,6 +196,13 @@ export default class StationUtils {
       });
     }
 
+    const indexOfTripId = (
+      idArray: (string | TripId)[],
+      id: string | TripId
+    ) => {
+      return idArray.findIndex((idX) => StationUtils.sameId(idX, id));
+    };
+
     for (const cNode of tNodes) {
       if (typeof cNode.id === "string") continue;
 
@@ -203,10 +210,9 @@ export default class StationUtils {
         this.sameId(cNode.id, n.id)
       );
       if (tempArray !== undefined && tempArray.length > 0) {
-        const i = fNodesFinished.indexOf(
-          fNodesFinished.find((n) => this.sameId(cNode.id, n.id))
-        );
-        // fNodesFinished[i] = ;
+
+        const i = indexOfTripId(fNodesFinished.map((n)=> n.id),cNode.id);
+
         tNodesFinished[i] = {
           ...cNode,
           full: cNode.cap < cNode.pax,
@@ -264,12 +270,6 @@ export default class StationUtils {
       else return 0;
     });
 
-    const indexOfTripId = (
-      idArray: (string | TripId)[],
-      id: string | TripId
-    ) => {
-      return idArray.findIndex((idX) => StationUtils.sameId(idX, id));
-    };
 
     const nodeIdArray: (string | TripId)[] = tNodesFinished.map((a) => a.id);
 
