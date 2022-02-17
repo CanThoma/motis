@@ -6,7 +6,10 @@ import {
 } from "./SankeyStationTypes";
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
-import { PaxMonGetInterchangesRequest } from "../api/protocol/motis/paxmon";
+import {
+  PaxMonGetInterchangesRequest,
+  PaxMonInterchangeInfo,
+} from "../api/protocol/motis/paxmon";
 import {
   queryKeys,
   sendPaxMonTripLoadInfosRequest,
@@ -23,6 +26,7 @@ export type StationInterchangeParameters = {
   startTime: number;
   endTime: number;
   maxCount: number;
+  onlyIncludeTripIds?: TripId[];
 };
 type ExtTripId = TripId & {
   pax: number;
@@ -86,71 +90,32 @@ enum TripDirection {
   FROM,
   TO,
 }
-export function ExtractThisStationTripInfo(
-  universe: number,
-  tripId: TripId,
-  stationId: string,
-  direction: TripDirection
-): // return type
-{
-  from: NodeCapacityInfo | null;
-  to: NodeCapacityInfo | null;
-} {
-  const { data: status } = usePaxMonStatusQuery();
 
-  const queryClient = useQueryClient();
-  const { data /*, isLoading, error*/ } = useQuery(
-    queryKeys.tripLoad(universe, tripId),
-    async () => loadAndProcessTripInfo(universe, tripId),
-    {
-      enabled: !!status,
-      placeholderData: () => {
-        return universe != 0
-          ? queryClient.getQueryData(queryKeys.tripLoad(0, tripId))
-          : undefined;
-      },
-    }
+/**
+ * Returns true if array contains element
+ * @param el
+ * @param filter
+ * @param comparator Optional Parameter that compares the element el with every element of filter via a custom boolean function
+ * @constructor
+ */
+function ArrayContains<T>(
+  el: T,
+  filter: T[],
+  comparator?: (a: T, b: T) => boolean
+): boolean {
+  return (
+    filter.findIndex((x) => (comparator ? comparator(el, x) : x === el)) !== -1
   );
-  let thisStationFromEdge: NodeCapacityInfo | null = null;
-  let thisStationToEdge: NodeCapacityInfo | null = null;
-  if (!status || !data) {
-    // error handling
-  } else {
-    let foundFromStation = data.edges.findIndex(
-      (station) => station.from.id == stationId
-    );
-    if (foundFromStation == -1) {
-      if (data.edges[data.edges.length - 1].to.id == stationId) {
-        //TO station. last station
-        let toStation = data.edges.length - 1;
-        let lastEdge = data.edges[toStation];
-        thisStationToEdge = {
-          max_pax: lastEdge.max_pax,
-          cap: lastEdge.capacity,
-        };
-      }
-    } else {
-      // its a FROM station information, assuming index != 0 => stationindex-1 = TO station information
-      if (foundFromStation != 0) {
-        let toStation = foundFromStation - 1;
-        let toEdge = data.edges[toStation];
-        thisStationToEdge = {
-          max_pax: toEdge.max_pax,
-          cap: toEdge.capacity,
-        };
-      }
+}
 
-      let fromEdge = data.edges[foundFromStation];
-      thisStationFromEdge = {
-        max_pax: fromEdge.max_pax,
-        cap: fromEdge.capacity,
-      };
-    }
-  }
-  return {
-    from: thisStationFromEdge,
-    to: thisStationFromEdge,
-  };
+/**
+ * Returns true if the trip given could be found in tripIdList
+ * @param tripId
+ * @param tripIdList
+ * @constructor
+ */
+function InterchangePassFilter(tripId: TripId, tripIdList: TripId[]) {
+  return ArrayContains(tripId, tripIdList, SameTripId);
 }
 export function ExtractStationData(
   params: StationInterchangeParameters
@@ -194,92 +159,106 @@ export function ExtractStationData(
   const exitingNode: NodeMinimal = SpecialNode("exiting", Number.MAX_VALUE);
 
   if (data) {
-    for (const interchange of data.interchanges) {
+    /**
+     * Will prevent the loop iteration to run, if the requirements of the structure are not met
+     * @param interchange
+     */
+    const requirementsInterchangeMet = (interchange: PaxMonInterchangeInfo) => {
+      const arrivalLengthRequirement = interchange.arrival.length == 1;
+      const departureLengthRequirement = interchange.departure.length == 1;
+
+      // assume error if length != 1 (all cases seemed to fulfill this property)
+      const arrivalTripsRequirement = interchange.arrival[0].trips.length == 1;
+      const departureTripsRequirement =
+        interchange.departure[0].trips.length == 1;
+
+      return (
+        arrivalLengthRequirement &&
+        departureLengthRequirement &&
+        arrivalTripsRequirement &&
+        departureTripsRequirement
+      );
+    };
+
+    for (const interchange of data.interchanges.filter(
+      requirementsInterchangeMet
+    )) {
       let arrivingStationIndex = -1;
       let departureStationIndex = -1;
 
+      // zwischenstop/endstop
+      let arrivalInfo = interchange.arrival[0];
+      //zwischenstop/start
+      let departureInfo = interchange.departure[0];
+
+      /* do not include node/link information for trips that don't fit the filter criteria */
       if (
-        interchange.arrival.length == 0 &&
-        interchange.departure.length == 0
+        params.onlyIncludeTripIds &&
+        !InterchangePassFilter(
+          departureInfo.trips[0].trip,
+          params.onlyIncludeTripIds
+        ) &&
+        !InterchangePassFilter(
+          arrivalInfo.trips[0].trip,
+          params.onlyIncludeTripIds
+        )
       ) {
-        // error message? interchange has NO arrival or departure
         continue;
       }
+
       /* Get arrival point */
-      if (interchange.arrival.length < 1) {
-        // edge case if motis ever bugs, starting trip here => arrival stays "boarding"
-      } else if (interchange.arrival.length == 1) {
-        // zwischenstop/endstop
-        let arrivalInfo = interchange.arrival[0];
-        // assume error if length != null (all cases seemed to fulfil this property)
-        if (arrivalInfo.trips.length != 1) continue;
-        //"boarding" group, when arrival train is out of time range
-        if (arrivalInfo.schedule_time < params.startTime) {
-          arrivingStationIndex = -2;
-        } else {
-          let trip = arrivalInfo.trips[0];
-          arrivingStationIndex = arrivingTripsInStation.findIndex((tripId) =>
-            SameExtTripId(tripId, ToExtTripId(trip.trip))
-          );
-          let foundTripsInStation =
-            arrivingTripsInStation[arrivingStationIndex];
-          if (!foundTripsInStation) {
-            let exttid = ToExtTripId(trip.trip);
-            exttid.interstation_time = arrivalInfo.schedule_time;
-
-            //TODO: move pax and cap to other query?
-            exttid.pax = interchange.groups.max_passenger_count;
-            exttid.cap = 1; //TBI
-
-            arrivingStationIndex = arrivingTripsInStation.length;
-            arrivingTripsInStation.push(exttid);
-          } else {
-            foundTripsInStation.pax += interchange.groups.max_passenger_count;
-          }
-        }
+      //"boarding" group, when arrival train is out of time range
+      if (arrivalInfo.schedule_time < params.startTime) {
+        arrivingStationIndex = -2;
       } else {
-        // error!! this shouldnt happen
-        continue;
+        let trip = arrivalInfo.trips[0];
+        arrivingStationIndex = arrivingTripsInStation.findIndex((tripId) =>
+          SameExtTripId(tripId, ToExtTripId(trip.trip))
+        );
+        let foundTripsInStation = arrivingTripsInStation[arrivingStationIndex];
+        if (!foundTripsInStation) {
+          let exttid = ToExtTripId(trip.trip);
+          exttid.interstation_time = arrivalInfo.schedule_time;
+
+          //TODO: move pax and cap to other query?
+          exttid.pax = interchange.groups.max_passenger_count;
+          exttid.cap = 1; //TBI
+
+          arrivingStationIndex = arrivingTripsInStation.length;
+          arrivingTripsInStation.push(exttid);
+        } else {
+          foundTripsInStation.pax += interchange.groups.max_passenger_count;
+        }
       }
 
       /* Get departure point */
 
-      if (interchange.departure.length < 1) {
-        // edge case if motis ever bugs, endstation => "target" = exiting
-      } else if (interchange.departure.length == 1) {
-        //zwischenstop/start
-        let departureInfo = interchange.departure[0];
-        // assume error if length != null (all cases seemed to fulfil this property)
-        if (departureInfo.trips.length != 1) continue;
-        //"exiting" group, when arrival train is out of time range. this shouldn't happen from how the query works though
-        if (departureInfo.schedule_time > params.endTime) {
-          // formatLongDateTime(departureInfo.schedule_time) + " params.endTime " + formatLongDateTime(params.endTime));
-          departureStationIndex = -2;
-        } else {
-          let trip = departureInfo.trips[0];
-          departureStationIndex = departingTripsInStation.findIndex((tripId) =>
-            SameExtTripId(tripId, ToExtTripId(trip.trip))
-          );
-          let foundTripsInStation =
-            departingTripsInStation[departureStationIndex];
-          if (!foundTripsInStation) {
-            const exttid = ToExtTripId(trip.trip);
-            exttid.interstation_time = departureInfo.schedule_time;
-
-            //TODO: move pax and cap to other query?
-            exttid.pax = interchange.groups.max_passenger_count;
-            exttid.cap = 500; //TBI
-
-            departureStationIndex = departingTripsInStation.length;
-            departingTripsInStation.push(exttid);
-          } else {
-            foundTripsInStation.pax += interchange.groups.max_passenger_count;
-          }
-        }
+      //"exiting" group, when arrival train is out of time range. this shouldn't happen from how the query works though
+      if (departureInfo.schedule_time > params.endTime) {
+        // formatLongDateTime(departureInfo.schedule_time) + " params.endTime " + formatLongDateTime(params.endTime));
+        departureStationIndex = -2;
       } else {
-        // error!!
-        continue;
+        let trip = departureInfo.trips[0];
+        departureStationIndex = departingTripsInStation.findIndex((tripId) =>
+          SameExtTripId(tripId, ToExtTripId(trip.trip))
+        );
+        let foundTripsInStation =
+          departingTripsInStation[departureStationIndex];
+        if (!foundTripsInStation) {
+          const exttid = ToExtTripId(trip.trip);
+          exttid.interstation_time = departureInfo.schedule_time;
+
+          //TODO: move pax and cap to other query?
+          exttid.pax = interchange.groups.max_passenger_count;
+          exttid.cap = 500; //TBI
+
+          departureStationIndex = departingTripsInStation.length;
+          departingTripsInStation.push(exttid);
+        } else {
+          foundTripsInStation.pax += interchange.groups.max_passenger_count;
+        }
       }
+
       /* If there is boarding/exiting previous/future */
       if (arrivingStationIndex === -1) {
         //boarding
