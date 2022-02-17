@@ -32,7 +32,7 @@ const SankeyGraph = ({
 
   const [svgHeight, setSvgHeight] = useState(600);
   const [isOpen, setIsOpen] = useState(false);
-  const [clickedNode, setClickedNode] = useState<Node>();
+  const [clickedNode, setClickedNode] = useState<{ node: Node , tripId: TripId }>();
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -206,7 +206,7 @@ const SankeyGraph = ({
       .text((d) => d.name)
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode(d);
+        setClickedNode({node: d, tripId: tripId});
       })
       .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
@@ -216,7 +216,7 @@ const SankeyGraph = ({
       .attr("cursor", "pointer")
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode(d);
+        setClickedNode({node: d, tripId: tripId});
       });
 
     // Add <title> hover effect on links.
@@ -290,7 +290,7 @@ const SankeyGraph = ({
   return (
     <>
       {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
-      {isOpen && <Modal setIsOpen={setIsOpen} node={clickedNode} />}
+      {isOpen && <Modal setIsOpen={setIsOpen} param={clickedNode} />}
       {graphData && (
         <svg
           ref={svgRef}

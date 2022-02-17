@@ -16,6 +16,7 @@ import SankeyStationGraph from "./components/SankeyStationGraph";
 import StationPicker from "./components/StationPicker";
 
 import "./components/Modal.styles.css";
+import {defaults} from "autoprefixer";
 
 const queryClient = new QueryClient({
   defaultOptions: {

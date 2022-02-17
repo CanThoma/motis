@@ -6,22 +6,11 @@ import * as d3 from "d3";
 import {
   Node,
   Link,
-  SankeyInterfaceMinimal,
-  NodeMinimal,
-  LinkMinimal,
-  stationGraphDefault,
 } from "./SankeyStationTypes";
 import Utils from "./SankeyStationUtils";
-import { interpolate } from "d3";
 import { TripId } from "../api/protocol/motis";
-import { useAtom } from "jotai";
-import { universeAtom } from "../data/simulation";
-import {
-  usePaxMonGetInterchangesQuery,
-  usePaxMonGroupsInTripQuery,
-} from "../api/paxmon";
-import { PaxMonGetInterchangesRequest } from "../api/protocol/motis/paxmon";
 import { ExtractStationData } from "./StationInfoUtils";
+
 
 type Props = {
   stationId: string;
@@ -53,7 +42,6 @@ const SankeyStationGraph = ({
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
-
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -217,15 +205,7 @@ const SankeyStationGraph = ({
       .attr("cursor", "pointer")
       .on("click", (_, i) => onTripSelected(i.id, i.name))
       .style("fill", "url(#diagonalHash)");
-    // Zeug für die Animation
-    /*
-      .append("animate")
-      .attr("attributeName", "opacity")
-      .attr("from", 0.2)
-      .attr("to", nodeOppacity)
-      .attr("dur", "2s")
-      .attr("repeatCount", "indefinite");
-*/
+
     // Add titles for node hover effects.
     nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
 
@@ -269,14 +249,12 @@ const SankeyStationGraph = ({
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
       .text((d) => {if (typeof d.id === "string") {return d.name} else {return d.name }})
-      .on("click", (_, i) => onTripSelected(i.id, i.name))
-      .attr("cursor", "pointer")
+
       .filter((d) => (d.x1 || 0) > width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
       .attr("text-anchor", "end")
-      .on("click", (_, i) => onTripSelected(i.id, i.name))
-      .attr("cursor", "pointer");
+
 
     // Add text labels for time.
     view
@@ -383,12 +361,17 @@ const SankeyStationGraph = ({
   }, [data, height, width, nodeWidth, nodePadding, duration, onTripSelected, svgHeight]);
 
   return (
-    <svg
-      ref={svgRef}
-      width={width}
-      height={svgHeight}
-      className="m-auto"
-    />
+    <>
+      {!data && <div>Daten zum Zug nicht verfügbar</div>}
+      {data && (
+        <svg
+          ref={svgRef}
+          width={width}
+          height={svgHeight}
+          className="m-auto"
+        />
+      )}
+    </>
   );
 };
 
