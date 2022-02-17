@@ -194,6 +194,7 @@ export function ExtractStationData(
       /* do not include node/link information for trips that don't fit the filter criteria */
       if (
         params.onlyIncludeTripIds &&
+        params.onlyIncludeTripIds.length > 0 &&
         !InterchangePassFilter(
           departureInfo.trips[0].trip,
           params.onlyIncludeTripIds
