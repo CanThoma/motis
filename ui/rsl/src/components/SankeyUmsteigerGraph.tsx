@@ -13,7 +13,6 @@ type Props = {
   time:number;
   maxCount: number;
   onlyIncludeTripId: TripId[];
-  //onTripSelected: (id: TripId | string, name: string) => void;
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -28,7 +27,7 @@ const SankeyUmsteigerGraph = ({
   time,
   maxCount,
   onlyIncludeTripId,
-  width = 1200,
+  width = 600,
   height = 600,
   nodeWidth = 25,
   nodePadding = 15,
@@ -40,6 +39,14 @@ const SankeyUmsteigerGraph = ({
 
   const startTime = time - 2.5*60*60;
   const endTime = time + 2.5*60*60;
+
+  const linkOppacity = 0.4;
+  const linkOppacityFocus = 0.7;
+  const linkOppacityClear = 0.05;
+
+  const nodeOppacity = 0.9;
+  const rowBackgroundColour = "#cacaca";
+  const backdropOppacity = 0.7;
 
   const data = ExtractStationData({
     stationId: stationId,
@@ -65,9 +72,274 @@ const SankeyUmsteigerGraph = ({
         nodePadding,
       }
     );
+    const graphTemp = {
+      nodes: [...graph.toNodes, ...graph.fromNodes],
+      links: graph.links,
+    };
 
-    console.log(graph)
+    const svg = d3.select(svgRef.current);
+    // Säubern von potentiellen svg Inhalt
+    svg.selectAll("*").remove();
 
+    const defs = svg.append("defs");
+
+    const hatchPattern = defs
+      .append("pattern")
+      .attr("id", "diagonalHash")
+      .attr("patternUnits", "userSpaceOnUse")
+      .attr("width", "10")
+      .attr("height", "10")
+      .attr("patternTransform", "rotate(45)")
+      .append("g")
+      .style("stroke", "#f01414")
+      .style("stroke-width", 5);
+
+    hatchPattern
+      .append("line")
+      .attr("x1", 5)
+      .attr("y", 0)
+      .attr("x2", 5)
+      .attr("y2", 10);
+
+    // Animation der Strichfarbe
+    hatchPattern
+      .append("animate")
+      .attr("attributeName", "stroke")
+      .attr("dur", "5s")
+      .attr("repeatCount", "indefinite")
+      .attr("keyTimes", "0;0.5;1")
+      .attr("values", "#ECE81A;#f01414;#ECE81A;");
+
+    // Add a g.view for holding the sankey diagram.
+    const view = svg.append("g").classed("view", true);
+
+    // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
+    const backdrop = view
+      .selectAll("rect.nodeBackdrop")
+      .data(graphTemp.nodes.filter((n) => n.pax !== 0)) // filter out empty nodes
+      .join("rect")
+      .classed("backdrop", true)
+      .attr("id", (d) => d.id + "_backdrop")
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0_backdrop || 0)
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) =>
+        Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
+      )
+      .attr("fill", rowBackgroundColour)
+      .attr("opacity", backdropOppacity)
+
+    // Define the nodes.
+    const nodes = view
+      .selectAll("rect.node")
+      .data(graphTemp.nodes)
+      .join("rect")
+      .classed("node", true)
+      .attr("id", (d) => String(d.id))
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => (d.full ? d.y0_backdrop || 0 : d.y0 || 0))
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) =>
+        Math.max(
+          0,
+          d.full
+            ? (d.y1 || 0) - (d.y0_backdrop || 0)
+            : (d.y1 || 0) - (d.y0 || 0)
+        )
+      )
+      .attr("fill", (d) => d.colour || rowBackgroundColour)
+      .attr("opacity", nodeOppacity);
+
+    view
+      .selectAll("rect.nodeOverflowBack")
+      .data(graphTemp.nodes.filter((n) => n.full))
+      .join("rect")
+      .classed("nodeOverflowBack", true)
+      .attr("id", (n) => String(n.id))
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0 || 0)
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) => Math.max(0, (d.y0_backdrop || 0) - (d.y0 || 0)))
+      .attr(
+        "fill",
+        (d) =>
+          d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
+          rowBackgroundColour
+      )
+      .attr("opacity", nodeOppacity);
+
+    //Define the Overflow
+    const overflow = view
+      .selectAll("rect.nodeOverflow")
+      .data(graphTemp.nodes.filter((n) => n.full))
+      .join("rect")
+      .classed("nodeOverflow", true)
+      .attr("id", (n) => String(n.id))
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0 || 0)
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+      .attr("height", (d) => Math.max(0, (d.y0_backdrop || 0) - (d.y0 || 0)))
+      .attr(
+        "fill",
+        (d) =>
+          d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
+          rowBackgroundColour
+      )
+      .attr("opacity", nodeOppacity)
+      .style("fill", "url(#diagonalHash)");
+
+    // Add titles for node hover effects.
+    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
+
+    // Add titles for backdrop hover effects.
+    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
+
+    // Add titles for backdrop hover effects.
+    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
+
+    // Define the links.
+    const links = view
+      .selectAll("path.link")
+      .data(graphTemp.links)
+      .join("path")
+      .classed("link", true)
+      .attr("d", (d) =>
+        Utils.createSankeyLink(nodeWidth, width,d.y0 || 0, d.y1 || 0)
+      )
+      .attr("stroke", (d) => d.colour || rowBackgroundColour)
+      .attr("stroke-opacity", linkOppacity)
+      .attr("stroke-width", (d) => d.width || 1)
+      .attr("fill", "none");
+
+    // Add text labels for Names
+    view
+      .selectAll("text.node")
+      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
+      .join("text")
+      .classed("node", true)
+      .attr("x", (d) => d.x1 || -1)
+      .attr("dx", 6)
+      .attr(
+        "y",
+        (d) =>
+          (d.y0_backdrop || 0) +
+          ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+      )
+      .attr("dy", "0.35em")
+      .attr("fill", "black")
+      .attr("text-anchor", "start")
+      .attr("font-size", 10)
+      .attr("font-family", "Arial, sans-serif")
+      .text((d) => {if (typeof d.id === "string") {return d.name} else {return d.name }})
+
+      .filter((d) => (d.x1 || 0) > width / 2)
+      .attr("x", (d) => d.x0 || 0)
+      .attr("dx", -6)
+      .attr("text-anchor", "end")
+
+
+    // Add text labels for time.
+    view
+      .selectAll("text.nodeTime")
+      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
+      .join("text")
+      .classed("node", true)
+      .attr("x", 0)
+      .attr("dx", 0)
+      .attr(
+        "y",
+        (d) =>
+          (d.y0_backdrop || 0) +
+          ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+      )
+      .attr("dy", "0.35em")
+      .attr("fill", "black")
+      .attr("text-anchor", "start")
+      .attr("font-size", 10)
+      .attr("font-family", "Arial, sans-serif")
+      .text((d) => {if (typeof d.id === "string") {return ""} else {return Utils.formatTextTime(d)}})
+      .filter((d) => (d.x1 || 0) > width / 2)
+      .attr("x", width)
+      .attr("dx", 0)
+      .attr("text-anchor", "end")
+
+    // Add <title> hover effect on links.
+    links.append("title").text((d) => {
+      const sourceName = graph.fromNodes.find((n) => Utils.sameId(n.id, d.fNId))?.name;
+      const targetName = graph.toNodes.find((n) => Utils.sameId(n.id, d.tNId))?.name;
+      return Utils.formatTextLink(
+        sourceName || " – ",
+        targetName || " – ",
+        d
+      );
+    });
+
+    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
+    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
+
+    const tripIdCompare = (a: TripId, b: TripId) => {
+      return (
+        a.station_id === b.station_id &&
+        a.train_nr === b.train_nr &&
+        a.time === b.time &&
+        a.target_station_id === b.target_station_id &&
+        a.line_id === b.line_id &&
+        a.target_time === b.target_time
+      );
+    };
+
+    const sameId = (a: TripId | string, b: TripId | string) => {
+      if (typeof a !== "string" && typeof b !== "string")
+        return tripIdCompare(a, b);
+      if (typeof a !== typeof b) return false;
+      else return a === b;
+    };
+
+    function branchAnimate(_: MouseEvent, node: Node) {
+      const focusLinks = view.selectAll("path.link").filter((l) => {
+        return (
+          sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
+        );
+      });
+      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+
+      const clearLinks = view.selectAll("path.link").filter((l) => {
+        return (
+          !sameId((l as Link).tNId, node.id) &&
+          !sameId((l as Link).fNId, node.id)
+        );
+      });
+      clearLinks.attr("stroke-opacity", linkOppacityClear);
+    }
+
+    function branchClear() {
+      links.attr("stroke-opacity", linkOppacity);
+    }
+
+    backdrop.on("mouseover", branchAnimate);
+    backdrop.on("mouseout", branchClear);
+    nodes.on("mouseover", branchAnimate);
+    nodes.on("mouseout", branchClear);
+    overflow.on("mouseover", branchAnimate);
+    overflow.on("mouseout", branchClear);
+
+    function linkAnimate(_: MouseEvent, link: Link) {
+      const focusLinks = view.selectAll("path.link").filter((l) => {
+        return (l as Link).id === link.id;
+      });
+      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+
+      const clearLinks = view.selectAll("path.link").filter((l) => {
+        return (l as Link).id !== link.id;
+      });
+      clearLinks.attr("stroke-opacity", linkOppacityClear);
+    }
+
+    function linkClear() {
+      links.attr("stroke-opacity", linkOppacity);
+    }
+
+    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
   }, [data, height, width, nodeWidth, nodePadding, duration, svgHeightUmsteiger]);
 
   return (

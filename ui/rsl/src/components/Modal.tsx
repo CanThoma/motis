@@ -27,16 +27,8 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
       <div className="modal-backdrop" onClick={() => setIsOpen(false)} />
       <div className="container">
         <div className="modalContent">
-          <img
-            //src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flogos-world.net%2Fwp-content%2Fuploads%2F2021%2F02%2FDeutsche-Bahn-Logo.png&f=1&nofb=1"
-            src="https://img.pr0gramm.com/2016/09/11/2b7c3fefe833e987.jpg"
-            alt="Bierdurst!!!!"
-          />
-          <a href="https://de.wikipedia.org/wiki/Steinieform">
-            {param && param.node.name}
-          </a>
           <p style={{ marginBottom: "10px" }}>
-            Ich biete voll so hilfreiche Informationen für diesen Bahnhof!
+            Personen die hier umgestiegen sind nahmen folgende Verbindungen:
           </p>
           <div className="app mt-16 text-center" >
             {param && (

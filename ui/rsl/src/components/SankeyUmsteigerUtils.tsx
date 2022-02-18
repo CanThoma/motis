@@ -245,7 +245,7 @@ export default class UmsteigerUtils {
       };
     };
     for (const i in tNodesFinished) {
-      if (typeof fNodesFinished[i].id === "string") continue;
+      if (typeof tNodesFinished[i].id === "string") continue;
       tNodesFinished[i] = {
         ...tNodesFinished[i],
         colour: this.colour((Number(i) + 1) / tNodesFinished.length),
@@ -338,13 +338,13 @@ export default class UmsteigerUtils {
         cNode.x0 = x0;
 
         calcNodes.push(cNode);
-        finalHeight = Math.max(finalHeight, cNode.y0)
+        finalHeight = Math.max(finalHeight, cNode.y1)
       };
       return calcNodes;
     };
 
     fNodesFinished = calcNodeXY(fNodesFinished,50,nodeWidth + 50);
-    fNodesFinished = calcNodeXY(fNodesFinished,width - nodeWidth - 50,width - 50);
+    tNodesFinished = calcNodeXY(tNodesFinished,width - nodeWidth - 50,width - 50);
 
     onSvgResize( finalHeight + 20); // set height of svg to the bottom of the last node + 20
 
@@ -355,9 +355,12 @@ export default class UmsteigerUtils {
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
 
-      const currentLinks = [
-        ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
-      ]
+      const currentLinks = links.filter((a) => this.sameId(a.fNId, fNodeId)).sort(
+        (a,b) => {
+          if(this.getNode(tNodesFinished,a.tNId).time>this.getNode(tNodesFinished,b.tNId).time) return -1;
+          if(this.getNode(tNodesFinished,a.tNId).time<this.getNode(tNodesFinished,b.tNId).time) return 1;
+          else return 0;
+        });
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -379,9 +382,7 @@ export default class UmsteigerUtils {
 
     for (const cNode of tNodesFinished) {
       const tNodeId = cNode.id;
-      const currentLinks = [
-        ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
-      ];
+      const currentLinks = calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)).reverse();
 
       let offset = 0;
       for (const i in currentLinks) {
