@@ -48,6 +48,13 @@ const SankeyUmsteigerGraph = ({
   const rowBackgroundColour = "#cacaca";
   const backdropOppacity = 0.7;
 
+  console.log("POG",{
+    stationId: stationId,
+    startTime: startTime,
+    endTime: endTime,
+    maxCount: 0,
+    onlyIncludeTripIds:[... onlyIncludeTripId]
+  })
   const data = ExtractStationData({
     stationId: stationId,
     startTime: startTime,

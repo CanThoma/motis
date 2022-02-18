@@ -146,7 +146,7 @@ export default class UmsteigerUtils {
     const fuPaxColour = "#f20544";
 
 
-    const minNodeHeight = 2;
+    const minNodeHeight = 2.5;
 
     // fügt previous node zu falls umsteiger existieren und gibt ihr die farbe
 
@@ -237,20 +237,21 @@ export default class UmsteigerUtils {
 
     // assign every node a colour depending on the amount of nodes on every side
 
-    for (const i in fNodesFinished) {
-      if (typeof fNodesFinished[i].id === "string") continue;
-      fNodesFinished[i] = {
-        ...fNodesFinished[i],
-        colour: this.colour((Number(i) + 1) / fNodesFinished.length),
+
+    const calcColour = (nArray: Node[]) => {
+      const calcNodes = [];
+      for (const i in nArray) {
+        const cNode = nArray[i];
+        if (typeof cNode.id === "string") continue;
+        calcNodes
+          .push({...cNode,
+          colour: this.colour((Number(i) + 1) / nArray.length)})
       };
+      return calcNodes
     };
-    for (const i in tNodesFinished) {
-      if (typeof tNodesFinished[i].id === "string") continue;
-      tNodesFinished[i] = {
-        ...tNodesFinished[i],
-        colour: this.colour((Number(i) + 1) / tNodesFinished.length),
-      };
-    };
+
+    fNodesFinished = calcColour(fNodesFinished);
+    tNodesFinished = calcColour(tNodesFinished);
 
     // Berechnen der Höhe der Nodes.
 
@@ -352,15 +353,32 @@ export default class UmsteigerUtils {
 
     const calculatedLinks: Link[] = [];
 
+    const indexOfTripId = (
+      idArray: (string | TripId)[],
+      id: string | TripId
+    ) => {
+      return idArray.findIndex((idX) => this.sameId(idX, id));
+    };
+
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
 
-      const currentLinks = links.filter((a) => this.sameId(a.fNId, fNodeId)).sort(
-        (a,b) => {
-          if(this.getNode(tNodesFinished,a.tNId).time>this.getNode(tNodesFinished,b.tNId).time) return -1;
-          if(this.getNode(tNodesFinished,a.tNId).time<this.getNode(tNodesFinished,b.tNId).time) return 1;
-          else return 0;
-        });
+      const tempArray = tNodesFinished.map((n)=> n.id)
+      const currentLinks = links.filter((a) =>
+        this.sameId(a.fNId, fNodeId))
+        .sort((a, b) =>  {
+        if (
+          indexOfTripId(tempArray, a.tNId) >
+          indexOfTripId(tempArray, b.tNId)
+        )
+          return -1;
+        if (
+          indexOfTripId(tempArray, a.tNId) <
+          indexOfTripId(tempArray, b.tNId)
+        )
+          return 1;
+        else return 0;
+      });
 
       let offset = 0;
       for (const i in currentLinks) {
