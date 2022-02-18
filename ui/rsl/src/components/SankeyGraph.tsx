@@ -32,7 +32,7 @@ const SankeyGraph = ({
 
   const [svgHeight, setSvgHeight] = useState(600);
   const [isOpen, setIsOpen] = useState(false);
-  const [clickedNode, setClickedNode] = useState<{ node: Node , tripId: TripId }>();
+  const [clickedNode, setClickedNode] = useState<{ node: Node , tripId: TripId, time: number }>();
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -184,6 +184,12 @@ const SankeyGraph = ({
       .attr("fill", "none")
       .each(setDash);
 */
+
+    // temporary time to give to Modal
+    const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
+    const theUnixTime = someDate.getTime() / 1000;
+    const aTime = theUnixTime - (theUnixTime % 1800);
+
     // Add text labels.
     view
       .selectAll("text.node")
@@ -206,7 +212,7 @@ const SankeyGraph = ({
       .text((d) => d.name)
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode({node: d, tripId: tripId});
+        setClickedNode({node: d, tripId: tripId, time: aTime});
       })
       .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
@@ -216,7 +222,7 @@ const SankeyGraph = ({
       .attr("cursor", "pointer")
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode({node: d, tripId: tripId});
+        setClickedNode({node: d, tripId: tripId, time: aTime});
       });
 
     // Add <title> hover effect on links.
