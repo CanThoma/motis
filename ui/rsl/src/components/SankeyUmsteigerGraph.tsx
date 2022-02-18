@@ -3,7 +3,7 @@ import { select as d3Select } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyStationTypes";
-import Utils from "./SankeyStationUtils";
+import Utils from "./SankeyUmsteigerUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import * as d3 from "d3";
@@ -28,7 +28,6 @@ const SankeyUmsteigerGraph = ({
   time,
   maxCount,
   onlyIncludeTripId,
-  //onTripSelected,
   width = 1200,
   height = 600,
   nodeWidth = 25,
@@ -50,7 +49,6 @@ const SankeyUmsteigerGraph = ({
     onlyIncludeTripIds:[... onlyIncludeTripId]
   });;
 
-  console.log("data",data)
   React.useEffect(() => {
     const handleSvgResize = (newSize: number) => {
       setSvgHeight(newSize);

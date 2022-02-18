@@ -361,7 +361,7 @@ export default class StationUtils {
         tDif = currentFNode.backdropHeight - currentTNode.backdropHeight;
       }
 
-      // calc height difference between the extra nodes generated in case of a train having reached > 100% cap
+      // calc height difference between the nodes generated in case of a train having reached > 100% cap
       let fullPadding = 0;
       let fNodeFullPadding = 0;
       let tNodeFullPadding = 0;
@@ -388,7 +388,7 @@ export default class StationUtils {
           fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0
         ) + fullPadding;
 
-      // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
+      // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Padding
       currentTNode.y0_backdrop =
         y1_start + (i === 0 ? 0 : nodePadding) + tDif / 2;
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
@@ -438,9 +438,6 @@ export default class StationUtils {
 
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
-      const currentNodeIndex = fNodesFinished.findIndex((n) =>
-        this.sameId(n.id, fNodeId)
-      );
 
       const currentLinks = [
         ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
@@ -457,10 +454,6 @@ export default class StationUtils {
           return 1;
         else return 0;
       });
-      // .reverse();
-
-      // initialisieren des sourceLink arrays, da vorher undefined
-      fNodesFinished[currentNodeIndex].sourceLinks = [];
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -475,7 +468,6 @@ export default class StationUtils {
         offset += width;
 
         calculatedLinks.push(l);
-        (fNodesFinished[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
 
@@ -483,9 +475,6 @@ export default class StationUtils {
 
     for (const cNode of tNodesFinished) {
       const tNodeId = cNode.id;
-      const currentNodeIndex = fNodesFinished.findIndex((n) =>
-        this.sameId(n.id, tNodeId)
-      );
       const currentLinks = [
         ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
       ].sort((a, b) => {
@@ -501,10 +490,6 @@ export default class StationUtils {
           return 1;
         else return 0;
       });
-      //.reverse();
-
-      // initialisieren des targetLink arrays, da vorher undefined
-      tNodesFinished[currentNodeIndex].targetLinks = [];
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -518,7 +503,6 @@ export default class StationUtils {
           // Ziel bestimmt die Farbe der Knoten
           // currentLink.colour = currentNode.colour;
           finishedLinks.push(l);
-          (tNodesFinished[currentNodeIndex].targetLinks || []).push(l);
         }
       }
     }
