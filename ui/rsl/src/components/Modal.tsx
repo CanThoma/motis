@@ -19,7 +19,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
   else
   return (
     <>
-      <div className="modal-backdrop" onClick={() => setIsOpen(false)} />
+      <div className="modal-backdrop " onClick={() => setIsOpen(false)} />
       <div className="container">
         <div className="modalContent">
           <p style={{ marginBottom: "10px" }}>
