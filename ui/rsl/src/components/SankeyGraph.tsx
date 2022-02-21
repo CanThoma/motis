@@ -115,7 +115,7 @@ const SankeyGraph = ({
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrops = view
       .selectAll("rect.nodeBackdrop")
-      .data(graph.nodes)
+      .data(graph.nodes.filter((n)=> (n.nodeHeight || 0) === 0))
       .join("rect")
       .classed("backdrop", true)
       .attr("id", (d) => d.id + "_backdrop")
@@ -149,6 +149,9 @@ const SankeyGraph = ({
 
     // Add titles for node hover effects.
     nodes
+      .append("title")
+      .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
+    backdrops
       .append("title")
       .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
 
@@ -186,6 +189,7 @@ const SankeyGraph = ({
 */
 
     // temporary time to give to Modal
+    // TODO give aTime time of node
     const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
     const theUnixTime = someDate.getTime() / 1000;
     const aTime = theUnixTime - (theUnixTime % 1800);
@@ -270,6 +274,7 @@ const SankeyGraph = ({
     //nodes.on("mouseover", branchAnimate).on("mouseout", branchClear);
     // Das für ein einfaches Show/Don't Show
     nodes.on("mouseover", branchShow).on("mouseout", branchClear);
+    backdrops.on("mouseover", branchShow).on("mouseout", branchClear);
 
     function linkAnimate(_: MouseEvent, link: Link) {
       const links = view.selectAll("path.link").filter((l) => {

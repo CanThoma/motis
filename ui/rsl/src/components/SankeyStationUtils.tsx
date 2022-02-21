@@ -57,7 +57,7 @@ export default class StationUtils {
   };
 
   static calcNodeHeightWithoutMinHeight = (value: number): number => {
-    return value / 4;
+    return value / 5;
   };
 
   /**
@@ -350,7 +350,6 @@ export default class StationUtils {
         }
       }
 
-      // TODO
       let fDif = 0;
       if (currentFNode.backdropHeight < currentTNode.backdropHeight) {
         fDif = currentTNode.backdropHeight - currentFNode.backdropHeight;
@@ -384,8 +383,8 @@ export default class StationUtils {
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
       const y1_start =
         Math.max(
-          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0,
-          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0
+          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5,
+          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5
         ) + fullPadding;
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Padding

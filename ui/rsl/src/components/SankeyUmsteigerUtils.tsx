@@ -318,7 +318,6 @@ export default class UmsteigerUtils {
         const cNode = nArray[i];
         if (!(cNode.backdropHeight && cNode.nodeHeight)) continue;
 
-
         // calc height difference between the nodes generated in case of a train having reached > 100% cap
 
         let diff = 0;

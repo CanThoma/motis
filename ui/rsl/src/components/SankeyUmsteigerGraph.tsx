@@ -37,8 +37,8 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const startTime = time - 2.5*60*60;
-  const endTime = time + 2.5*60*60;
+  const startTime = time - 5*60*60;
+  const endTime = time + 5*60*60;
 
   const linkOppacity = 0.4;
   const linkOppacityFocus = 0.7;

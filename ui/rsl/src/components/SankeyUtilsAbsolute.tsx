@@ -222,21 +222,26 @@ export default class Utils {
         leftNodes[i].totalNodeValue || 0
       );
 
+      const lDif = Math.max(this.calcNodeHeight(leftNodes[i].biggerNodeTotalValue||0)-this.calcNodeHeight(leftNodes[i].totalNodeValue||0),0);
+      const rDif = Math.max(this.calcNodeHeight(rightNodes[i].biggerNodeTotalValue||0)-this.calcNodeHeight(rightNodes[i].totalNodeValue||0),0);
+
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
-      const y1_start = rightNodes[Math.max(0, i - 1)].y1_backdrop || 0;
+      const y1_start =
+        Math.max(leftNodes[Math.max(0, i-1 )].y1_backdrop || 5,
+          rightNodes[Math.max(0, i - 1)].y1_backdrop || 5);
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
       // rightNodes[i].y0_backdrop = y1_start + (i === 0 ? 0 : nodePadding);
       // beginne auch schon beim ersten Node mit Padding, da sonst bei leeren Ersthaltestellen
       // die Schrift abgehackt ist.
-      rightNodes[i].y0_backdrop = y1_start + nodePadding;
+      rightNodes[i].y0_backdrop = y1_start + nodePadding + rDif/2;
 
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
       rightNodes[i].y1_backdrop =
-        (rightNodes[i].y0_backdrop || 0) + (rightNodes[i].backdropHeight || 0);
+        (rightNodes[i].y0_backdrop || this.calcNodeHeight(1)) + (rightNodes[i].nodeHeight || this.calcNodeHeight(1));
       // Die y-Koordinaten beider Backdrops sind identisch
-      leftNodes[i].y0_backdrop = rightNodes[i].y0_backdrop;
-      leftNodes[i].y1_backdrop = rightNodes[i].y1_backdrop;
+      leftNodes[i].y0_backdrop = y1_start + nodePadding + lDif/2;
+      leftNodes[i].y1_backdrop =  (leftNodes[i].y0_backdrop || this.calcNodeHeight(1)) + (leftNodes[i].nodeHeight || this.calcNodeHeight(1));
 
       // Das untere Ende von Backdrop und dem eigentlich Knoten stimmen überein
       rightNodes[i].y1 = rightNodes[i].y1_backdrop;
