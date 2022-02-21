@@ -32,6 +32,7 @@ type ExtTripId = TripId & {
   pax: number;
   cap: number;
   interstation_time: number;
+  stationID: string;
 };
 type NodeCapacityInfo = {
   cap: number;
@@ -83,12 +84,9 @@ function ToExtTripId(tripId: TripId): ExtTripId {
     pax: 0,
     cap: 0,
     interstation_time: 0,
+    stationID: "",
   };
   return extTripId;
-}
-enum TripDirection {
-  FROM,
-  TO,
 }
 
 /**
@@ -224,6 +222,7 @@ export function ExtractStationData(
 
           exttid.pax = interchange.groups.max_passenger_count;
           exttid.cap = 1;
+          exttid.stationID = arrivalInfo.station.id;
 
           arrivingStationIndex = arrivingTripsInStation.length;
           arrivingTripsInStation.push(exttid);
@@ -250,7 +249,8 @@ export function ExtractStationData(
           exttid.interstation_time = departureInfo.schedule_time;
 
           exttid.pax = interchange.groups.max_passenger_count;
-          exttid.cap = 500; //TBI
+          exttid.cap = 1; //TBI
+          exttid.stationID = departureInfo.station.id;
 
           departureStationIndex = departingTripsInStation.length;
           departingTripsInStation.push(exttid);
@@ -371,6 +371,15 @@ export function ExtractStationData(
   const arrivingTripIds: TripId[] = graph.fromNodes.flatMap(({ id }) => {
     return typeof id === "string" ? [] : id;
   });
+  const arrivingTripIdStations: { tripId: TripId; stationId: string }[] =
+    arrivingTripsInStation.map((x) => {
+      return { tripId: ToTripId(x), stationId: x.stationID };
+    });
+  const departingTripIdStations: { tripId: TripId; stationId: string }[] =
+    departingTripsInStation.map((x) => {
+      return { tripId: ToTripId(x), stationId: x.stationID };
+    });
+
   const previousData = data;
   const { data: status } = usePaxMonStatusQuery();
   {
@@ -390,7 +399,10 @@ export function ExtractStationData(
       console.assert(data.length + 2 == graph.fromNodes.length);
       for (let i = 0; i < data.length; i++) {
         const tsi = data[i];
-        const edge = tsi.edges.find((edge) => edge.to.id == params.stationId);
+        const arrivingStationId = arrivingTripIdStations.find((x) =>
+          SameTripId(x.tripId, tsi.tsi.trip)
+        )?.stationId;
+        const edge = tsi.edges.find((edge) => edge.to.id === arrivingStationId);
         graph.fromNodes[i + 2].name = NameTrip(tsi.tsi);
         // it will not find an edge, if the trip is nahverkehr but station is fernverkehr (?)
         if (edge) {
@@ -400,6 +412,10 @@ export function ExtractStationData(
           // situation: we do not have information about the train at params.stationId, because the trip we have found searching
           // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
           // this is a backend problem :shrug:
+          console.log(
+            "TO-STATION " + arrivingStationId + " NOT FOUND IN ",
+            tsi.edges
+          );
           const maxCapacity = tsi.edges.reduce(
             (max, ef) => (ef.capacity ? Math.max(max, ef.capacity) : max),
             0
@@ -436,7 +452,12 @@ export function ExtractStationData(
       console.assert(data.length + 2 == graph.toNodes.length);
       for (let i = 0; i < data.length; i++) {
         const tsi = data[i];
-        const edge = tsi.edges.find((edge) => edge.from.id == params.stationId);
+        const departingStationId = departingTripIdStations.find((x) =>
+          SameTripId(x.tripId, tsi.tsi.trip)
+        )?.stationId;
+        const edge = tsi.edges.find(
+          (edge) => edge.from.id === departingStationId
+        );
         graph.toNodes[i].name = NameTrip(tsi.tsi);
         // it will not find an edge, if the trip is nahverkehr but station is fernverkehr (?)
         if (edge) {
@@ -446,6 +467,10 @@ export function ExtractStationData(
           // situation: we do not have information about the train at params.stationId, because the trip we have found searching
           // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
           // this is a backend problem :shrug:
+          console.log(
+            "FROM-STATION " + departingStationId + " NOT FOUND IN ",
+            tsi.edges
+          );
           const maxCapacity = tsi.edges.reduce(
             (max, ef) => (ef.capacity ? Math.max(max, ef.capacity) : max),
             0
