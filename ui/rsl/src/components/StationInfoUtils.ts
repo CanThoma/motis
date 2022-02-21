@@ -168,8 +168,10 @@ export function ExtractStationData(
       const departureLengthRequirement = interchange.departure.length == 1;
 
       // assume error if length != 1 (all cases seemed to fulfill this property)
-      const arrivalTripsRequirement = interchange.arrival[0].trips.length == 1;
+      const arrivalTripsRequirement =
+        arrivalLengthRequirement && interchange.arrival[0].trips.length == 1;
       const departureTripsRequirement =
+        departureLengthRequirement &&
         interchange.departure[0].trips.length == 1;
 
       return (
@@ -190,7 +192,6 @@ export function ExtractStationData(
       let arrivalInfo = interchange.arrival[0];
       //zwischenstop/start
       let departureInfo = interchange.departure[0];
-
       /* do not include node/link information for trips that don't fit the filter criteria */
       if (
         params.onlyIncludeTripIds &&
@@ -221,9 +222,8 @@ export function ExtractStationData(
           let exttid = ToExtTripId(trip.trip);
           exttid.interstation_time = arrivalInfo.schedule_time;
 
-          //TODO: move pax and cap to other query?
           exttid.pax = interchange.groups.max_passenger_count;
-          exttid.cap = 1; //TBI
+          exttid.cap = 1;
 
           arrivingStationIndex = arrivingTripsInStation.length;
           arrivingTripsInStation.push(exttid);
@@ -249,7 +249,6 @@ export function ExtractStationData(
           const exttid = ToExtTripId(trip.trip);
           exttid.interstation_time = departureInfo.schedule_time;
 
-          //TODO: move pax and cap to other query?
           exttid.pax = interchange.groups.max_passenger_count;
           exttid.cap = 500; //TBI
 
