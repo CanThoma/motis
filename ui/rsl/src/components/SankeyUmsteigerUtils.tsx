@@ -80,7 +80,7 @@ export default class UmsteigerUtils {
     tNodeName: string,
     link: Link
   ): string => {
-    return `${link.value} Personen \n ${fNodeName.includes("\u2192")?fNodeName.substr(0,fNodeName.indexOf(" \u2192")):fNodeName} \u2192 ${tNodeName.includes("\u2192")?tNodeName.substr(0,tNodeName.indexOf(" \u2192")):tNodeName}}`;
+    return `${link.value} Personen \n ${fNodeName.includes("\u2192")?fNodeName.substr(0,fNodeName.indexOf(" \u2192")):fNodeName} \u2192 ${tNodeName.includes("\u2192")?tNodeName.substr(0,tNodeName.indexOf(" \u2192")):tNodeName}`;
   };
 
   static createSankeyLink = (
@@ -238,20 +238,26 @@ export default class UmsteigerUtils {
     // assign every node a colour depending on the amount of nodes on every side
 
 
-    const calcColour = (nArray: Node[]) => {
+    const calcColour = (nArray: Node[], n: number) => {
       const calcNodes = [];
       for (const i in nArray) {
         const cNode = nArray[i];
         if (typeof cNode.id === "string") continue;
-        calcNodes
-          .push({...cNode,
-          colour: this.colour((Number(i) + 1) / nArray.length)})
+        if (Number(i) === n) {
+          calcNodes
+            .push({...cNode,
+              colour: "#f20544"})
+          } else {
+          calcNodes
+            .push({...cNode,
+              colour: this.colour((Number(i) + 1) / nArray.length)})
+        };
       };
       return calcNodes
     };
 
-    fNodesFinished = calcColour(fNodesFinished);
-    tNodesFinished = calcColour(tNodesFinished);
+    fNodesFinished = calcColour(fNodesFinished, fNodesFinished.length-1);
+    tNodesFinished = calcColour(tNodesFinished, 0);
 
     // Berechnen der Höhe der Nodes.
 
