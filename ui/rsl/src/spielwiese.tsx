@@ -16,7 +16,7 @@ import SankeyStationGraph from "./components/SankeyStationGraph";
 import StationPicker from "./components/StationPicker";
 
 import "./components/Modal.styles.css";
-import {defaults} from "autoprefixer";
+import { defaults } from "autoprefixer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,7 +131,7 @@ class App extends React.Component {
     const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
     const theUnixTime = someDate.getTime() / 1000;
     const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-    const endTime = startTime + 30 * 60; // dd-mm-yy 9:30
+    const endTime = startTime + 0.5 * 60 * 60; // dd-mm-yy 9:30
 
     return (
       <QueryClientProvider client={queryClient}>
@@ -218,7 +218,7 @@ class App extends React.Component {
                 </div>
               </div>
             </div>
-            <div className="app mt-16 text-center" >
+            <div className="app mt-16 text-center">
               <h1>{subHeadline}</h1>
               <h2 className="text-gray-500">{headline}</h2>
               {selectedTrip && (
