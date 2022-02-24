@@ -53,7 +53,7 @@ const SankeyUmsteigerGraph = ({
     startTime: startTime,
     endTime: endTime,
     maxCount: 0,
-    onlyIncludeTripIds: [...onlyIncludeTripId],
+    //onlyIncludeTripIds: [...onlyIncludeTripId],
   });
 
   React.useEffect(() => {

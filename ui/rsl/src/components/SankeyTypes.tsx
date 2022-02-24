@@ -2,6 +2,10 @@ type Node = {
   name: string;
   id: string;
   sId: string;
+  arrival_current_time: number;
+  arrival_schedule_time: number;
+  departure_current_time: number;
+  departure_schedule_time: number;
   offset?: number;
   colour?: string;
   biggerNodeTotalValue?: number;
@@ -45,6 +49,10 @@ type NodeMinimal = {
   id: string;
   sId: string;
   name: string;
+  arrival_current_time: number;
+  arrival_schedule_time: number;
+  departure_current_time: number;
+  departure_schedule_time: number;
 };
 
 type LinkMinimal = {
