@@ -44,6 +44,49 @@ export default class Utils {
       .reduce((sum, current) => sum + current.value, 0);
   };
 
+  // TODO: Wie reagieren wir auf GMT+2?
+  // Haben wir das immer? das wäre ne verdammt wichtige Frage :(
+  static renderTime = (time) => {
+    let minutes = Math.floor((time / (1000 * 60)) % 60);
+    let hours = Math.floor((time / (1000 * 60 * 60)) % 24);
+
+    hours = hours < 10 ? "0" + hours : hours;
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+
+    return `${hours}:${minutes}Uhr`;
+  };
+
+  // Zeit unterschied in Minuten
+  static renderTimeDifference = (arrival, schedule) => {
+    return Math.floor((arrival - schedule) / (1000 * 60));
+  };
+
+  static renderDelay = (tmp) => {
+    tmp
+      .append("tspan")
+      .text((d) => {
+        const diff = Utils.renderTimeDifference(
+          d.arrival_current_time,
+          d.arrival_schedule_time
+        );
+
+        if (diff === 0) return "";
+        if (diff > 0) return ` +${diff}min`;
+        return ` ${diff}min`;
+      })
+      .attr("fill", (d) => {
+        const diff = Utils.renderTimeDifference(
+          d.arrival_current_time,
+          d.arrival_schedule_time
+        );
+
+        if (diff === 0) return "";
+        if (diff > 0) return "red";
+        return "green";
+      })
+      .attr("font-weight", "bold");
+  };
+
   /**
    * Berechnet die relative Höhe eines Knotens basierend auf dem
    * Gesamtvalue (= gesamte Passagieranzahl),
@@ -126,7 +169,8 @@ export default class Utils {
     nodeWidth: number,
     width: number,
     y0: number,
-    y1: number
+    y1: number,
+    leftOffset: number
   ): string => {
     // +++++++++ Kurz +++++++++
     // Beispielpfad: d="M20,461.58662092624354C300,461.58662092624354,300,337.6243567753003,580,337.6243567753003"
@@ -138,9 +182,9 @@ export default class Utils {
   
       C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s). 
        */
-    return `M${nodeWidth},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth
-    },${y1}`;
+    return `M${nodeWidth + leftOffset},${y0}C${width / 2},${y0},${
+      width / 2
+    },${y1},${width - nodeWidth - leftOffset},${y1}`; // Hab mich entschieden auch auf der rechten Seite was einzublenden
   };
 
   static formatTextNode = (name: string, nodeValue: number): string => {
@@ -164,6 +208,7 @@ export default class Utils {
     width, // TODO: Ist hier die Übergabe die richtige Wahl oder die Config Datei?!
     nodeWidth,
     nodePadding,
+    leftTimeOffset,
   }: createGraphInterface): SankeyInterface => {
     // #####################################################################################
     // Berechnung der Nodes
@@ -188,6 +233,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
+        arrival_current_time: nodes[i].arrival_current_time,
+        arrival_schedule_time: nodes[i].arrival_schedule_time,
+        departure_current_time: nodes[i].departure_current_time,
+        departure_schedule_time: nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: leftLinkSum,
@@ -196,6 +245,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
+        arrival_current_time: nodes[i].arrival_current_time,
+        arrival_schedule_time: nodes[i].arrival_schedule_time,
+        departure_current_time: nodes[i].departure_current_time,
+        departure_schedule_time: nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: rightLinkSum,
@@ -222,26 +275,38 @@ export default class Utils {
         leftNodes[i].totalNodeValue || 0
       );
 
-      const lDif = Math.max(this.calcNodeHeight(leftNodes[i].biggerNodeTotalValue||0)-this.calcNodeHeight(leftNodes[i].totalNodeValue||0),0);
-      const rDif = Math.max(this.calcNodeHeight(rightNodes[i].biggerNodeTotalValue||0)-this.calcNodeHeight(rightNodes[i].totalNodeValue||0),0);
+      const lDif = Math.max(
+        this.calcNodeHeight(leftNodes[i].biggerNodeTotalValue || 0) -
+          this.calcNodeHeight(leftNodes[i].totalNodeValue || 0),
+        0
+      );
+      const rDif = Math.max(
+        this.calcNodeHeight(rightNodes[i].biggerNodeTotalValue || 0) -
+          this.calcNodeHeight(rightNodes[i].totalNodeValue || 0),
+        0
+      );
 
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
-      const y1_start =
-        Math.max(leftNodes[Math.max(0, i-1 )].y1_backdrop || 5,
-          rightNodes[Math.max(0, i - 1)].y1_backdrop || 5);
+      const y1_start = Math.max(
+        leftNodes[Math.max(0, i - 1)].y1_backdrop || 5,
+        rightNodes[Math.max(0, i - 1)].y1_backdrop || 5
+      );
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
       // rightNodes[i].y0_backdrop = y1_start + (i === 0 ? 0 : nodePadding);
       // beginne auch schon beim ersten Node mit Padding, da sonst bei leeren Ersthaltestellen
       // die Schrift abgehackt ist.
-      rightNodes[i].y0_backdrop = y1_start + nodePadding + rDif/2;
+      rightNodes[i].y0_backdrop = y1_start + nodePadding + rDif / 2;
 
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
       rightNodes[i].y1_backdrop =
-        (rightNodes[i].y0_backdrop || this.calcNodeHeight(1)) + (rightNodes[i].nodeHeight || this.calcNodeHeight(1));
+        (rightNodes[i].y0_backdrop || this.calcNodeHeight(1)) +
+        (rightNodes[i].nodeHeight || this.calcNodeHeight(1));
       // Die y-Koordinaten beider Backdrops sind identisch
-      leftNodes[i].y0_backdrop = y1_start + nodePadding + lDif/2;
-      leftNodes[i].y1_backdrop =  (leftNodes[i].y0_backdrop || this.calcNodeHeight(1)) + (leftNodes[i].nodeHeight || this.calcNodeHeight(1));
+      leftNodes[i].y0_backdrop = y1_start + nodePadding + lDif / 2;
+      leftNodes[i].y1_backdrop =
+        (leftNodes[i].y0_backdrop || this.calcNodeHeight(1)) +
+        (leftNodes[i].nodeHeight || this.calcNodeHeight(1));
 
       // Das untere Ende von Backdrop und dem eigentlich Knoten stimmen überein
       rightNodes[i].y1 = rightNodes[i].y1_backdrop;
@@ -253,11 +318,11 @@ export default class Utils {
       leftNodes[i].y1 = leftNodes[i].y1_backdrop;
       leftNodes[i].y0 = (leftNodes[i].y1 || 0) - (leftNodes[i].nodeHeight || 0);
 
-      leftNodes[i].x0 = 0;
-      leftNodes[i].x1 = 0 + nodeWidth;
+      leftNodes[i].x0 = leftTimeOffset; // AAAAAAAh , hiäär
+      leftNodes[i].x1 = leftTimeOffset + nodeWidth;
 
-      rightNodes[i].x0 = width - nodeWidth;
-      rightNodes[i].x1 = width;
+      rightNodes[i].x0 = width - nodeWidth - leftTimeOffset;
+      rightNodes[i].x1 = width - leftTimeOffset;
     }
 
     // Berechnung der Gesamthöhe, um die Höhe der .svg anzupassen

@@ -1,5 +1,5 @@
 import React, { MouseEvent, useRef, useState } from "react";
-import { select as d3Select } from "d3";
+import { select as d3Select, create as d3create } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
@@ -8,6 +8,7 @@ import { TripId } from "../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
 import Modal from "./Modal";
+import config from "../config";
 
 type Props = {
   tripId: TripId;
@@ -23,7 +24,7 @@ type Props = {
 const SankeyGraph = ({
   tripId,
   onStationSelected,
-  width = 600,
+  width = 1000,
   nodeWidth = 25,
   nodePadding = 15,
   duration = 250, // deprecated
@@ -32,7 +33,12 @@ const SankeyGraph = ({
 
   const [svgHeight, setSvgHeight] = useState(600);
   const [isOpen, setIsOpen] = useState(false);
-  const [clickedNode, setClickedNode] = useState<{ node: Node , tripId: TripId, time: number }>();
+  const [clickedNode, setClickedNode] = useState<{
+    node: Node;
+    tripId: TripId;
+    currentArrivalTime: number;
+    currentDepatureTime: number;
+  }>();
 
   //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
@@ -44,6 +50,8 @@ const SankeyGraph = ({
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
+
+  const leftTimeOffset = 100;
 
   const graphData = ExtractGroupInfoForThisTrain(tripId);
 
@@ -61,6 +69,7 @@ const SankeyGraph = ({
       width,
       nodeWidth,
       nodePadding,
+      leftTimeOffset,
     });
 
     const svg = d3Select(svgRef.current);
@@ -115,7 +124,7 @@ const SankeyGraph = ({
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrops = view
       .selectAll("rect.nodeBackdrop")
-      .data(graph.nodes.filter((n)=> (n.nodeHeight || 0) === 0))
+      .data(graph.nodes.filter((n) => (n.nodeHeight || 0) === 0))
       .join("rect")
       .classed("backdrop", true)
       .attr("id", (d) => d.id + "_backdrop")
@@ -165,7 +174,13 @@ const SankeyGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        Utils.createSankeyLink(
+          nodeWidth,
+          width,
+          d.y0 || 0,
+          d.y1 || 0,
+          leftTimeOffset
+        )
       )
       .attr("stroke", (d) => d.colour || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
@@ -188,12 +203,6 @@ const SankeyGraph = ({
       .each(setDash);
 */
 
-    // temporary time to give to Modal
-    // TODO give aTime time of node
-    const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
-    const theUnixTime = someDate.getTime() / 1000;
-    const aTime = theUnixTime - (theUnixTime % 1800);
-
     // Add text labels.
     view
       .selectAll("text.node")
@@ -212,11 +221,16 @@ const SankeyGraph = ({
       .attr("fill", "black")
       .attr("text-anchor", "start")
       .attr("font-size", 10)
-      .attr("font-family", "Arial, sans-serif")
+      .attr("font-family", config.font_family)
       .text((d) => d.name)
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode({node: d, tripId: tripId, time: aTime});
+        setClickedNode({
+          node: d,
+          tripId: tripId,
+          currentArrivalTime: d.arrival_current_time,
+          currentDepatureTime: d.departure_current_time,
+        });
       })
       .attr("cursor", "pointer")
       .filter((d) => (d.x1 || 0) > width / 2)
@@ -226,8 +240,142 @@ const SankeyGraph = ({
       .attr("cursor", "pointer")
       .on("click", (_, d) => {
         setIsOpen(true);
-        setClickedNode({node: d, tripId: tripId, time: aTime});
+        setClickedNode({
+          node: d,
+          tripId: tripId,
+          currentArrivalTime: d.arrival_current_time,
+          currentDepatureTime: d.departure_current_time,
+        });
       });
+
+    // *************************************************
+    // Add text labels for time.
+    /*
+    view
+      .selectAll("text.nodeTime")
+      .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
+      .join((enter) => {
+        const tmp = enter
+          .append("text")
+          .classed("node", true)
+          .attr("x", 0)
+          .attr("dx", leftTimeOffset - 5)
+          .attr(
+            "y",
+            (d) =>
+              (d.y0_backdrop || 0) +
+              ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+          )
+          .attr("dy", 2.5)
+          .attr("text-anchor", "end")
+          .attr("font-family", config.font_family)
+          .attr("font-size", 10)
+          .attr("fill", "#a8a8a8")
+          .attr("font-weight", "bold");
+
+        tmp.append("tspan").text((d) => "10:30Uhr");
+
+        tmp.append("tspan").text(" (");
+        tmp
+          .append("tspan")
+          .text("+100min")
+          .attr("fill", "red")
+          .attr("font-weight", "bold");
+        tmp.append("tspan").text(")");
+      });
+*/
+    view
+      .selectAll("text.nodeTime")
+      .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
+      .join((enter) => {
+        const tmp = enter
+          .append("text")
+          .classed("node", true)
+          .attr("x", 0)
+          .attr("dx", leftTimeOffset - 5)
+          .attr(
+            "y",
+            (d) =>
+              (d.y0_backdrop || 0) +
+              ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+          )
+          .attr("dy", 2.5)
+          .attr("text-anchor", "end")
+          .attr("font-family", config.font_family)
+          .attr("font-size", 10)
+          .attr("fill", "#a8a8a8")
+          .attr("font-weight", "bold");
+
+        // Die eigentliche Zeit
+        tmp
+          .append("tspan")
+          .text((d) => Utils.renderTime(d.arrival_current_time));
+
+        //tmp.append("tspan").text(" (");
+        // Die
+        Utils.renderDelay(tmp);
+
+        //tmp.append("tspan").text(")");
+        return tmp;
+      });
+
+    view
+      .selectAll("text.nodeTime")
+      .data(graph.nodes.filter((d) => (d.x1 || 0) > width / 2))
+      .join((enter) => {
+        const tmp = enter
+          .append("text")
+          .classed("node", true)
+          .attr("x", (d) => d.x0 || 0)
+          .attr("dx", 5 + nodeWidth)
+          .attr(
+            "y",
+            (d) =>
+              (d.y0_backdrop || 0) +
+              ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+          )
+          .attr("dy", 2.5)
+          .attr("text-anchor", "start")
+          .attr("font-family", config.font_family)
+          .attr("font-size", 10)
+          .attr("fill", "#a8a8a8")
+          .attr("font-weight", "bold");
+
+        // Die eigentliche Zeit
+        tmp
+          .append("tspan")
+          .text((d) => Utils.renderTime(d.arrival_current_time));
+
+        //tmp.append("tspan").text(" (");
+        // Die
+        Utils.renderDelay(tmp);
+
+        //tmp.append("tspan").text(")");
+        return tmp;
+      });
+    /*
+      .classed("node", true)
+      .attr("x", 0)
+      .attr("dx", leftTimeOffset - 5)
+      .attr(
+        "y",
+        (d) =>
+          (d.y0_backdrop || 0) +
+          ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
+      )
+      .attr("dy", 2.5)
+      .attr("fill", "#a8a8a8")
+      .attr("text-anchor", "end")
+      .attr("font-size", 10)
+      .attr("font-weight", "bold")
+      .attr("font-family", config.font_family)
+      //.text((d) => "10:30Uhr (+100min)")
+      .text((d) => "10:30Uhr")
+      .append("tspan")
+      .text("Bobo")
+
+      .text("--------");*/
+    // *************************************************
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
@@ -288,15 +436,7 @@ const SankeyGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [
-    graphData,
-    svgHeight,
-    width,
-    nodeWidth,
-    nodePadding,
-    duration,
-    onStationSelected,
-  ]);
+  }, [graphData]);
 
   return (
     <>

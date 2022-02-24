@@ -42,7 +42,7 @@ const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 
 const App = (): JSX.Element => {
   const [data, setDate] = useState(null);
-  const [width, setWidth] = useState(600);
+  const [width, setWidth] = useState(1000);
   const [height, setHeight] = useState(600);
   const [hedline, setHeadline] = useState("");
   const [subhedline, setSubHeadline] = useState("");

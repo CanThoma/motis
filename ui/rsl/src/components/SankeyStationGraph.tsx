@@ -400,12 +400,16 @@ const SankeyStationGraph = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
 
     thomas = false;
+    console.log(data);
+    console.log(thomas);
   }, [data]);
 
   return (
     <>
-      {!data && <div>Daten zum Zug nicht verfügbar</div>}
-      {thomas && <Loading />}
+      {(!data || !data.links.length) && (
+        <div>Daten zum Zug nicht verfügbar</div>
+      )}
+      {thomas && data.links.length > 0 && <Loading />}
       {!thomas && (
         <>
           <svg

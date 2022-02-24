@@ -181,6 +181,8 @@ export default class Utils {
     const leftNodes: Node[] = [];
     const rightNodes: Node[] = [];
 
+    console.log(nodes);
+
     // Zuordnen der Links zu den passenden Stationen
     // Gleichzeitiges Sammeln der Values – Hier die Passagieranzahl.
     for (let i = 0; i < nodes.length; i++) {
@@ -198,6 +200,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
+        arrival_current_time: nodes[i].arrival_current_time,
+        arrival_schedule_time: nodes[i].arrival_schedule_time,
+        departure_current_time: nodes[i].departure_current_time,
+        departure_schedule_time: nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: leftLinkSum,
@@ -206,6 +212,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
+        arrival_current_time: nodes[i].arrival_current_time,
+        arrival_schedule_time: nodes[i].arrival_schedule_time,
+        departure_current_time: nodes[i].departure_current_time,
+        departure_schedule_time: nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: rightLinkSum,

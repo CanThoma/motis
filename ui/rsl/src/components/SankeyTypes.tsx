@@ -69,6 +69,7 @@ interface createGraphInterface {
   width: number;
   nodeWidth: number;
   nodePadding: number;
+  leftTimeOffset: number;
 }
 
 export type {

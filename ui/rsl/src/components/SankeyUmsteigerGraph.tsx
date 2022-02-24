@@ -11,7 +11,8 @@ import config from "../config";
 
 type Props = {
   stationId: string;
-  time: number;
+  currentArrivalTime: number;
+  currentDepatureTime: number;
   maxCount: number;
   onlyIncludeTripId: TripId[];
   width?: number;
@@ -23,7 +24,8 @@ type Props = {
 
 const SankeyUmsteigerGraph = ({
   stationId,
-  time,
+  currentArrivalTime,
+  currentDepatureTime,
   maxCount,
   onlyIncludeTripId,
   width = 600,
@@ -35,11 +37,6 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  // TODO: :)
-
-  const startTime = time - 5 * 60 * 60;
-  const endTime = time + 5 * 60 * 60;
-
   const linkOppacity = 0.4;
   const linkOppacityFocus = 0.7;
   const linkOppacityClear = 0.05;
@@ -50,8 +47,8 @@ const SankeyUmsteigerGraph = ({
 
   const data = ExtractStationData({
     stationId: stationId,
-    startTime: startTime,
-    endTime: endTime,
+    startTime: currentArrivalTime,
+    endTime: currentDepatureTime + 6000, // TODO: Sonst sieht man halt nix :(
     maxCount: 0,
     //onlyIncludeTripIds: [...onlyIncludeTripId],
   });
