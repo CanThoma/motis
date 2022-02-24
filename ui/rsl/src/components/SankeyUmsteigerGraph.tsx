@@ -50,7 +50,7 @@ const SankeyUmsteigerGraph = ({
     startTime: currentArrivalTime,
     endTime: currentDepatureTime + 6000, // TODO: Sonst sieht man halt nix :(
     maxCount: 0,
-    //onlyIncludeTripIds: [...onlyIncludeTripId],
+    onlyIncludeTripIds: [...onlyIncludeTripId],
   });
 
   React.useEffect(() => {
