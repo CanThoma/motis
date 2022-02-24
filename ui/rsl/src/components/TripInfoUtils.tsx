@@ -77,6 +77,18 @@ export function ExtractGroupInfoForThisTrain(
         id: sankeyInterface.nodes.length.toString(),
         sId: currentEnteringStationID,
         name: currentEnteringStationName,
+        arrival_current_time:
+          groupsInTrip.sections[groupsInTrip.sections.length - 1]
+            .arrival_current_time,
+        arrival_schedule_time:
+          groupsInTrip.sections[groupsInTrip.sections.length - 1]
+            .arrival_schedule_time,
+        departure_current_time:
+          groupsInTrip.sections[groupsInTrip.sections.length - 1]
+            .departure_current_time,
+        departure_schedule_time:
+          groupsInTrip.sections[groupsInTrip.sections.length - 1]
+            .departure_schedule_time,
       };
       sankeyInterface.nodes.push(node);
     }
