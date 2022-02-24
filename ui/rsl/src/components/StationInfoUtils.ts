@@ -298,34 +298,40 @@ export function ExtractStationData(
       //zwischenstop/start
       let departureInfo = interchange.departure[0];
       /* do not include node/link information for trips that don't fit the filter criteria */
-      if (
-        params.onlyIncludeTripIds &&
-        params.onlyIncludeTripIds.length > 0 &&
-        // when departure & arrival exist
-        ((departureInfo &&
+      if (params.onlyIncludeTripIds && params.onlyIncludeTripIds.length > 0) {
+        if (
+          // when departure & arrival exist, make sure arrival or departureinfo is in onlyIncludeTripIds
+          departureInfo &&
           arrivalInfo &&
-          !InterchangePassFilter(
-            departureInfo.trips[0].trip,
-            params.onlyIncludeTripIds
-          ) &&
           !InterchangePassFilter(
             arrivalInfo.trips[0].trip,
             params.onlyIncludeTripIds
-          )) ||
-          // when arrival exists
-          (arrivalInfo &&
-            !InterchangePassFilter(
-              arrivalInfo.trips[0].trip,
-              params.onlyIncludeTripIds
-            )) ||
-          // when departure exists
-          (departureInfo &&
-            !InterchangePassFilter(
-              departureInfo.trips[0].trip,
-              params.onlyIncludeTripIds
-            )))
-      ) {
-        continue;
+          ) &&
+          !InterchangePassFilter(
+            departureInfo.trips[0].trip,
+            params.onlyIncludeTripIds
+          )
+        ) {
+          continue;
+        }
+        // if there is only departure existing (boarding)
+        else if (
+          !arrivalInfo &&
+          !InterchangePassFilter(
+            departureInfo.trips[0].trip,
+            params.onlyIncludeTripIds
+          )
+        )
+          continue;
+        // if there is only departure existing (boarding)
+        else if (
+          !departureInfo &&
+          !InterchangePassFilter(
+            arrivalInfo.trips[0].trip,
+            params.onlyIncludeTripIds
+          )
+        )
+          continue;
       }
 
       /* Push/modify trip point, for arrival, if exists; else -1 = "boarding" */
