@@ -315,6 +315,16 @@ const SankeyGraph = ({
         // Die
         Utils.renderDelay(tmp, "arrival");
 
+        tmp
+          .append("title")
+          .text(
+            (d) =>
+              `Geplante Abfahrtszeit: ${Utils.renderTime(
+                d.departure_schedule_time
+              )} – Tatsächliche Abfahrtszeit: ${Utils.renderTime(
+                d.departure_current_time
+              )} `
+          );
         //tmp.append("tspan").text(")");
         return tmp;
       });
@@ -350,6 +360,16 @@ const SankeyGraph = ({
         // Die
         Utils.renderDelay(tmp, "depature");
 
+        tmp
+          .append("title")
+          .text(
+            (d) =>
+              `Geplante Ankunftszeit: ${Utils.renderTime(
+                d.departure_schedule_time
+              )} – Tatsächliche Ankunftszeit: ${Utils.renderTime(
+                d.departure_current_time
+              )} `
+          );
         //tmp.append("tspan").text(")");
         return tmp;
       });

@@ -67,11 +67,11 @@ export default class Utils {
       .text((d) => {
         const timeCurr =
           selector === "arrival"
-            ? d.arrival_current_time
+            ? d.arrival_schedule_time // Umgedreht, da es bei der Ankunft besser ist früh dran zu sein
             : d.departure_current_time;
         const timeSchedule =
           selector === "arrival"
-            ? d.arrival_schedule_time
+            ? d.arrival_current_time
             : d.departure_schedule_time;
 
         const diff = Utils.renderTimeDifference(timeCurr, timeSchedule);
@@ -83,11 +83,11 @@ export default class Utils {
       .attr("fill", (d) => {
         const timeCurr =
           selector === "arrival"
-            ? d.arrival_current_time
+            ? d.arrival_schedule_time
             : d.departure_current_time;
         const timeSchedule =
           selector === "arrival"
-            ? d.arrival_schedule_time
+            ? d.arrival_current_time
             : d.departure_schedule_time;
 
         const diff = Utils.renderTimeDifference(timeCurr, timeSchedule);
