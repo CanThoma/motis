@@ -1,0 +1,178 @@
+.legend-container {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+}
+
+.svg-legend {
+  max-width: 30px;
+  fill: #bf3a2b;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.svg-legend:hover {
+  scale: 1.2;
+}
+
+/* legend */
+.legend-content-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 4;
+
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* --m-background is set as inline style */
+  background: linear-gradient(
+    to right,
+    hsla(210, 29%, 20%, 0.144),
+    hsl(255, 30%, 25%, 0.144)
+  );
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.legend-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 4;
+
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* --m-background is set as inline style */
+  background: linear-gradient(
+    to right,
+    hsla(210, 29%, 20%, 0.144),
+    hsl(255, 30%, 25%, 0.144)
+  );
+}
+
+.legend-modal {
+  width: 60rem;
+
+  z-index: 10;
+
+  padding: 2rem;
+  border-radius: 0.8rem;
+
+  color: hsl(210, 6%, 35%);
+  background: #fafafa;
+  box-shadow: 0.4rem 0.4rem 10.2rem hsla(236, 50%, 50%, 0.2);
+  position: fixed;
+  top: 10%;
+
+  max-height: 80%;
+  overflow: auto;
+}
+.legend_title {
+  font-size: 2rem;
+}
+
+.legend_btn {
+  background-color: #ed6755;
+  border: none;
+  border-radius: 5px;
+  width: 200px;
+  padding: 14px;
+  font-size: 13px;
+  color: white;
+  box-shadow: 0px 6px 18px -5px rgba(237, 103, 85, 1);
+  position: fixed;
+  bottom: 5%;
+  left: calc(50% - 100px);
+}
+
+ol.gradient-list {
+  counter-reset: gradient-counter;
+  list-style: none;
+  margin: 1.75rem 0;
+  padding-left: 1rem;
+}
+ol.gradient-list > li {
+  background: white;
+  box-shadow: 0.25rem 0.25rem 0.6rem rgba(0, 0, 0, 0.05),
+    0 0.5rem 1.125rem rgba(75, 0, 0, 0.05);
+  border-radius: 0 0.5rem 0.5rem 0.5rem;
+  counter-increment: gradient-counter;
+  margin-top: 1rem;
+  min-height: 3rem;
+  padding: 1rem 1rem 1rem 3rem;
+  position: relative;
+  text-align: left;
+}
+ol.gradient-list > li > span,
+ol.gradient-list > li > span {
+  background: linear-gradient(135deg, #83e4e2 0%, #a2ed56 100%);
+  border-radius: 1rem 1rem 0 1rem;
+  content: "";
+  height: 3rem;
+  left: -1rem;
+  overflow: hidden;
+  position: absolute;
+  top: -1rem;
+  width: 3rem;
+}
+ol.gradient-list > li > span {
+  align-items: flex-end;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1;
+}
+ol.gradient-list > li > span {
+  background: linear-gradient(
+    135deg,
+    rgba(162, 237, 86) 0%,
+    rgba(253, 220, 50) 100%
+  );
+}
+ol.gradient-list > li + li {
+  margin-top: 2rem;
+}
+
+.close {
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid hsla(0, 0%, 0%, 0.2);
+  border-radius: 100rem;
+
+  color: inherit;
+  font-size: 2rem;
+
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: 0.2s;
+}
+
+.close::before {
+  content: "×";
+}
+
+.close:hover,
+.close:focus {
+  background: #ed6755;
+  color: white;
+  border-color: #ed6755;
+  transform: translateY(-0.2rem);
+}

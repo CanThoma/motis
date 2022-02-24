@@ -1,10 +1,12 @@
-import { interpolateRainbow } from "d3";
+import { format, interpolateRainbow, reduce, scaleLinear } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
   NodeMinimal,
-  createGraphInterface
+  LinkMinimal,
+  stationGraphDefault,
+  createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
 
@@ -49,15 +51,22 @@ export default class StationUtils {
    * dem Knotenvalue (= Passagiere am jeweiligen Bahnhof)
    * und der effektiv nutzbaren Höhe (= Gesamthöhe - NodePadding * (NodeCount - 1))
    */
-  static calcNodeHeight = (nodeValue: number, minHeight: number): number => {
+  static calcNodeHeight = (
+    nodeValue: number,
+    minHeight: number,
+    factor = 4
+  ): number => {
     if (nodeValue <= 0) return 0;
-    const calcHeight = this.calcNodeHeightWithoutMinHeight(nodeValue);
+    const calcHeight = this.calcNodeHeightWithoutMinHeight(nodeValue, factor);
     if (calcHeight <= minHeight) return minHeight;
     return calcHeight;
   };
 
-  static calcNodeHeightWithoutMinHeight = (value: number): number => {
-    return value / 5;
+  static calcNodeHeightWithoutMinHeight = (
+    value: number,
+    factor = 4
+  ): number => {
+    return value / factor;
   };
 
   /**
@@ -67,9 +76,11 @@ export default class StationUtils {
   static formatTextTime = (n: Node) => {
     const nodeArrivalTime = n.time;
     const aDate = new Date(nodeArrivalTime * 1000);
-    const aHour = aDate.getHours()<10?"0"+aDate.getHours():aDate.getHours()
-    const aMinute = aDate.getMinutes()<10?"0"+aDate.getMinutes():aDate.getMinutes();
-    return aHour+":"+aMinute+" Uhr";
+    const aHour =
+      aDate.getHours() < 10 ? "0" + aDate.getHours() : aDate.getHours();
+    const aMinute =
+      aDate.getMinutes() < 10 ? "0" + aDate.getMinutes() : aDate.getMinutes();
+    return aHour + ":" + aMinute + " Uhr";
   };
   static formatTextNode = (name: string, node: Node): string => {
     return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
@@ -79,7 +90,15 @@ export default class StationUtils {
     tNodeName: string,
     link: Link
   ): string => {
-    return `${link.value} Personen \n ${fNodeName.includes("\u2192")?fNodeName.substr(0,fNodeName.indexOf(" \u2192")):fNodeName} \u2192 ${tNodeName.includes("\u2192")?tNodeName.substr(0,tNodeName.indexOf(" \u2192")):tNodeName}`;
+    return `${link.value} Personen \n ${
+      fNodeName.includes("\u2192")
+        ? fNodeName.substr(0, fNodeName.indexOf(" \u2192"))
+        : fNodeName
+    } \u2192 ${
+      tNodeName.includes("\u2192")
+        ? tNodeName.substr(0, tNodeName.indexOf(" \u2192"))
+        : tNodeName
+    }}`;
   };
 
   static createSankeyLink = (
@@ -97,8 +116,8 @@ export default class StationUtils {
     M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
      */
-    return `M${nodeWidth+50},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth-50
+    return `M${nodeWidth + 50},${y0}C${width / 2},${y0},${width / 2},${y1},${
+      width - nodeWidth - 50
     },${y1}`;
   };
 
@@ -126,15 +145,15 @@ export default class StationUtils {
    * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
    */
   static createGraph = ({
-                          fNodes,
-                          tNodes,
-                          links,
-                          onSvgResize,
-                          width = 600,
-                          nodeWidth = 20,
-                          nodePadding = 20,
-                        }: createGraphInterface
-  ): SankeyInterface => {
+    fNodes,
+    tNodes,
+    links,
+    onSvgResize,
+    width = 600,
+    nodeWidth = 20,
+    nodePadding = 20,
+    factor = 4,
+  }: createGraphInterface): SankeyInterface => {
     const fNodesFinished: Node[] = [];
     const tNodesFinished: Node[] = [];
 
@@ -182,9 +201,12 @@ export default class StationUtils {
       fNodesFinished.push({
         ...cNode,
         name:
-          cNode.name.substr(0, cNode.name.indexOf(" ("))
-          + " \u2192 "
-          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
+          cNode.name.substr(0, cNode.name.indexOf(" (")) +
+          " \u2192 " +
+          cNode.name.substr(
+            cNode.name.indexOf(" - ") + 2,
+            cNode.name.length - cNode.name.indexOf(" - ") - 3
+          ),
         full: cNode.cap < cNode.pax,
       });
       tNodesFinished.push({
@@ -208,16 +230,21 @@ export default class StationUtils {
         this.sameId(cNode.id, n.id)
       );
       if (tempArray !== undefined && tempArray.length > 0) {
-
-        const i = indexOfTripId(fNodesFinished.map((n)=> n.id),cNode.id);
+        const i = indexOfTripId(
+          fNodesFinished.map((n) => n.id),
+          cNode.id
+        );
 
         tNodesFinished[i] = {
           ...cNode,
           full: cNode.cap < cNode.pax,
           name:
-            cNode.name.substr(0, cNode.name.indexOf(" ("))
-            + " \u2192 "
-            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
+            cNode.name.substr(0, cNode.name.indexOf(" (")) +
+            " \u2192 " +
+            cNode.name.substr(
+              cNode.name.indexOf(" - ") + 2,
+              cNode.name.length - cNode.name.indexOf(" - ") - 3
+            ),
         };
       } else {
         fNodesFinished.push({
@@ -228,9 +255,12 @@ export default class StationUtils {
         tNodesFinished.push({
           ...cNode,
           name:
-            cNode.name.substr(0, cNode.name.indexOf(" ("))
-            + " \u2192 "
-            + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
+            cNode.name.substr(0, cNode.name.indexOf(" (")) +
+            " \u2192 " +
+            cNode.name.substr(
+              cNode.name.indexOf(" - ") + 2,
+              cNode.name.length - cNode.name.indexOf(" - ") - 3
+            ),
           full: cNode.cap < cNode.pax,
         });
       }
@@ -267,7 +297,6 @@ export default class StationUtils {
       if (a.time > b.time) return 1;
       else return 0;
     });
-
 
     const nodeIdArray: (string | TripId)[] = tNodesFinished.map((a) => a.id);
 
@@ -307,17 +336,21 @@ export default class StationUtils {
       if (!(currentFNode && currentTNode)) continue;
 
       currentTNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
-        currentTNode.cap
+        currentTNode.cap,
+        factor
       );
       currentFNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
-        currentFNode.cap
+        currentFNode.cap,
+        factor
       );
 
       currentTNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
-        currentTNode.pax
+        currentTNode.pax,
+        factor
       );
       currentFNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
-        currentFNode.pax
+        currentFNode.pax,
+        factor
       );
 
       // vergrößere Nodes falls links wegen minimaler link größe vergrößert wurden
@@ -326,10 +359,13 @@ export default class StationUtils {
         this.sameId(a.fNId, currentFNode.id)
       );
       for (const cLink of currentFLinks) {
-        if (this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight) {
+        if (
+          this.calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+          minNodeHeight
+        ) {
           const heightDiff =
-            this.calcNodeHeight(cLink.value, minNodeHeight) -
-            this.calcNodeHeightWithoutMinHeight(cLink.value);
+            this.calcNodeHeight(cLink.value, minNodeHeight, factor) -
+            this.calcNodeHeightWithoutMinHeight(cLink.value, factor);
           currentFNode.backdropHeight += heightDiff;
           currentFNode.nodeHeight += heightDiff;
           currentTNode.backdropHeight += heightDiff;
@@ -340,16 +376,20 @@ export default class StationUtils {
         this.sameId(a.tNId, currentTNode.id)
       );
       for (const cLink of currentTLinks) {
-        if (this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight) {
+        if (
+          this.calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+          minNodeHeight
+        ) {
           const heightDiff =
-            this.calcNodeHeight(cLink.value, minNodeHeight) -
-            this.calcNodeHeightWithoutMinHeight(cLink.value);
+            this.calcNodeHeight(cLink.value, minNodeHeight, factor) -
+            this.calcNodeHeightWithoutMinHeight(cLink.value, factor);
           currentTNode.backdropHeight += heightDiff;
           currentTNode.nodeHeight += heightDiff;
           currentFNode.backdropHeight += heightDiff;
         }
       }
 
+      // TODO
       let fDif = 0;
       if (currentFNode.backdropHeight < currentTNode.backdropHeight) {
         fDif = currentTNode.backdropHeight - currentFNode.backdropHeight;
@@ -360,7 +400,7 @@ export default class StationUtils {
         tDif = currentFNode.backdropHeight - currentTNode.backdropHeight;
       }
 
-      // calc height difference between the nodes generated in case of a train having reached > 100% cap
+      // calc height difference between the extra nodes generated in case of a train having reached > 100% cap
       let fullPadding = 0;
       let fNodeFullPadding = 0;
       let tNodeFullPadding = 0;
@@ -383,11 +423,11 @@ export default class StationUtils {
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
       const y1_start =
         Math.max(
-          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5,
-          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5
+          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0,
+          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0
         ) + fullPadding;
 
-      // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Padding
+      // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
       currentTNode.y0_backdrop =
         y1_start + (i === 0 ? 0 : nodePadding) + tDif / 2;
       // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
@@ -427,7 +467,7 @@ export default class StationUtils {
       finalHeight = currentFNode.y0;
     }
 
-    onSvgResize( finalHeight + 20); // set height of svg to the bottom of the last node + 20
+    onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20
 
     // #####################################################################################
     // Berechnung der Links für diesen Knoten, ggf später auslagern.
@@ -437,6 +477,9 @@ export default class StationUtils {
 
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
+      const currentNodeIndex = fNodesFinished.findIndex((n) =>
+        this.sameId(n.id, fNodeId)
+      );
 
       const currentLinks = [
         ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
@@ -453,11 +496,15 @@ export default class StationUtils {
           return 1;
         else return 0;
       });
+      // .reverse();
+
+      // initialisieren des sourceLink arrays, da vorher undefined
+      fNodesFinished[currentNodeIndex].sourceLinks = [];
 
       let offset = 0;
       for (const i in currentLinks) {
         const cLink: Link = currentLinks[i];
-        const width = this.calcNodeHeight(cLink.value, minNodeHeight);
+        const width = this.calcNodeHeight(cLink.value, minNodeHeight, factor);
         const l: Link = {
           ...cLink,
           width: width,
@@ -467,6 +514,7 @@ export default class StationUtils {
         offset += width;
 
         calculatedLinks.push(l);
+        (fNodesFinished[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
 
@@ -474,6 +522,9 @@ export default class StationUtils {
 
     for (const cNode of tNodesFinished) {
       const tNodeId = cNode.id;
+      const currentNodeIndex = fNodesFinished.findIndex((n) =>
+        this.sameId(n.id, tNodeId)
+      );
       const currentLinks = [
         ...calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)),
       ].sort((a, b) => {
@@ -489,6 +540,10 @@ export default class StationUtils {
           return 1;
         else return 0;
       });
+      //.reverse();
+
+      // initialisieren des targetLink arrays, da vorher undefined
+      tNodesFinished[currentNodeIndex].targetLinks = [];
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -502,6 +557,7 @@ export default class StationUtils {
           // Ziel bestimmt die Farbe der Knoten
           // currentLink.colour = currentNode.colour;
           finishedLinks.push(l);
+          (tNodesFinished[currentNodeIndex].targetLinks || []).push(l);
         }
       }
     }

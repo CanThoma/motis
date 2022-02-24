@@ -7,10 +7,11 @@ import Utils from "./SankeyUmsteigerUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import * as d3 from "d3";
+import config from "../config";
 
 type Props = {
   stationId: string;
-  time:number;
+  time: number;
   maxCount: number;
   onlyIncludeTripId: TripId[];
   width?: number;
@@ -19,8 +20,6 @@ type Props = {
   nodePadding?: number;
   duration?: number;
 };
-
-
 
 const SankeyUmsteigerGraph = ({
   stationId,
@@ -33,12 +32,13 @@ const SankeyUmsteigerGraph = ({
   nodePadding = 15,
   duration = 250,
 }: Props): JSX.Element => {
-
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const startTime = time - 5*60*60;
-  const endTime = time + 5*60*60;
+  // TODO: :)
+
+  const startTime = time - 5 * 60 * 60;
+  const endTime = time + 5 * 60 * 60;
 
   const linkOppacity = 0.4;
   const linkOppacityFocus = 0.7;
@@ -53,25 +53,23 @@ const SankeyUmsteigerGraph = ({
     startTime: startTime,
     endTime: endTime,
     maxCount: 0,
-    onlyIncludeTripIds:[... onlyIncludeTripId]
-  });;
+    onlyIncludeTripIds: [...onlyIncludeTripId],
+  });
 
   React.useEffect(() => {
     const handleSvgResize = (newSize: number) => {
       setSvgHeight(newSize);
     };
 
-    const graph = Utils.createGraph(
-      {
-        fNodes: data.fromNodes,
-        tNodes: data.toNodes,
-        links: data.links,
-        onSvgResize: handleSvgResize,
-        width,
-        nodeWidth,
-        nodePadding,
-      }
-    );
+    const graph = Utils.createGraph({
+      fNodes: data.fromNodes,
+      tNodes: data.toNodes,
+      links: data.links,
+      onSvgResize: handleSvgResize,
+      width,
+      nodeWidth,
+      nodePadding,
+    });
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],
       links: graph.links,
@@ -127,7 +125,7 @@ const SankeyUmsteigerGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity)
+      .attr("opacity", backdropOppacity);
 
     // Define the nodes.
     const nodes = view
@@ -204,7 +202,7 @@ const SankeyUmsteigerGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width,d.y0 || 0, d.y1 || 0)
+        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
       .attr("stroke", (d) => d.colour || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
@@ -214,7 +212,7 @@ const SankeyUmsteigerGraph = ({
     // Add text labels for Names
     view
       .selectAll("text.node")
-      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
+      .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
       .attr("x", (d) => d.x1 || -1)
@@ -230,18 +228,23 @@ const SankeyUmsteigerGraph = ({
       .attr("text-anchor", "start")
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
-      .text((d) => {if (typeof d.id === "string") {return d.name} else {return d.name }})
+      .text((d) => {
+        if (typeof d.id === "string") {
+          return d.name;
+        } else {
+          return d.name;
+        }
+      })
 
       .filter((d) => (d.x1 || 0) > width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
-      .attr("text-anchor", "end")
-
+      .attr("text-anchor", "end");
 
     // Add text labels for time.
     view
       .selectAll("text.nodeTime")
-      .data(graphTemp.nodes.filter((n)=>n.pax > 0))
+      .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
       .attr("x", 0)
@@ -257,21 +260,27 @@ const SankeyUmsteigerGraph = ({
       .attr("text-anchor", "start")
       .attr("font-size", 10)
       .attr("font-family", "Arial, sans-serif")
-      .text((d) => {if (typeof d.id === "string") {return ""} else {return Utils.formatTextTime(d)}})
+      .text((d) => {
+        if (typeof d.id === "string") {
+          return "";
+        } else {
+          return Utils.formatTextTime(d);
+        }
+      })
       .filter((d) => (d.x1 || 0) > width / 2)
       .attr("x", width)
       .attr("dx", 0)
-      .attr("text-anchor", "end")
+      .attr("text-anchor", "end");
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
-      const sourceName = graph.fromNodes.find((n) => Utils.sameId(n.id, d.fNId))?.name;
-      const targetName = graph.toNodes.find((n) => Utils.sameId(n.id, d.tNId))?.name;
-      return Utils.formatTextLink(
-        sourceName || " – ",
-        targetName || " – ",
-        d
-      );
+      const sourceName = graph.fromNodes.find((n) =>
+        Utils.sameId(n.id, d.fNId)
+      )?.name;
+      const targetName = graph.toNodes.find((n) =>
+        Utils.sameId(n.id, d.tNId)
+      )?.name;
+      return Utils.formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
@@ -340,7 +349,15 @@ const SankeyUmsteigerGraph = ({
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [data, height, width, nodeWidth, nodePadding, duration, svgHeightUmsteiger]);
+  }, [
+    data,
+    height,
+    width,
+    nodeWidth,
+    nodePadding,
+    duration,
+    svgHeightUmsteiger,
+  ]);
 
   return (
     <>

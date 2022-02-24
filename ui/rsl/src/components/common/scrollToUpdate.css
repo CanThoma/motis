@@ -1,0 +1,108 @@
+.scroll-update,
+.scroll-update-children {
+  position: relative;
+}
+.scroll-update {
+  overflow: auto;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.scroll-update-children,
+.scroll-down {
+  -webkit-transition: -webkit-transform 0.2s cubic-bezier(0, 0, 0.31, 1);
+  transition: -webkit-transform 0.2s cubic-bezier(0, 0, 0.31, 1);
+  transition: transform 0.2s cubic-bezier(0, 0, 0.31, 1);
+  transition: transform 0.2s cubic-bezier(0, 0, 0.31, 1),
+    -webkit-transform 0.2s cubic-bezier(0, 0, 0.31, 1);
+}
+
+.scroll-down {
+  position: absolute;
+  overflow: hidden;
+  left: 0;
+  right: 0;
+  top: 0;
+  /*visibility: hidden;*/
+}
+
+.scroll-down > div {
+  display: none;
+}
+
+.scroll-show > div {
+  display: block;
+}
+
+.scroll-up-container,
+.scroll-down-container {
+  position: relative;
+  top: 0;
+}
+
+.reveal {
+  /*transform: translateY(-150px);*/
+  opacity: 0;
+  transition: 1s all ease;
+}
+
+.reveal.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.loading-circle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.scroll-up-container > * > .arrow {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 100%);
+}
+
+.scroll-down-container > * > .arrow {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.arrow span {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-bottom: 5px solid #f01414;
+  border-right: 5px solid #f01414;
+  transform: rotate(45deg);
+  margin: -10px;
+  animation: arrow-animate 2s infinite;
+}
+.arrow span:nth-child(2) {
+  animation-delay: -0.2s;
+}
+.arrow span:nth-child(3) {
+  animation-delay: -0.4s;
+}
+@keyframes arrow-animate {
+  0% {
+    opacity: 0;
+    transform: rotate(45deg) translate(-20px, -20px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(45deg) translate(20px, 20px);
+  }
+}
+
+.arrow-up {
+  rotate: 180deg;
+  margin-top: 80px;
+}

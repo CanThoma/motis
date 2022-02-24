@@ -28,6 +28,7 @@ export type StationInterchangeParameters = {
   startTime: number;
   endTime: number;
   maxCount: number;
+  onStatusUpdate: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
 };
 type TripIdAtStation = TripId & {
@@ -219,7 +220,7 @@ function InterchangePointInfoHandle(
 
       tripIdAtStation.pax = interchangePassengerCount;
       tripIdAtStation.cap = 1;
-      tripIdAtStation.stationID = info.station.id;
+      tripIdAtStation.stationID = info.station?.id;
 
       pointStationIndex = tripsInStationPoint.length;
       tripsInStationPoint.push(tripIdAtStation);
@@ -241,6 +242,8 @@ function InterchangePassFilter(tripId: TripId, tripIdList: TripId[]) {
 export function ExtractStationData(
   params: StationInterchangeParameters
 ): SankeyInterfaceMinimal {
+  if (params.onStatusUpdate) params.onStatusUpdate("loading");
+
   const graph: SankeyInterfaceMinimal = {
     fromNodes: [],
     toNodes: [],
@@ -258,7 +261,11 @@ export function ExtractStationData(
     max_count: params.maxCount,
     universe: universe,
   };
-  const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
+  const { data, status: thomas } =
+    usePaxMonGetInterchangesQuery(interchangeRequest);
+
+  //if(params.onStatusUpdate) params.onStatusUpdate(thomas);
+
   const arrivingTripsInStation: TripIdAtStation[] = [];
   const departingTripsInStation: TripIdAtStation[] = [];
 
@@ -445,7 +452,7 @@ export function ExtractStationData(
   const previousData = data;
   const { data: status } = usePaxMonStatusQuery();
   {
-    const { data /*, isLoading, error*/ } = useQuery(
+    const { data, status: nina /*, isLoading, error*/ } = useQuery(
       queryKeys.tripsLoad(universe, arrivingTripIds),
       async () => loadAndProcessTripInfos(universe, arrivingTripIds),
       {
@@ -457,6 +464,9 @@ export function ExtractStationData(
         },
       }
     );
+
+    if (params.onStatusUpdate) params.onStatusUpdate(nina);
+
     if (data) {
       console.assert(data.length + 2 == graph.fromNodes.length);
       for (let i = 0; i < data.length; i++) {

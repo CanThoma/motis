@@ -1,140 +1,126 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 
 import "./index.css";
-import SankeyGraph from "./components/SankeyGraph";
 import SankeyPicker from "./components/SankeyPicker";
 import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
-import MeasureInput from "./components/measures/MeasureInput";
-import TripPicker from "./components/TripPicker";
+
 import { TripId } from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
 import TripDetails from "./components/TripDetails";
 import SankeyStationGraph from "./components/SankeyStationGraph";
-import StationPicker from "./components/StationPicker";
+
+//import "antd/dist/antd.css";
+import "./global-styles.css";
+//import "./components/common/styles/tooltip.css";
 
 import "./components/Modal.styles.css";
-import { defaults } from "autoprefixer";
+import ScrollToUpdate from "./components/common/scrollToUpdate";
+
+import TimeInput from "./components/measures/TimeInput";
+import InputSlider from "./components/common/inputSlider";
+import Navbar from "./components/common/navbar";
+import Legend from "./components/legend";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/solid";
+import StationPage from "./components/StationPage";
+import TripPage from "./components/TripPage";
+
+import {
+  SankeyContextProvider,
+  useSankeyContext,
+} from "./components/context/SankeyContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: true, staleTime: 10000 },
   },
 });
-const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
-class App extends React.Component {
-  state = {
-    data: null,
-    width: 600,
-    height: 600,
-    headline: "",
-    subHeadline: "",
-    target: true,
-    key: 1,
-    selectedTrip: null,
-    selectedStation: null,
-    stationName: "",
-    tripName: "",
-    showStation: false,
-    simActive: false,
-    loading: false,
-  };
-  svgRef = React.createRef();
 
-  changeData(data: TripId | undefined) {
-    console.log("change data happens");
-    this.setState({ data });
-  }
+const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
+
+const App = (): JSX.Element => {
+  const [data, setDate] = useState(null);
+  const [width, setWidth] = useState(600);
+  const [height, setHeight] = useState(600);
+  const [hedline, setHeadline] = useState("");
+  const [subhedline, setSubHeadline] = useState("");
+  //const[target, setTarget] = useState(true)
+  const [key, setKey] = useState(1);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  //  const [selectedStation, setSelectedStation] = useState("");
+  //  const [stationName, setStationName] = useState("");
+  const [tripName, setTripName] = useState("");
+  const [activePage, setActivePage] = useState(1);
+  const [showStationControls, setShowStationControls] = useState(false);
+  const [simActive, setSimActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  //  const [startTime, setStartTime] = useState(new Date());
+  //  const [endTime, setEndTime] = useState(new Date());
+  const [startTmpTime, setStartTmpTime] = useState(new Date());
+  const [endTmpTime, setEndTmpTime] = useState(new Date());
+  const [factor, setFactor] = useState(15);
+
+  const pages = ["Trip Graph", "Station Graph", "Bahn Memes"];
+
+  const svgRef = React.createRef();
+
+  const valueRef = React.createRef();
+
+  const { selectedStation, setSelectedStation, stationName, setStationName } =
+    useSankeyContext();
+
+  /*
   toggleTarget(target: boolean, key: number) {
     this.setState({ target: false });
   }
-  changeHeadline(headline: { text: string; link: string; headline: string }) {
-    this.setState({ headline: headline.headline, subHeadline: headline.text });
-  }
+  */
 
-  componentDidMount() {
-    // Wichtig, data ist ein Object { nodes: (48) […], links: (68) […] }
-    // nodes und links sind arrays aus Objects index: 0
-    // ==> diese gilt es anschließend dynamisch zu erstellen.
-    //     Bzw einfach die json (oder eine ähnliche Funktion) von d3 zu nutzen.
-    //this.setState({ data: graphDefault });
-  }
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyboardNavigation);
 
-  componentWillUnmount() {
-    window.removeEventListener("resize", this.measureSVG);
-  }
+    return () => {
+      window.removeEventListener("keydown", handleKeyboardNavigation);
+    };
+  }, [activePage]);
 
-  changeWidth = (width, height = 600) => {
-    this.setState({
-      width,
-      height,
-    });
+  const handleKeyboardNavigation = (e) => {
+    if (e.key === "ArrowLeft") {
+      setActivePage(activePage === 0 ? pages.length - 1 : activePage - 1);
+    } else if (e.key === "ArrowRight") {
+      setActivePage(activePage === pages.length - 1 ? 0 : activePage + 1);
+    }
   };
 
-  handleChange(evt) {
-    const width = evt.target.validity.valid
-      ? evt.target.value
-      : this.state.width;
+  const changeWidth = (width, height = 600) => {
+    setHeight(height);
+    setWidth(width);
+  };
 
-    this.setState({ width });
-  }
+  const handleChange = (evt) => {
+    const newWidth = evt.target.validity.valid ? evt.target.value : width;
 
-  handleStationSelect(selectedStation: string, name: string) {
-    this.setState({
-      selectedStation,
-      stationName: name,
-      showStation: true,
-    });
-  }
+    setWidth({ newWidth });
+  };
 
-  handleTripSelect(selectedTrip: TripId | string, name: string) {
-    this.setState({
-      selectedTrip,
-      tripName: name,
-      showStation: false,
-    });
-  }
+  const handleFactorChange = (i) => {
+    console.log(i.target.value);
+    setFactor(i.target.value);
+  };
 
-  toggleStationDisplay() {
-    this.setState({ showStation: !this.state.showStation });
-  }
+  const handleStationSelect = () => {
+    setActivePage(1);
+  };
 
-  setLoading(b: boolean) {
-    this.setState({ loading: b });
-  }
+  const handleTripSelect = () => {
+    setActivePage(0);
+  };
 
-  render() {
-    const {
-      data,
-      width,
-      headline,
-      subHeadline,
-      selectedTrip,
-      selectedStation,
-      showStation,
-      simActive,
-      stationName,
-      tripName,
-      loading,
-    } = this.state;
-    const sankeyDisplay = null;
-    const tripDisplay =
-      selectedTrip !== null ? (
-        <TripDetails
-          tripId={selectedTrip}
-          onSectionDetailClick={(trip) => setSelectedTrip(trip)}
-        />
-      ) : null;
-
-    const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
-    const theUnixTime = someDate.getTime() / 1000;
-    const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
-    const endTime = startTime + 0.5 * 60 * 60; // dd-mm-yy 9:30
-
-    return (
-      <QueryClientProvider client={queryClient}>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SankeyContextProvider>
         <div
           className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
             bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
@@ -145,40 +131,20 @@ class App extends React.Component {
             <button
               type="button"
               className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
-              onClick={() => this.setState({ simActive: !simActive })}
+              onClick={() => setSimActive(!simActive)}
             >
               Maßnahmensimulation
             </button>
           </div>
         </div>
-
-        <div className="flex justify-between max-w-sm mx-auto mt-20">
-          <button
-            type="button"
-            //className="inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 hover:bg-db-red-600 text-white"
-            className={
-              !showStation
-                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 text-white cursor-not-allowed"
-                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 hover:bg-db-red-600"
-            }
-            disabled={!showStation}
-            onClick={this.toggleStationDisplay.bind(this)}
-          >
-            Trip Graph
-          </button>
-          <button
-            type="button"
-            className={
-              showStation
-                ? "inline-flex items-baseline px-3 py-1 rounded text-sm bg-db-red-500 text-white cursor-not-allowed"
-                : "px-3 py-1 rounded text-sm bg-db-red-300 text-db-red-100 hover:bg-db-red-600"
-            }
-            disabled={showStation}
-            onClick={this.toggleStationDisplay.bind(this)}
-          >
-            Station Graph
-          </button>
+        <div className="flex place-content-center mx-auto mt-20">
+          <Navbar
+            pages={pages}
+            onChange={(page) => setActivePage(page)}
+            activePage={activePage}
+          />
         </div>
+        <Legend />
         {loading && (
           <div className="flex justify-center max-w-sm mx-auto mt-20">
             <div className="lds-ring">
@@ -189,96 +155,61 @@ class App extends React.Component {
             </div>
           </div>
         )}
-        {!showStation && (
+        {activePage === 0 && (
+          <TripPage
+            tripName={tripName}
+            width={width}
+            selectedTrip={selectedTrip}
+            onTripPicked={(trip) => {
+              setSelectedTrip(trip);
+              setTripName(trip?.train_nr);
+            }}
+            onStationSelected={handleStationSelect}
+          />
+        )}
+        {activePage === 1 && (
+          <StationPage
+            selectedStation={selectedStation}
+            onStationPicked={(station) => {
+              setSelectedStation(station?.id);
+              setStationName(station?.name);
+            }}
+            onLoad={(b) => {
+              console.log("HAlihalo – " + b);
+              setLoading(b);
+            }}
+            onTripSelected={handleTripSelect}
+          />
+        )}
+        {activePage === 2 && (
           <>
-            <div className="flex justify-between w-full">
-              {simActive && (
-                <div
-                  className="h-screen sticky top-0 pt-10 flex flex-col w-full bg-db-cool-gray-200
-              w-80 p-2 shadow-md overflow-visible"
-                >
-                  <MeasureInput />
-                </div>
-              )}
-              <div className="flex-grow">
-                <div className="mt-6 flex items-center justify-center gap-2">
-                  <span>Trip:</span>
-                  <TripPicker
-                    onTripPicked={(trip) =>
-                      this.setState({
-                        selectedTrip: trip,
-                        tripName: trip?.train_nr,
-                      })
-                    }
-                    clearOnPick={false}
-                    longDistanceOnly={true}
-                    placeHolder={tripName}
-                    className="w-96"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="app mt-16 text-center">
-              <h1>{subHeadline}</h1>
-              <h2 className="text-gray-500">{headline}</h2>
-              {selectedTrip && (
-                <SankeyGraph
-                  tripId={selectedTrip}
-                  width={width}
-                  onStationSelected={this.handleStationSelect.bind(this)}
-                />
-              )}
-            </div>
+            <img
+              className="m-auto"
+              src="https://img.pr0gramm.com/2021/10/15/2b2b32f223adaf2b.jpg"
+              alt="Bahn"
+            />
+            <img
+              className="m-auto"
+              src="https://img.pr0gramm.com/2022/02/17/0d69eeb925d5d070.jpg"
+              alt="Bahn"
+            />
+            <img
+              className="m-auto"
+              src="https://img.pr0gramm.com/2022/02/07/0e3af3882f0a2091.png"
+              alt="Bahn"
+            />
+
+            <img
+              className="m-auto"
+              src="https://img.pr0gramm.com/2021/11/05/49c162d9523a7954.jpg"
+              alt="Bahn"
+            />
           </>
         )}
-        {showStation && (
-          <>
-            <div className="flex justify-between w-full">
-              {simActive && (
-                <div
-                  className="h-screen sticky top-0 pt-10 flex flex-col w-full bg-db-cool-gray-200
-              w-80 p-2 shadow-md overflow-visible"
-                >
-                  <MeasureInput />
-                </div>
-              )}
-              <div className="flex-grow">
-                <div className="mt-6 flex items-center justify-center gap-2">
-                  <span>Station:</span>
-                  <StationPicker
-                    onStationPicked={(station) =>
-                      this.setState({
-                        selectedStation: station?.id,
-                        stationName: station?.name,
-                      })
-                    }
-                    clearOnPick={false}
-                    placeHolder={stationName}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="App mt-16 text-center">
-              <h1>{subHeadline}</h1>
-              <h2 className="text-gray-500">{headline}</h2>
-              {selectedStation && (
-                <SankeyStationGraph
-                  stationId={selectedStation}
-                  startTime={startTime}
-                  endTime={endTime}
-                  maxCount={0}
-                  width={1200} // TODO: ist mehr son Test.
-                  onTripSelected={this.handleTripSelect.bind(this)}
-                  setLoading={this.setLoading.bind(this)}
-                />
-              )}
-            </div>
-          </>
-        )}
-      </QueryClientProvider>
-    );
-  }
-}
+      </SankeyContextProvider>
+    </QueryClientProvider>
+  );
+};
 
 const rootElement = document.getElementById("root");
 ReactDOM.render(<App />, rootElement);
