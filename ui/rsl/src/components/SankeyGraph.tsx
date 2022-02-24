@@ -373,6 +373,31 @@ const SankeyGraph = ({
         //tmp.append("tspan").text(")");
         return tmp;
       });
+
+    view
+      .append("text")
+      .attr("x", leftTimeOffset)
+      .attr("dx", -5) //
+      .attr("y", 30)
+      .attr("dy", 2.5)
+      .attr("text-anchor", "end")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ABFAHRT");
+
+    view
+      .append("text")
+      .attr("x", width - leftTimeOffset)
+      .attr("dx", 5) //
+      .attr("y", (graph.nodes[0].nodeHeight || 30) + 20)
+      //.attr("dy", 2.5)
+      .attr("text-anchor", "start")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ANKUNFT");
+
     /*
       .classed("node", true)
       .attr("x", 0)
