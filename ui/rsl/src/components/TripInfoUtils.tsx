@@ -51,6 +51,10 @@ export function ExtractGroupInfoForThisTrain(
         id: nodeIdx,
         sId: currentEnteringStationID,
         name: currentEnteringStationName,
+        arrival_current_time: groupsInTripSection.arrival_current_time,
+        arrival_schedule_time: groupsInTripSection.arrival_schedule_time,
+        departure_current_time: groupsInTripSection.departure_current_time,
+        departure_schedule_time: groupsInTripSection.departure_schedule_time,
       };
       sankeyInterface.nodes.push(node);
       groupsInTripSection.groups.forEach((groupedPassengerGroup) => {
