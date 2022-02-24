@@ -61,24 +61,36 @@ export default class Utils {
     return Math.floor((arrival - schedule) / (1000 * 60));
   };
 
-  static renderDelay = (tmp) => {
+  static renderDelay = (tmp, selector: "arrival" | "depature") => {
     tmp
       .append("tspan")
       .text((d) => {
-        const diff = Utils.renderTimeDifference(
-          d.arrival_current_time,
-          d.arrival_schedule_time
-        );
+        const timeCurr =
+          selector === "arrival"
+            ? d.arrival_current_time
+            : d.departure_current_time;
+        const timeSchedule =
+          selector === "arrival"
+            ? d.arrival_schedule_time
+            : d.departure_schedule_time;
+
+        const diff = Utils.renderTimeDifference(timeCurr, timeSchedule);
 
         if (diff === 0) return "";
         if (diff > 0) return ` +${diff}min`;
         return ` ${diff}min`;
       })
       .attr("fill", (d) => {
-        const diff = Utils.renderTimeDifference(
-          d.arrival_current_time,
-          d.arrival_schedule_time
-        );
+        const timeCurr =
+          selector === "arrival"
+            ? d.arrival_current_time
+            : d.departure_current_time;
+        const timeSchedule =
+          selector === "arrival"
+            ? d.arrival_schedule_time
+            : d.departure_schedule_time;
+
+        const diff = Utils.renderTimeDifference(timeCurr, timeSchedule);
 
         if (diff === 0) return "";
         if (diff > 0) return "red";
@@ -233,10 +245,18 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
-        arrival_current_time: nodes[i].arrival_current_time,
-        arrival_schedule_time: nodes[i].arrival_schedule_time,
-        departure_current_time: nodes[i].departure_current_time,
-        departure_schedule_time: nodes[i].departure_schedule_time,
+        arrival_current_time: new Date(
+          "Mon, 25 Oct 2021 09:12:00 GMT+0"
+        ).getTime(), // nodes[i].arrival_current_time,
+        arrival_schedule_time: new Date(
+          "Mon, 25 Oct 2021 09:15:00 GMT+0"
+        ).getTime(), //nodes[i].arrival_schedule_time,
+        departure_current_time: new Date(
+          "Mon, 25 Oct 2021 09:16:00 GMT+0"
+        ).getTime(), //nodes[i].departure_current_time,
+        departure_schedule_time: new Date(
+          "Mon, 25 Oct 2021 09:12:00 GMT+0"
+        ).getTime(), //nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: leftLinkSum,
@@ -245,10 +265,18 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
-        arrival_current_time: nodes[i].arrival_current_time,
-        arrival_schedule_time: nodes[i].arrival_schedule_time,
-        departure_current_time: nodes[i].departure_current_time,
-        departure_schedule_time: nodes[i].departure_schedule_time,
+        arrival_current_time: new Date(
+          "Mon, 25 Oct 2021 09:17:00 GMT+0"
+        ).getTime(), // nodes[i].arrival_current_time,
+        arrival_schedule_time: new Date(
+          "Mon, 25 Oct 2021 09:11:00 GMT+0"
+        ).getTime(), //nodes[i].arrival_schedule_time,
+        departure_current_time: new Date(
+          "Mon, 25 Oct 2021 09:17:00 GMT+0"
+        ).getTime(), //nodes[i].departure_current_time,
+        departure_schedule_time: new Date(
+          "Mon, 25 Oct 2021 09:11:00 GMT+0"
+        ).getTime(), //nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: rightLinkSum,

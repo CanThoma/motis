@@ -313,7 +313,7 @@ const SankeyGraph = ({
 
         //tmp.append("tspan").text(" (");
         // Die
-        Utils.renderDelay(tmp);
+        Utils.renderDelay(tmp, "arrival");
 
         //tmp.append("tspan").text(")");
         return tmp;
@@ -348,7 +348,7 @@ const SankeyGraph = ({
 
         //tmp.append("tspan").text(" (");
         // Die
-        Utils.renderDelay(tmp);
+        Utils.renderDelay(tmp, "depature");
 
         //tmp.append("tspan").text(")");
         return tmp;
