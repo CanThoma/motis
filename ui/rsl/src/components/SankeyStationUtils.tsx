@@ -83,7 +83,22 @@ export default class StationUtils {
     return aHour + ":" + aMinute + " Uhr";
   };
   static formatTextNode = (name: string, node: Node): string => {
-    return `${name}\n${node.pax} Passagiere \nKapazität: ${node.cap} `;
+    if (typeof node.id === "string") {
+      switch (node.id){
+        case "previous":
+          return `${node.pax} people coming from trips outside the selected timeframe.`
+          break;
+        case "boarding":
+          return `${node.pax} people starting their trip at this station.`
+          break;
+        case "future":
+          return `${node.pax} people boarding trips outside the selected timeframe.`
+          break;
+        case "exiting":
+          `${node.pax} people ending their trip at this station.`
+          break;
+      };
+    } else return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${node.linkPaxSum} \nKapazität: ${node.cap} `;
   };
   static formatTextLink = (
     fNodeName: string,
@@ -355,11 +370,15 @@ export default class StationUtils {
       );
 
       // vergrößere Nodes falls links wegen minimaler link größe vergrößert wurden
+      // berechne gleichzeitig die summe der aus-/einsteiger
 
+      let linkPaxSum = 0;
       const currentFLinks = links.filter((a) =>
         this.sameId(a.fNId, currentFNode.id)
       );
+
       for (const cLink of currentFLinks) {
+        linkPaxSum += cLink.value;
         if (
           this.calcNodeHeightWithoutMinHeight(cLink.value, factor) <
           minNodeHeight
@@ -372,11 +391,15 @@ export default class StationUtils {
           currentTNode.backdropHeight += heightDiff;
         }
       }
+      currentFNode.linkPaxSum = linkPaxSum;
 
+      linkPaxSum = 0;
       const currentTLinks = links.filter((a) =>
         this.sameId(a.tNId, currentTNode.id)
       );
+
       for (const cLink of currentTLinks) {
+        linkPaxSum += cLink.value;
         if (
           this.calcNodeHeightWithoutMinHeight(cLink.value, factor) <
           minNodeHeight
@@ -389,8 +412,10 @@ export default class StationUtils {
           currentFNode.backdropHeight += heightDiff;
         }
       }
+      currentTNode.linkPaxSum = linkPaxSum;
 
-      // TODO
+
+
       let fDif = 0;
       if (currentFNode.backdropHeight < currentTNode.backdropHeight) {
         fDif = currentTNode.backdropHeight - currentFNode.backdropHeight;
