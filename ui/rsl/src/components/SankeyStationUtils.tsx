@@ -41,8 +41,8 @@ export default class StationUtils {
     return nodes.filter((node) => this.sameId(node.id, id))[0];
   };
 
-  static colour = (value: number): string => {
-    return interpolateRainbow(value);
+  static colour = (a: number,b:number): string => {
+    return interpolateRainbow((Number(a) + 1) % 15 / Math.min(b,15));
   };
 
   /**
@@ -318,11 +318,11 @@ export default class StationUtils {
       if (typeof fNodesFinished[i].id === "string") continue;
       fNodesFinished[i] = {
         ...fNodesFinished[i],
-        colour: this.colour((Number(i) + 1) / fNodesFinished.length),
+        colour: this.colour(Number(i),fNodesFinished.length),
       };
       tNodesFinished[i] = {
         ...tNodesFinished[i],
-        colour: this.colour((Number(i) + 1) / tNodesFinished.length),
+        colour: this.colour(Number(i),tNodesFinished.length),
       };
     }
 
