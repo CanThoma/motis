@@ -478,9 +478,6 @@ export default class StationUtils {
 
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
-      const currentNodeIndex = fNodesFinished.findIndex((n) =>
-        this.sameId(n.id, fNodeId)
-      );
 
       const currentLinks = [
         ...links.filter((a) => this.sameId(a.fNId, fNodeId)),
@@ -499,9 +496,6 @@ export default class StationUtils {
       });
       // .reverse();
 
-      // initialisieren des sourceLink arrays, da vorher undefined
-      fNodesFinished[currentNodeIndex].sourceLinks = [];
-
       let offset = 0;
       for (const i in currentLinks) {
         const cLink: Link = currentLinks[i];
@@ -515,7 +509,6 @@ export default class StationUtils {
         offset += width;
 
         calculatedLinks.push(l);
-        (fNodesFinished[currentNodeIndex].sourceLinks || []).push(l);
       }
     }
 
@@ -543,9 +536,6 @@ export default class StationUtils {
       });
       //.reverse();
 
-      // initialisieren des targetLink arrays, da vorher undefined
-      tNodesFinished[currentNodeIndex].targetLinks = [];
-
       let offset = 0;
       for (const i in currentLinks) {
         const cLink: Link = currentLinks[i];
@@ -558,7 +548,6 @@ export default class StationUtils {
           // Ziel bestimmt die Farbe der Knoten
           // currentLink.colour = currentNode.colour;
           finishedLinks.push(l);
-          (tNodesFinished[currentNodeIndex].targetLinks || []).push(l);
         }
       }
     }

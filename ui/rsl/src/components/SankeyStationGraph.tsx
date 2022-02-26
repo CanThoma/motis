@@ -43,7 +43,6 @@ function getSvgBlob(svgEl: SVGSVGElement) {
 
 function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
   if (!svgEl) {
-    console.log(svgEl);
     return;
   }
   const svgBlob = getSvgBlob(svgEl);
@@ -445,8 +444,6 @@ const SankeyStationGraph = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
 
     thomas = false;
-    console.log(data);
-    console.log(thomas);
   }, [data]);
 
   return (
