@@ -116,8 +116,8 @@ export default class StationUtils {
     M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
      */
-    return `M${nodeWidth + 50},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth - 50
+    return `M${nodeWidth + 70},${y0}C${width / 2},${y0},${width / 2},${y1},${
+      width - nodeWidth - 70
     },${y1}`;
   };
 
@@ -162,6 +162,7 @@ export default class StationUtils {
     const exPaxColour = "#f27e93";
     const fuPaxColour = "#f20544";
 
+    const timeOffset = 70;
     const minNodeHeight = 2;
 
     // #####################################################################################
@@ -455,11 +456,11 @@ export default class StationUtils {
         0
       ); //currentFNode.y0_backdrop
 
-      currentFNode.x0 = 50;
-      currentFNode.x1 = 0 + nodeWidth + 50;
+      currentFNode.x0 = timeOffset;
+      currentFNode.x1 = 0 + nodeWidth + timeOffset;
 
-      currentTNode.x0 = width - nodeWidth - 50;
-      currentTNode.x1 = width - 50;
+      currentTNode.x0 = width - nodeWidth - timeOffset;
+      currentTNode.x1 = width - timeOffset;
 
       tNodesFinished[i] = currentTNode;
       fNodesFinished[i] = currentFNode;

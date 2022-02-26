@@ -9,6 +9,7 @@ import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "./common/Loading";
+import config from "../config";
 
 type Props = {
   stationId: string;
@@ -78,6 +79,8 @@ const SankeyStationGraph = ({
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0.0; // AG wollte nicht die 0.2 die vom Team bevorzugt werden
+
+  const timeOffset = 70;
 
   let thomas = true;
 
@@ -296,7 +299,7 @@ const SankeyStationGraph = ({
       .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
-      .attr("x", 0)
+      .attr("x", 20)
       .attr("dx", 0)
       .attr(
         "y",
@@ -317,7 +320,7 @@ const SankeyStationGraph = ({
         }
       })
       .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width)
+      .attr("x", width - 20)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
@@ -331,6 +334,48 @@ const SankeyStationGraph = ({
       )?.name;
       return Utils.formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
+
+
+    // Add Abfahrt and Ankunft markers
+
+    let tempFHeight;
+    const nonEmptyFNodes = graph.fromNodes.filter((n)=> n.pax > 0 && typeof n.id !== "string");
+    if (nonEmptyFNodes[0] && nonEmptyFNodes[0].y0_backdrop) {
+      tempFHeight = Math.max(nonEmptyFNodes[0].y0_backdrop -10, 8);
+    } else {
+      tempFHeight = 30;
+    };
+
+    view
+      .append("text")
+      .attr("x", timeOffset)
+      .attr("dx", -5) //
+      .attr("y", tempFHeight)
+      .attr("dy", 2.5)
+      .attr("text-anchor", "end")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ABFAHRT");
+
+    let tempTHeight;
+    const nonEmptyTNodes = graph.toNodes.filter((n)=> n.pax > 0);
+    if (nonEmptyTNodes[0] && nonEmptyTNodes[0].y0_backdrop) {
+      tempTHeight = nonEmptyTNodes[0].y0_backdrop -10;
+    } else {
+      tempTHeight = 30;
+    };
+
+    view
+      .append("text")
+      .attr("x", width - timeOffset)
+      .attr("dx", 5) //
+      .attr("y", tempTHeight )
+      .attr("text-anchor", "start")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ANKUNFT");
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
