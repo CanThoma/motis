@@ -101,7 +101,7 @@ export default class StationUtils {
           return "";
           break;
       };
-    } else return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${node.linkPaxSum} \nKapazität: ${node.cap} `;
+    } else return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${node.linkPaxSum} \nKapazität: ${node.cap} \nAuslastung: ${Math.ceil((node.pax/node.cap)*100)}%`;
   };
   static formatTextLink = (
     fNodeName: string,
