@@ -356,7 +356,7 @@ const SankeyStationGraph = ({
       .attr("font-family", config.font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
-      .text("ABFAHRT");
+      .text("ANKUNFT");
 
     let tempTHeight;
     const nonEmptyTNodes = graph.toNodes.filter((n)=> n.pax > 0);
@@ -375,7 +375,7 @@ const SankeyStationGraph = ({
       .attr("font-family", config.font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
-      .text("ANKUNFT");
+      .text("ABFAHRT");
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
