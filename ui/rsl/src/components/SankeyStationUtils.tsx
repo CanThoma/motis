@@ -83,7 +83,7 @@ export default class StationUtils {
     return aHour + ":" + aMinute + " Uhr";
   };
   static formatTextNode = (name: string, node: Node): string => {
-    return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
+    return `${name}\n${node.pax} Passagiere \nKapazität: ${node.cap} `;
   };
   static formatTextLink = (
     fNodeName: string,
@@ -423,8 +423,8 @@ export default class StationUtils {
       // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
       const y1_start =
         Math.max(
-          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0,
-          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 0
+          tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5,
+          fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5
         ) + fullPadding;
 
       // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
@@ -467,7 +467,7 @@ export default class StationUtils {
       finalHeight = currentFNode.y0;
     }
 
-    onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20
+    onSvgResize(finalHeight + 10); // set height of svg to the bottom of the last node + 20
 
     // #####################################################################################
     // Berechnung der Links für diesen Knoten, ggf später auslagern.

@@ -378,7 +378,7 @@ const SankeyGraph = ({
       .append("text")
       .attr("x", leftTimeOffset)
       .attr("dx", -5) //
-      .attr("y", 30)
+      .attr("y", 8)
       .attr("dy", 2.5)
       .attr("text-anchor", "end")
       .attr("font-family", config.font_family)
@@ -386,11 +386,18 @@ const SankeyGraph = ({
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
 
+    let tempHeight;
+    if (graph.nodes[0] && graph.nodes[0].nodeHeight) {
+      tempHeight = graph.nodes[0].nodeHeight + 20;
+    } else {
+      tempHeight = 30;
+    };
+
     view
       .append("text")
       .attr("x", width - leftTimeOffset)
       .attr("dx", 5) //
-      .attr("y", (graph.nodes[0].nodeHeight || 30) + 20)
+      .attr("y", tempHeight )
       //.attr("dy", 2.5)
       .attr("text-anchor", "start")
       .attr("font-family", config.font_family)
