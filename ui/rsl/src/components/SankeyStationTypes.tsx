@@ -17,6 +17,7 @@ type Node = {
   y0?: number;
   y1?: number;
   full?: boolean;
+  linkPaxSum?: number;
 };
 
 type Link = {
