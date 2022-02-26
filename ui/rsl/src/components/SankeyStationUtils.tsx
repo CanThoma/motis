@@ -95,7 +95,10 @@ export default class StationUtils {
           return `${node.pax} people boarding trips outside the selected timeframe.`
           break;
         case "exiting":
-          `${node.pax} people ending their trip at this station.`
+          return `${node.pax} people ending their trip at this station.`
+          break;
+        default:
+          return "";
           break;
       };
     } else return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${node.linkPaxSum} \nKapazität: ${node.cap} `;
