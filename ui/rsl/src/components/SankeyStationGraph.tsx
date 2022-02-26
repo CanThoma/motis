@@ -16,7 +16,7 @@ type Props = {
   endTime: number;
   maxCount: number;
   onTripSelected: (id: TripId | string, name: string) => void;
-  factor;
+  factor: number;
   width?: number;
   height?: number;
   nodeWidth?: number;

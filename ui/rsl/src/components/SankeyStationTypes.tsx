@@ -53,6 +53,7 @@ interface createGraphInterface {
   width: number;
   nodeWidth: number;
   nodePadding: number;
+  factor: number;
 }
 
 type NodeMinimal = {
