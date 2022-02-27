@@ -82,6 +82,7 @@ export default class StationUtils {
       aDate.getMinutes() < 10 ? "0" + aDate.getMinutes() : aDate.getMinutes();
     return aHour + ":" + aMinute + " Uhr";
   };
+
   static formatTextNode = (name: string, node: Node): string => {
     if (typeof node.id === "string") {
       switch (node.id){
@@ -103,6 +104,7 @@ export default class StationUtils {
       };
     } else return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${node.linkPaxSum} \nKapazität: ${node.cap} \nAuslastung: ${Math.ceil((node.pax/node.cap)*100)}%`;
   };
+
   static formatTextLink = (
     fNodeName: string,
     tNodeName: string,

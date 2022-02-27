@@ -46,19 +46,15 @@ export default class Utils {
 
   // TODO: Wie reagieren wir auf GMT+2?
   // Haben wir das immer? das wäre ne verdammt wichtige Frage :(
-  static renderTime = (time) => {
-    let minutes = Math.floor((time / (1000 * 60)) % 60);
-    let hours = Math.floor((time / (1000 * 60 * 60)) % 24);
-
-    hours = hours < 10 ? "0" + hours : hours;
-    minutes = minutes < 10 ? "0" + minutes : minutes;
-
-    return `${hours}:${minutes}Uhr`;
+  static renderTime = (time: number) => {
+    const aDate = new Date(time*1000);
+    const dateString = aDate.toLocaleTimeString("de");
+  return dateString.substr(0,dateString.length-3)+ " Uhr" ;
   };
 
   // Zeit unterschied in Minuten
-  static renderTimeDifference = (arrival, schedule) => {
-    return Math.floor((arrival - schedule) / (1000 * 60));
+  static renderTimeDifference = (arrival: number, schedule: number) => {
+    return Math.floor((arrival - schedule) / (60));
   };
 
   static renderDelay = (tmp, selector: "arrival" | "depature") => {
@@ -245,18 +241,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
-        arrival_current_time: new Date(
-          "Mon, 25 Oct 2021 09:12:00 GMT+0"
-        ).getTime(), // nodes[i].arrival_current_time,
-        arrival_schedule_time: new Date(
-          "Mon, 25 Oct 2021 09:15:00 GMT+0"
-        ).getTime(), //nodes[i].arrival_schedule_time,
-        departure_current_time: new Date(
-          "Mon, 25 Oct 2021 09:16:00 GMT+0"
-        ).getTime(), //nodes[i].departure_current_time,
-        departure_schedule_time: new Date(
-          "Mon, 25 Oct 2021 09:12:00 GMT+0"
-        ).getTime(), //nodes[i].departure_schedule_time,
+        arrival_current_time: 1635147900, // nodes[i].arrival_current_time,
+        arrival_schedule_time: 1635148200, //nodes[i].arrival_schedule_time,
+        departure_current_time: 1635148320, //nodes[i].departure_current_time,
+        departure_schedule_time: 1635148200, //nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: leftLinkSum,
@@ -265,18 +253,10 @@ export default class Utils {
         id: nodes[i].id,
         sId: nodes[i].sId,
         name: nodes[i].name,
-        arrival_current_time: new Date(
-          "Mon, 25 Oct 2021 09:17:00 GMT+0"
-        ).getTime(), // nodes[i].arrival_current_time,
-        arrival_schedule_time: new Date(
-          "Mon, 25 Oct 2021 09:11:00 GMT+0"
-        ).getTime(), //nodes[i].arrival_schedule_time,
-        departure_current_time: new Date(
-          "Mon, 25 Oct 2021 09:17:00 GMT+0"
-        ).getTime(), //nodes[i].departure_current_time,
-        departure_schedule_time: new Date(
-          "Mon, 25 Oct 2021 09:11:00 GMT+0"
-        ).getTime(), //nodes[i].departure_schedule_time,
+        arrival_current_time: 1635147900, // nodes[i].arrival_current_time,
+        arrival_schedule_time: 1635148200, //nodes[i].arrival_schedule_time,
+        departure_current_time: 1635148320, //nodes[i].departure_current_time,
+        departure_schedule_time: 1635148200, //nodes[i].departure_schedule_time,
         colour,
         biggerNodeTotalValue,
         totalNodeValue: rightLinkSum,
