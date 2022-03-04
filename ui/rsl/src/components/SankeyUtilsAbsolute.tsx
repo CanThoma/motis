@@ -237,6 +237,7 @@ export default class Utils {
 
       const colour = this.colour(i / nodes.length);
 
+      //TODO remove this once times are provided by ExtractGroupInfoForThisTrain in SankeyGraph
       leftNodes.push({
         id: nodes[i].id,
         sId: nodes[i].sId,
