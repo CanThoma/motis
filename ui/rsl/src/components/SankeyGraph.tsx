@@ -1,5 +1,5 @@
 import React, { MouseEvent, useRef, useState } from "react";
-import { select as d3Select, create as d3create } from "d3";
+import { select as d3Select } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
