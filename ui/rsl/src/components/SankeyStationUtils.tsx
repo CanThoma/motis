@@ -1,11 +1,9 @@
-import { format, interpolateRainbow, reduce, scaleLinear } from "d3";
+import { interpolateRainbow } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
   NodeMinimal,
-  LinkMinimal,
-  stationGraphDefault,
   createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";

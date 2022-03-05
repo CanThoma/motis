@@ -13,12 +13,7 @@ import {
   PaxMonTripLoadInfoWithStats,
 } from "../data/loadInfo";
 import { TripId } from "../api/protocol/motis";
-import {
-  queryKeys,
-  sendPaxMonTripLoadInfosRequest,
-  usePaxMonStatusQuery,
-} from "../api/paxmon";
-import { addEdgeStatistics } from "../util/statistics";
+import { queryKeys, usePaxMonStatusQuery } from "../api/paxmon";
 import { universeAtom } from "../data/simulation";
 import { loadAndProcessTripInfo } from "./TripInfoUtils";
 
@@ -43,6 +38,7 @@ function getSvgLinePath(
     return "";
   }
 }
+
 function getSvgLinePathVertical(
   edges: PaxMonEdgeLoadInfoWithStats[],
   maxVal: number,
@@ -87,6 +83,7 @@ function getYLabels(maxVal: number) {
   }
   return labels;
 }
+
 function getXLabels(maxVal: number) {
   const stepSize =
     maxVal >= 20000
