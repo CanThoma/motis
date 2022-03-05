@@ -19,19 +19,11 @@ const tripIdCompare = (a: TripId, b: TripId) => {
   );
 };
 
-export const sameId = (a: TripId | string, b: TripId | string) => {
+export const sameId = (a: TripId | string, b: TripId | string): boolean => {
   if (typeof a !== "string" && typeof b !== "string")
     return tripIdCompare(a, b);
   if (typeof a !== typeof b) return false;
   else return a === b;
-};
-
-const getNodeValue = <K extends keyof NodeMinimal>(
-  nodes: NodeMinimal[],
-  id: string,
-  selector: K
-) => {
-  return nodes.filter((node: NodeMinimal) => node.id === id)[0][selector];
 };
 
 const getNode = (nodes: NodeMinimal[], id: string | TripId) => {
@@ -67,7 +59,7 @@ const calcNodeHeightWithoutMinHeight = (value: number, factor = 4): number => {
  * Konvertiert einen Link in einen Pfad-String
  */
 
-export const formatTextTime = (n: Node) => {
+export const formatTextTime = (n: Node): string => {
   const nodeArrivalTime = n.time;
   const aDate = new Date(nodeArrivalTime * 1000);
   const aHour =
@@ -82,19 +74,14 @@ export const formatTextNode = (name: string, node: Node): string => {
     switch (node.id) {
       case "previous":
         return `${node.pax} people coming from trips outside the selected timeframe.`;
-        break;
       case "boarding":
         return `${node.pax} people starting their trip at this station.`;
-        break;
       case "future":
         return `${node.pax} people boarding trips outside the selected timeframe.`;
-        break;
       case "exiting":
         return `${node.pax} people ending their trip at this station.`;
-        break;
       default:
         return "";
-        break;
     }
   } else
     return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${
@@ -132,32 +119,12 @@ export const createSankeyLink = (
   // M nodeWidth, y0 C Width/2, y0 , Width/2, y1, Width-nodeWidth, y1
 
   /* ++++++ Ausführlich +++++
-  M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
-  C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
-   */
+    M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
+    C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
+     */
   return `M${nodeWidth + 70},${y0}C${width / 2},${y0},${width / 2},${y1},${
     width - nodeWidth - 70
   },${y1}`;
-};
-
-const createNode = (
-  id: string,
-  name: string,
-  pax: number,
-  cap: number,
-  time: number
-): Node => {
-  return {
-    id,
-    name,
-    pax,
-    cap,
-    time,
-    x0: 0,
-    x1: 0,
-    y0: 0,
-    y1: 0,
-  };
 };
 
 /**
@@ -467,7 +434,7 @@ export const createGraph = ({
     ); //currentFNode.y0_backdrop
 
     currentFNode.x0 = timeOffset;
-    currentFNode.x1 = 0 + nodeWidth + timeOffset;
+    currentFNode.x1 = nodeWidth + timeOffset;
 
     currentTNode.x0 = width - nodeWidth - timeOffset;
     currentTNode.x1 = width - timeOffset;
@@ -526,9 +493,6 @@ export const createGraph = ({
 
   for (const cNode of tNodesFinished) {
     const tNodeId = cNode.id;
-    const currentNodeIndex = fNodesFinished.findIndex((n) =>
-      sameId(n.id, tNodeId)
-    );
     const currentLinks = [
       ...calculatedLinks.filter((a) => sameId(a.tNId, tNodeId)),
     ].sort((a, b) => {
