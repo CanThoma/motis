@@ -242,13 +242,13 @@ const SankeyStationGraph = ({
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => formatTextNode(d.name, d));
+    nodes.append("title").text((d) => formatTextNode(d));
 
     // Add titles for backdrop hover effects.
-    backdrop.append("title").text((d) => formatTextNode(d.name, d));
+    backdrop.append("title").text((d) => formatTextNode(d));
 
     // Add titles for backdrop hover effects.
-    overflow.append("title").text((d) => formatTextNode(d.name, d));
+    overflow.append("title").text((d) => formatTextNode(d));
 
     // Define the links.
     const links = view

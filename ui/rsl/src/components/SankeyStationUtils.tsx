@@ -8,6 +8,12 @@ import {
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
 
+/**
+ * vergleicht 2 tripIds abhängig von jedem feld
+ * benötigt um nach TripId sortieren zu können
+ * @param a erste Trip Id
+ * @param b zweitee Trip Id
+ */
 const tripIdCompare = (a: TripId, b: TripId) => {
   return (
     a.station_id === b.station_id &&
@@ -19,6 +25,12 @@ const tripIdCompare = (a: TripId, b: TripId) => {
   );
 };
 
+/**
+ * Vergleicht zwei Ids, können auch string sein wegen "previous" etc
+ * benötigt um nach Id zu sortieren
+ * @param a erste id
+ * @param b zweite id
+ */
 export const sameId = (a: TripId | string, b: TripId | string) => {
   if (typeof a !== "string" && typeof b !== "string")
     return tripIdCompare(a, b);
@@ -26,20 +38,27 @@ export const sameId = (a: TripId | string, b: TripId | string) => {
   else return a === b;
 };
 
-const getNodeValue = <K extends keyof NodeMinimal>(
-  nodes: NodeMinimal[],
-  id: string,
-  selector: K
-) => {
-  return nodes.filter((node: NodeMinimal) => node.id === id)[0][selector];
-};
-
+/**
+ * gibt die erste node mit gegebener Id zurück
+ * @param nodes Node Array
+ * @param id eine id, kann string sein wegen "previous" etc
+ */
 const getNode = (nodes: NodeMinimal[], id: string | TripId) => {
-  return nodes.filter((node) => sameId(node.id, id))[0];
+  for (const cNode of nodes){
+    if (sameId(cNode.id,id))
+      return cNode
+  };
 };
 
+/**
+ * berechnet die Farbe der Node aus der Position der Node im array
+ * alle colourIntervallLength wiederholen sich die farben für bessere Lesbarkeit
+ * @param a index der node
+ * @param b länge des Array
+ */
 const colour = (a: number, b: number): string => {
-  return interpolateRainbow(((Number(a) + 1) % 15) / Math.min(b, 15));
+  const colourIntervallLength = 15;
+  return interpolateRainbow(((Number(a) + 1) % colourIntervallLength) / Math.min(b, colourIntervallLength));
 };
 
 /**
@@ -47,11 +66,14 @@ const colour = (a: number, b: number): string => {
  * Gesamtvalue (= gesamte Passagieranzahl),
  * dem Knotenvalue (= Passagiere am jeweiligen Bahnhof)
  * und der effektiv nutzbaren Höhe (= Gesamthöhe - NodePadding * (NodeCount - 1))
+ * @param nodeValue Anzahl an passagieren
+ * @param minHeight Minimale höhe einer Node
+ * @param factor Faktor zur skalierung der höhe
  */
 const calcNodeHeight = (
   nodeValue: number,
   minHeight: number,
-  factor = 4
+  factor:number = 4
 ): number => {
   if (nodeValue <= 0) return 0;
   const calcHeight = calcNodeHeightWithoutMinHeight(nodeValue, factor);
@@ -59,15 +81,20 @@ const calcNodeHeight = (
   return calcHeight;
 };
 
-const calcNodeHeightWithoutMinHeight = (value: number, factor = 4): number => {
+/**
+ * Funktion zur Skalierung der Funktion unter Annahme das die minimale Höhe nicht unterschritten.
+ * @param value Anzahl an Passagieren
+ * @param factor Skalierungsfaktor
+ */
+const calcNodeHeightWithoutMinHeight = (value: number, factor:number = 4): number => {
   return value / factor;
 };
 
 /**
- * Konvertiert einen Link in einen Pfad-String
+ * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
+ * @param n Node
  */
-
-export const formatTextTime = (n: Node) => {
+export const formatTextTime = (n: Node):string => {
   const nodeArrivalTime = n.time;
   const aDate = new Date(nodeArrivalTime * 1000);
   const aHour =
@@ -77,33 +104,39 @@ export const formatTextTime = (n: Node) => {
   return aHour + ":" + aMinute + " Uhr";
 };
 
-export const formatTextNode = (name: string, node: Node): string => {
+/**
+ * Erstellt den text um den Titel der Nodes zu füllen
+ * Unterscheidet zwischen string Ids und TripId Ids um die richtigen Titel zu vergeben
+ * @param node Node für die der String generiert werden soll
+ */
+export const formatTextNode = (node: Node): string => {
   if (typeof node.id === "string") {
     switch (node.id) {
       case "previous":
         return `${node.pax} people coming from trips outside the selected timeframe.`;
-        break;
       case "boarding":
         return `${node.pax} people starting their trip at this station.`;
-        break;
       case "future":
         return `${node.pax} people boarding trips outside the selected timeframe.`;
-        break;
       case "exiting":
         return `${node.pax} people ending their trip at this station.`;
-        break;
       default:
         return "";
-        break;
     }
   } else
-    return `${name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${
+    return `${node.name}\n${node.pax} Passagiere\nEin-/Aussteiger: ${
       node.linkPaxSum
     } \nKapazität: ${node.cap} \nAuslastung: ${Math.ceil(
       (node.pax / node.cap) * 100
     )}%`;
 };
 
+/**
+ * Erstellt den Text der den Titel beim hovern der Links füllt
+ * @param fNodeName
+ * @param tNodeName
+ * @param link
+ */
 export const formatTextLink = (
   fNodeName: string,
   tNodeName: string,
@@ -120,48 +153,42 @@ export const formatTextLink = (
   }}`;
 };
 
+/**
+ * +++++++++ Kurz +++++++++
+ * Beispielpfad: d="M20,461.58662092624354C300,461.58662092624354,300,337.6243567753003,580,337.6243567753003"
+ * Das Muster ist folgendes:
+ * M nodeWidth, y0 C Width/2, y0 , Width/2, y1, Width-nodeWidth, y1
+ *
+ * ++++++ Ausführlich +++++
+ * M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
+ * C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
+ *
+ * @param nodeWidth basisbreite der Nodes
+ * @param width basisbreite des Graphen
+ * @param y0 y Koordinate der linken Node
+ * @param y1 y Koordinate der rechten Node
+ */
 export const createSankeyLink = (
   nodeWidth: number,
   width: number,
   y0: number,
   y1: number
 ): string => {
-  // +++++++++ Kurz +++++++++
-  // Beispielpfad: d="M20,461.58662092624354C300,461.58662092624354,300,337.6243567753003,580,337.6243567753003"
-  // Das Muster ist folgendes:
-  // M nodeWidth, y0 C Width/2, y0 , Width/2, y1, Width-nodeWidth, y1
-
-  /* ++++++ Ausführlich +++++
-  M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
-  C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
-   */
   return `M${nodeWidth + 70},${y0}C${width / 2},${y0},${width / 2},${y1},${
     width - nodeWidth - 70
   },${y1}`;
 };
 
-const createNode = (
-  id: string,
-  name: string,
-  pax: number,
-  cap: number,
-  time: number
-): Node => {
-  return {
-    id,
-    name,
-    pax,
-    cap,
-    time,
-    x0: 0,
-    x1: 0,
-    y0: 0,
-    y1: 0,
-  };
-};
-
 /**
  * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
+ * @param fNodes
+ * @param tNodes
+ * @param links
+ * @param onSvgResize
+ * @param width
+ * @param nodeWidth
+ * @param nodePadding
+ * @param factor
  */
 export const createGraph = ({
   fNodes,
@@ -188,7 +215,7 @@ export const createGraph = ({
   // Berechnung der Nodes
   // #####################################################################################
 
-  // fügt previous node zu falls umsteiger existieren und gibt ihr die farbe
+  // fügt previous node zu, falls Umsteiger existieren und gibt ihr die Farbe
 
   const prNode: Node = {
     ...getNode(fNodes, "previous"),
@@ -200,7 +227,7 @@ export const createGraph = ({
     tNodesFinished.push({ ...prNode, pax: 0 });
   }
 
-  // fügt boarding node zu falls umsteiger existieren und gibt ihr die farbe
+  // fügt boarding node zu, falls Umsteiger existieren und gibt ihr die Farbe
 
   const boNode: Node = {
     ...getNode(fNodes, "boarding"),
@@ -212,8 +239,8 @@ export const createGraph = ({
     tNodesFinished.push({ ...boNode, pax: 0 });
   }
 
-  // fügt reguläre Nodes hinzu un bereitet daten vor
-  // beginnt nach previous und board node
+  // Fügt reguläre Nodes hinzu, und bereitet Daten vor.
+  // Beginnt nach previous und board Node.
 
   for (const cNode of fNodes) {
     if (typeof cNode.id === "string") continue;
