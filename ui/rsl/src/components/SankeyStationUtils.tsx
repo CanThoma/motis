@@ -9,10 +9,10 @@ import {
 import { TripId } from "../api/protocol/motis";
 
 /**
- * vergleicht 2 tripIds abhängig von jedem feld
+ * vergleicht 2 tripIds abhängig von jedem Feld
  * benötigt um nach TripId sortieren zu können
  * @param a erste Trip Id
- * @param b zweitee Trip Id
+ * @param b zweite Trip Id
  */
 const tripIdCompare = (a: TripId, b: TripId) => {
   return (
@@ -43,37 +43,40 @@ export const sameId = (a: TripId | string, b: TripId | string): boolean => {
  * @param nodes Node Array
  * @param id eine id, kann string sein wegen "previous" etc
  */
-const getNode = (nodes: NodeMinimal[], id: string | TripId) => {
-  for (const cNode of nodes){
-    if (sameId(cNode.id,id))
-      return cNode
-  };
+const getNode = (nodes: NodeMinimal[], id: string | TripId): Node => {
+  for (const cNode of nodes) {
+    if (sameId(cNode.id, id)) return cNode;
+  }
+  return nodes[0];
 };
 
 /**
  * berechnet die Farbe der Node aus der Position der Node im array
- * alle colourIntervallLength wiederholen sich die farben für bessere Lesbarkeit
+ * alle colourIntervallLength wiederholen sich die Farben für bessere Lesbarkeit
  * @param a index der node
- * @param b länge des Array
+ * @param b Länge des Array
  */
 const colour = (a: number, b: number): string => {
   const colourIntervallLength = 15;
-  return interpolateRainbow(((Number(a) + 1) % colourIntervallLength) / Math.min(b, colourIntervallLength));
+  return interpolateRainbow(
+    ((Number(a) + 1) % colourIntervallLength) /
+      Math.min(b, colourIntervallLength)
+  );
 };
 
 /**
  * Berechnet die relative Höhe eines Knotens basierend auf dem
- * Gesamtvalue (= gesamte Passagieranzahl),
- * dem Knotenvalue (= Passagiere am jeweiligen Bahnhof)
+ * Gesamtwert (= gesamte Passagieranzahl),
+ * dem Knotenwert (= Passagiere am jeweiligen Bahnhof)
  * und der effektiv nutzbaren Höhe (= Gesamthöhe - NodePadding * (NodeCount - 1))
- * @param nodeValue Anzahl an passagieren
- * @param minHeight Minimale höhe einer Node
- * @param factor Faktor zur skalierung der höhe
+ * @param nodeValue Anzahl an Passagieren
+ * @param minHeight Minimale Höhe einer Node
+ * @param factor Faktor zur Skalierung der Höhe
  */
 const calcNodeHeight = (
   nodeValue: number,
   minHeight: number,
-  factor: number = 4
+  factor = 4
 ): number => {
   if (nodeValue <= 0) return 0;
   const calcHeight = calcNodeHeightWithoutMinHeight(nodeValue, factor);
@@ -86,7 +89,7 @@ const calcNodeHeight = (
  * @param value Anzahl an Passagieren
  * @param factor Skalierungsfaktor
  */
-const calcNodeHeightWithoutMinHeight = (value: number, factor:number = 4): number => {
+const calcNodeHeightWithoutMinHeight = (value: number, factor = 4): number => {
   return value / factor;
 };
 
@@ -164,8 +167,8 @@ export const formatTextLink = (
  * M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
  * C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
  *
- * @param nodeWidth basisbreite der Nodes
- * @param width basisbreite des Graphen
+ * @param nodeWidth Basisbreite der Nodes
+ * @param width Basisbreite des Graphen
  * @param y0 y Koordinate der linken Node
  * @param y1 y Koordinate der rechten Node
  */
@@ -309,7 +312,7 @@ export const createGraph = ({
     }
   }
 
-  // fügt exiting node zu falls umsteiger existieren und gibt ihr die farbe
+  // fügt exiting node zu falls Umsteiger existieren und gibt ihr die Farbe
 
   const exNode: Node = {
     ...getNode(tNodes, "exiting"),
@@ -321,7 +324,7 @@ export const createGraph = ({
     tNodesFinished.push({ ...exNode, name: "exit" });
   }
 
-  // fügt future node zu falls umsteiger existieren und gibt ihr die farbe
+  // fügt future node zu falls Umsteiger existieren und gibt ihr die Farbe
 
   const fuNode: Node = {
     ...getNode(tNodes, "future"),
@@ -333,7 +336,7 @@ export const createGraph = ({
     tNodesFinished.push({ ...fuNode, name: "future" });
   }
 
-  // sort nodes by arival time first, then by departure time
+  // sort nodes by arrival time first, then by departure time
 
   fNodesFinished.sort((a, b) => {
     if (a.time < b.time) return -1;
@@ -396,8 +399,8 @@ export const createGraph = ({
       factor
     );
 
-    // vergrößere Nodes falls links wegen minimaler link größe vergrößert wurden
-    // berechne gleichzeitig die summe der aus-/einsteiger
+    // vergrößere Nodes falls links wegen minimaler link Größe vergrößert wurden
+    // berechne gleichzeitig die summe der Aus-/Einsteiger
 
     let linkPaxSum = 0;
     const currentFLinks = links.filter((a) => sameId(a.fNId, currentFNode.id));
@@ -459,7 +462,7 @@ export const createGraph = ({
         );
     }
 
-    // Beginn des neuen Nodes ist das Ende des vorrangegangen oder 0
+    // Beginn des neuen Nodes ist das Ende des vorangegangen oder 0
     const y1_start =
       Math.max(
         tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5,
