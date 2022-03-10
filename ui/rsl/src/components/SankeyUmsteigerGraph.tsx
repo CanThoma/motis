@@ -47,8 +47,8 @@ const SankeyUmsteigerGraph = ({
 
   const data = ExtractStationData({
     stationId: stationId,
-    startTime: currentArrivalTime,
-    endTime: currentDepatureTime + 6000, // TODO: Sonst sieht man halt nix :(
+    startTime: 1635147900 - 2.5*60*600,//currentArrivalTime - 2.5*60*600,
+    endTime: 1635147900 + 2.5*60*600, //currentDepatureTime + 2.5*60*600 *2,
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
   });
@@ -66,6 +66,7 @@ const SankeyUmsteigerGraph = ({
       width,
       nodeWidth,
       nodePadding,
+      factor: 10
     });
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],

@@ -28,7 +28,7 @@ export type StationInterchangeParameters = {
   startTime: number;
   endTime: number;
   maxCount: number;
-  onStatusUpdate: (status: "idle" | "error" | "loading" | "success") => void;
+  onStatusUpdate?: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
 };
 type TripIdAtStation = TripId & {

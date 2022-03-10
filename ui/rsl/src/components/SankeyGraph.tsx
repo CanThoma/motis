@@ -1,9 +1,16 @@
 import React, { MouseEvent, useRef, useState } from "react";
-import { select as d3Select, create as d3create } from "d3";
+import { select as d3Select } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 
 import { Node, Link } from "./SankeyTypes";
-import Utils from "./SankeyUtilsAbsolute";
+import {
+  createGraph,
+  formatTextLink,
+  formatTextNode,
+  createSankeyLink,
+  renderTime,
+  renderDelay,
+} from "./SankeyUtilsAbsolute";
 import { TripId } from "../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
 
@@ -21,13 +28,21 @@ type Props = {
   minNodeHeight?: number;
 };
 
+/**
+ * Draw the Graph
+ * @param tripId Id des Trips dessen Daten als Graph dargestellt werden sollen
+ * @param onStationSelected Funktion die aufgerunfen wird wenn auf eine node geklickt wird
+ * @param width Breite des Graphen
+ * @param nodeWidth basisbreite einer Node
+ * @param nodePadding basisabstand zwischen 2 Nodes
+ * @constructor
+ */
 const SankeyGraph = ({
   tripId,
   onStationSelected,
   width = 1000,
   nodeWidth = 25,
   nodePadding = 15,
-  duration = 250, // deprecated
 }: Props): JSX.Element => {
   const svgRef = useRef(null);
 
@@ -40,7 +55,6 @@ const SankeyGraph = ({
     currentDepatureTime: number;
   }>();
 
-  //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
 
   const linkOppacity = 0.3;
@@ -49,7 +63,6 @@ const SankeyGraph = ({
 
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
-  const rowBackgroundOppacity = 0; // na, wenn die AGs das so wollen :(
 
   const leftTimeOffset = 100;
 
@@ -62,7 +75,7 @@ const SankeyGraph = ({
       setSvgHeight(newSize);
     };
 
-    const graph = Utils.createGraph({
+    const graph = createGraph({
       nodes: graphData.nodes,
       links: graphData.links,
       onSvgResize: handleSvgResize,
@@ -103,23 +116,6 @@ const SankeyGraph = ({
 
     // Add a g.view for holding the sankey diagram.
     const view = svg.append("g").classed("view", true);
-
-    // Define the row backgrounds of every row
-    view
-      .selectAll("rect.rowBackground")
-      .data(graph.nodes)
-      .join("rect")
-      .classed("rowBackground", true)
-      .filter((d) => (d.x0 || width) < width)
-      .attr("id", (d) => d.id + "_background")
-      .attr("x", 0)
-      .attr("y", (d) => d.y0_backdrop || 0)
-      .attr("width", width)
-      .attr("height", (d) =>
-        Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
-      )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", rowBackgroundOppacity);
 
     // Define the BACKDROPS – Die grauen Balken hinter den nicht "vollen" Haltestellen.
     const backdrops = view
@@ -163,10 +159,10 @@ const SankeyGraph = ({
     // Add titles for node hover effects.
     nodes
       .append("title")
-      .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
+      .text((d) => formatTextNode(d.name, d.totalNodeValue || 0));
     backdrops
       .append("title")
-      .text((d) => Utils.formatTextNode(d.name, d.totalNodeValue || 0));
+      .text((d) => formatTextNode(d.name, d.totalNodeValue || 0));
 
     // Add the onClick Action
     nodes.on("click", (_, i) => onStationSelected(i.sId, i.name));
@@ -178,34 +174,12 @@ const SankeyGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(
-          nodeWidth,
-          width,
-          d.y0 || 0,
-          d.y1 || 0,
-          leftTimeOffset
-        )
+        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0, leftTimeOffset)
       )
       .attr("stroke", (d) => d.colour || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
-    /*
-    const gradientLinks = view
-      .selectAll("path.gradient-link")
-      .data(graph.links)
-      .join("path")
-      .classed("gradient-link", true)
-      .attr("id", (d) => "path_" + d.id)
-      .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
-      )
-      .attr("stroke", (d) => d.colour || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacityFocus)
-      .attr("stroke-width", (d) => d.width || 1)
-      .attr("fill", "none")
-      .each(setDash);
-*/
 
     // Add text labels.
     view
@@ -252,42 +226,6 @@ const SankeyGraph = ({
         });
       });
 
-    // *************************************************
-    // Add text labels for time.
-    /*
-    view
-      .selectAll("text.nodeTime")
-      .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
-      .join((enter) => {
-        const tmp = enter
-          .append("text")
-          .classed("node", true)
-          .attr("x", 0)
-          .attr("dx", leftTimeOffset - 5)
-          .attr(
-            "y",
-            (d) =>
-              (d.y0_backdrop || 0) +
-              ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
-          )
-          .attr("dy", 2.5)
-          .attr("text-anchor", "end")
-          .attr("font-family", config.font_family)
-          .attr("font-size", 10)
-          .attr("fill", "#a8a8a8")
-          .attr("font-weight", "bold");
-
-        tmp.append("tspan").text((d) => "10:30Uhr");
-
-        tmp.append("tspan").text(" (");
-        tmp
-          .append("tspan")
-          .text("+100min")
-          .attr("fill", "red")
-          .attr("font-weight", "bold");
-        tmp.append("tspan").text(")");
-      });
-*/
     view
       .selectAll("text.nodeTime")
       .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
@@ -311,25 +249,20 @@ const SankeyGraph = ({
           .attr("font-weight", "bold");
 
         // Die eigentliche Zeit
-        tmp
-          .append("tspan")
-          .text((d) => Utils.renderTime(d.arrival_current_time));
+        tmp.append("tspan").text((d) => renderTime(d.arrival_current_time));
 
-        //tmp.append("tspan").text(" (");
-        // Die
-        Utils.renderDelay(tmp, "arrival");
+        renderDelay(tmp, "arrival");
 
         tmp
           .append("title")
           .text(
             (d) =>
-              `Geplante Abfahrtszeit: ${Utils.renderTime(
+              `Geplante Abfahrtszeit: ${renderTime(
                 d.departure_schedule_time
-              )} – Tatsächliche Abfahrtszeit: ${Utils.renderTime(
+              )} – Tatsächliche Abfahrtszeit: ${renderTime(
                 d.departure_current_time
               )} `
           );
-        //tmp.append("tspan").text(")");
         return tmp;
       });
 
@@ -356,25 +289,19 @@ const SankeyGraph = ({
           .attr("font-weight", "bold");
 
         // Die eigentliche Zeit
-        tmp
-          .append("tspan")
-          .text((d) => Utils.renderTime(d.arrival_current_time));
-
-        //tmp.append("tspan").text(" (");
-        // Die
-        Utils.renderDelay(tmp, "depature");
+        tmp.append("tspan").text((d) => renderTime(d.arrival_current_time));
+        renderDelay(tmp, "depature");
 
         tmp
           .append("title")
           .text(
             (d) =>
-              `Geplante Ankunftszeit: ${Utils.renderTime(
+              `Geplante Ankunftszeit: ${renderTime(
                 d.departure_schedule_time
-              )} – Tatsächliche Ankunftszeit: ${Utils.renderTime(
+              )} – Tatsächliche Ankunftszeit: ${renderTime(
                 d.departure_current_time
               )} `
           );
-        //tmp.append("tspan").text(")");
         return tmp;
       });
 
@@ -382,7 +309,7 @@ const SankeyGraph = ({
       .append("text")
       .attr("x", leftTimeOffset)
       .attr("dx", -5) //
-      .attr("y", 30)
+      .attr("y", 8)
       .attr("dy", 2.5)
       .attr("text-anchor", "end")
       .attr("font-family", config.font_family)
@@ -390,59 +317,36 @@ const SankeyGraph = ({
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
 
+    let tempHeight;
+    if (graph.nodes[0] && graph.nodes[0].nodeHeight) {
+      tempHeight = graph.nodes[0].nodeHeight + 20;
+    } else {
+      tempHeight = 30;
+    }
+
     view
       .append("text")
       .attr("x", width - leftTimeOffset)
       .attr("dx", 5) //
-      .attr("y", () => {
-        if (graph.nodes[0]) {
-          return (graph.nodes[0].nodeHeight || 30) + 20;
-        } else return 20;
-      })
-      //.attr("dy", 2.5)
+      .attr("y", tempHeight)
       .attr("text-anchor", "start")
       .attr("font-family", config.font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ANKUNFT");
 
-    /*
-      .classed("node", true)
-      .attr("x", 0)
-      .attr("dx", leftTimeOffset - 5)
-      .attr(
-        "y",
-        (d) =>
-          (d.y0_backdrop || 0) +
-          ((d.y1_backdrop || 0) - (d.y0_backdrop || 0)) / 2
-      )
-      .attr("dy", 2.5)
-      .attr("fill", "#a8a8a8")
-      .attr("text-anchor", "end")
-      .attr("font-size", 10)
-      .attr("font-weight", "bold")
-      .attr("font-family", config.font_family)
-      //.text((d) => "10:30Uhr (+100min)")
-      .text((d) => "10:30Uhr")
-      .append("tspan")
-      .text("Bobo")
-
-      .text("--------");*/
-    // *************************************************
-
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
       const sourceName = graph.nodes.find((n) => n.id == d.source)?.name;
       const targetName = graph.nodes.find((n) => n.id == d.target)?.name;
-      return Utils.formatTextLink(
-        sourceName || " - ",
-        targetName || " - ",
-        d.value
-      );
+      return formatTextLink(sourceName || " - ", targetName || " - ", d.value);
     });
 
-    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
-    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
+    /**
+     * erhöht die opacity der links die mit der übergebenen Node verbuden sind
+     * @param _ Event (hier nicht benötigt)
+     * @param node node deren Links highlightet werden sollen
+     */
     function branchShow(_: MouseEvent, node: Node) {
       view.selectAll("path.link").attr("stroke-opacity", linkOppacityClear);
 
@@ -454,29 +358,32 @@ const SankeyGraph = ({
         });
 
         links.attr("stroke-opacity", linkOppacityFocus);
-        //.attr("stroke-dashoffset", 0);
       } else if (node.sourceLinks && node.sourceLinks.length === 0) {
         links = view.selectAll("path.link").filter((link) => {
           return (node.targetLinks || []).indexOf(link as Link) !== -1;
         });
 
         links.attr("stroke-opacity", linkOppacityFocus);
-        //.attr("stroke-dashoffset", 0);
       }
     }
 
+    /**
+     * setzt die opacity aller links auf den Ursprungswert zurück
+     */
     function branchClear() {
-      links.attr("stroke-opactiy", 0); //.each(setDash);
+      links.attr("stroke-opactiy", 0);
       view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
     }
 
-    // TODO:
-    // Das ist für die Animation:
-    //nodes.on("mouseover", branchAnimate).on("mouseout", branchClear);
     // Das für ein einfaches Show/Don't Show
     nodes.on("mouseover", branchShow).on("mouseout", branchClear);
     backdrops.on("mouseover", branchShow).on("mouseout", branchClear);
 
+    /**
+     * erhöht die Opacity des Links über den gehovered wird und senkt die Opacity aller anderen Links
+     * @param _ Event (hier nicht benötigt)
+     * @param link Link der highlightet werden soll
+     */
     function linkAnimate(_: MouseEvent, link: Link) {
       const links = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
@@ -484,6 +391,10 @@ const SankeyGraph = ({
 
       links.attr("stroke-opacity", linkOppacityFocus);
     }
+
+    /**
+     * setzt die Opacity aller Links auf den Ursprungswert zurück
+     */
     function linkClear() {
       links.attr("stroke-opacity", linkOppacity);
     }

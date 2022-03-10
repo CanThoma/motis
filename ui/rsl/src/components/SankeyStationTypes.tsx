@@ -17,6 +17,7 @@ type Node = {
   y0?: number;
   y1?: number;
   full?: boolean;
+  linkPaxSum?: number;
 };
 
 type Link = {
@@ -53,6 +54,7 @@ interface createGraphInterface {
   width: number;
   nodeWidth: number;
   nodePadding: number;
+  factor: number;
 }
 
 type NodeMinimal = {

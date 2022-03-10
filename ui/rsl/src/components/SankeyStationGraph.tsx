@@ -1,14 +1,19 @@
 import React, { MouseEvent, useRef, useState } from "react";
 import * as d3 from "d3";
-// import { select as d3Select, easeLinear } from "d3";
-// Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
-
 import { Node, Link } from "./SankeyStationTypes";
-import Utils from "./SankeyStationUtils";
+import {
+  createGraph,
+  formatTextNode,
+  formatTextTime,
+  createSankeyLink,
+  formatTextLink,
+  sameId,
+} from "./SankeyStationUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "./common/Loading";
+import config from "../config";
 
 type Props = {
   stationId: string;
@@ -16,7 +21,7 @@ type Props = {
   endTime: number;
   maxCount: number;
   onTripSelected: (id: TripId | string, name: string) => void;
-  factor;
+  factor: number;
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -42,7 +47,6 @@ function getSvgBlob(svgEl: SVGSVGElement) {
 
 function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
   if (!svgEl) {
-    console.log(svgEl);
     return;
   }
   const svgBlob = getSvgBlob(svgEl);
@@ -79,6 +83,8 @@ const SankeyStationGraph = ({
   const backdropOppacity = 0.7;
   const rowBackgroundOppacity = 0.0; // AG wollte nicht die 0.2 die vom Team bevorzugt werden
 
+  const timeOffset = 70;
+
   let thomas = true;
 
   const data = ExtractStationData({
@@ -99,7 +105,7 @@ const SankeyStationGraph = ({
       setSvgHeight(newSize);
     };
 
-    const graph = Utils.createGraph({
+    const graph = createGraph({
       fNodes: data.fromNodes,
       tNodes: data.toNodes,
       links: data.links,
@@ -236,13 +242,13 @@ const SankeyStationGraph = ({
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    nodes.append("title").text((d) => formatTextNode(d));
 
     // Add titles for backdrop hover effects.
-    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    backdrop.append("title").text((d) => formatTextNode(d));
 
     // Add titles for backdrop hover effects.
-    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    overflow.append("title").text((d) => formatTextNode(d));
 
     // Define the links.
     const links = view
@@ -251,7 +257,7 @@ const SankeyStationGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
       .attr("stroke", (d) => d.colour || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
@@ -296,7 +302,7 @@ const SankeyStationGraph = ({
       .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
-      .attr("x", 0)
+      .attr("x", 20)
       .attr("dx", 0)
       .attr(
         "y",
@@ -313,45 +319,65 @@ const SankeyStationGraph = ({
         if (typeof d.id === "string") {
           return "";
         } else {
-          return Utils.formatTextTime(d);
+          return formatTextTime(d);
         }
       })
       .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width)
+      .attr("x", width - 20)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
       const sourceName = graph.fromNodes.find((n) =>
-        Utils.sameId(n.id, d.fNId)
+        sameId(n.id, d.fNId)
       )?.name;
-      const targetName = graph.toNodes.find((n) =>
-        Utils.sameId(n.id, d.tNId)
-      )?.name;
-      return Utils.formatTextLink(sourceName || " – ", targetName || " – ", d);
+      const targetName = graph.toNodes.find((n) => sameId(n.id, d.tNId))?.name;
+      return formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
 
-    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
-    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
+    // Add Abfahrt and Ankunft markers
 
-    const tripIdCompare = (a: TripId, b: TripId) => {
-      return (
-        a.station_id === b.station_id &&
-        a.train_nr === b.train_nr &&
-        a.time === b.time &&
-        a.target_station_id === b.target_station_id &&
-        a.line_id === b.line_id &&
-        a.target_time === b.target_time
-      );
-    };
+    let tempFHeight;
+    const nonEmptyFNodes = graph.fromNodes.filter(
+      (n) => n.pax > 0 && typeof n.id !== "string"
+    );
+    if (nonEmptyFNodes[0] && nonEmptyFNodes[0].y0_backdrop) {
+      tempFHeight = Math.max(nonEmptyFNodes[0].y0_backdrop - 10, 8);
+    } else {
+      tempFHeight = 30;
+    }
 
-    const sameId = (a: TripId | string, b: TripId | string) => {
-      if (typeof a !== "string" && typeof b !== "string")
-        return tripIdCompare(a, b);
-      if (typeof a !== typeof b) return false;
-      else return a === b;
-    };
+    view
+      .append("text")
+      .attr("x", timeOffset)
+      .attr("dx", -5) //
+      .attr("y", tempFHeight)
+      .attr("dy", 2.5)
+      .attr("text-anchor", "end")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ANKUNFT");
+
+    let tempTHeight;
+    const nonEmptyTNodes = graph.toNodes.filter((n) => n.pax > 0);
+    if (nonEmptyTNodes[0] && nonEmptyTNodes[0].y0_backdrop) {
+      tempTHeight = nonEmptyTNodes[0].y0_backdrop - 10;
+    } else {
+      tempTHeight = 30;
+    }
+
+    view
+      .append("text")
+      .attr("x", width - timeOffset)
+      .attr("dx", 5) //
+      .attr("y", tempTHeight)
+      .attr("text-anchor", "start")
+      .attr("font-family", config.font_family)
+      .attr("font-size", 12)
+      .attr("fill", "#a8a8a8")
+      .text("ABFAHRT");
 
     function branchAnimate(_: MouseEvent, node: Node) {
       const focusLinks = view.selectAll("path.link").filter((l) => {
@@ -400,8 +426,6 @@ const SankeyStationGraph = ({
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
 
     thomas = false;
-    console.log(data);
-    console.log(thomas);
   }, [data]);
 
   return (
