@@ -606,6 +606,7 @@ function TripLoadForecastChartVertical({
       },
     }
   );
+  console.log(data);
 
   const svgEl = useRef<SVGSVGElement>(null);
 

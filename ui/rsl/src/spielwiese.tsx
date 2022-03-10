@@ -31,6 +31,7 @@ import {
   SankeyContextProvider,
   useSankeyContext,
 } from "./components/context/SankeyContext";
+import TripPage2 from "./components/TripPage2";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +53,7 @@ const App = (): JSX.Element => {
   //  const [selectedStation, setSelectedStation] = useState("");
   //  const [stationName, setStationName] = useState("");
   const [tripName, setTripName] = useState("");
-  const [activePage, setActivePage] = useState(1);
+  const [activePage, setActivePage] = useState(3); // TODO: 0 oder 1
   const [showStationControls, setShowStationControls] = useState(false);
   const [simActive, setSimActive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,7 @@ const App = (): JSX.Element => {
   const [endTmpTime, setEndTmpTime] = useState(new Date());
   const [factor, setFactor] = useState(15);
 
-  const pages = ["Trip Graph", "Station Graph", "Bahn Memes"];
+  const pages = ["Trip Graph", "Station Graph", "🫀", "Peak Spotting"];
 
   const svgRef = React.createRef();
 
@@ -204,6 +205,11 @@ const App = (): JSX.Element => {
               src="https://img.pr0gramm.com/2021/11/05/49c162d9523a7954.jpg"
               alt="Bahn"
             />
+          </>
+        )}
+        {activePage === 3 && (
+          <>
+            <TripPage2 />
           </>
         )}
       </SankeyContextProvider>

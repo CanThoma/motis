@@ -57,6 +57,7 @@ const TripPage = ({
             tripId={selectedTrip}
             width={width}
             onStationSelected={(selectedStation: string, name: string) => {
+              // TODO: DIE ZEIT MUSS NOCH GESETZT WERDEN.
               setSelectedStation(selectedStation);
               setStationName(name);
               onStationSelected();

@@ -139,7 +139,11 @@ const SankeyGraph = ({
       .attr("cursor", "pointer");
 
     // Add the onClick Action for Backdrops
-    backdrops.on("click", (_, i) => onStationSelected(i.sId, i.name));
+    // TODO: welche Zeit ist hier die richtige?!?! + Anpassen der restlichen Zeiten. (bzw. weitere onStationSelecteds)
+    backdrops.on(
+      "click",
+      (_, i) => onStationSelected(i.sId, i.name) //, i.arrival_current_time)
+    );
 
     // Define the nodes.
     const nodes = view
@@ -148,7 +152,7 @@ const SankeyGraph = ({
       .join("rect")
       .classed("node", true)
       .attr("cursor", "pointer")
-      .attr("id", (d) => d.id) // TODO: Das habe ich zu sId geändert, um das clicken einfacher zu maken.
+      .attr("id", (d) => d.id)
       .attr("x", (d) => d.x0 || 0)
       .attr("y", (d) => d.y0 || 0)
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
@@ -390,7 +394,11 @@ const SankeyGraph = ({
       .append("text")
       .attr("x", width - leftTimeOffset)
       .attr("dx", 5) //
-      .attr("y", (graph.nodes[0].nodeHeight || 30) + 20)
+      .attr("y", () => {
+        if (graph.nodes[0]) {
+          return (graph.nodes[0].nodeHeight || 30) + 20;
+        } else return 20;
+      })
       //.attr("dy", 2.5)
       .attr("text-anchor", "start")
       .attr("font-family", config.font_family)

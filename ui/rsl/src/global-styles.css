@@ -1,3 +1,9 @@
+:root {
+  --red: #b00;
+  --blue: #00b;
+  --fullwidth: 100%;
+}
+
 body {
   margin: 0;
   color: rgba(0, 0, 0, 0.85);

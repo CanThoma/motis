@@ -1,0 +1,15 @@
+:root {
+  --lightGrey: #e9ecef;
+  --lighterGrey: #ebeef0;
+  --bluishGrey: #ced4da;
+  --darkBluishGrey: #b6bec5;
+  --grey: #85898e;
+  --darkGrey: #757778;
+  --black: #343a40;
+  --white: #fff;
+}
+
+.horizontalTripSelected {
+  background-color: var(--lightGrey) !important;
+  border-color: var(--bluishGrey) !important;
+}
