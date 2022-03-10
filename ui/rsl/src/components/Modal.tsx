@@ -1,10 +1,12 @@
 import React from "react";
 
+import Navbar from "./common/navbar";
 import { Node } from "./SankeyTypes";
 import "./Modal.styles.css";
 import SankeyUmsteigerGraph from "./SankeyUmsteigerGraph";
 import { TripId } from "../api/protocol/motis";
 
+const filterBy = (i: number) => {};
 type Props = {
   setIsOpen: (b: boolean) => void;
   param:
@@ -18,6 +20,7 @@ type Props = {
 };
 
 const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
+  const pages = ["Einstiege", "Beide", "Ausstiege"];
   if (typeof param === undefined) return <>not a node</>;
   else
     return (
@@ -38,22 +41,12 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                   ":"}
             </p>
             <div className="flex justify-center">
-
-              <div className="form-check">
-                <input
-                  className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                  type="radio" name="flexRadioDefault" id="flexRadioDefault1"></input>
-                  <label className="form-check-label inline-block text-gray-800" htmlFor="flexRadioDefault1">
-                    Default radio
-                  </label>
-              </div>
-              <div className="form-check">
-                <input
-                  className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                  type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked></input>
-                  <label className="form-check-label inline-block text-gray-800" htmlFor="flexRadioDefault2">
-                    Default checked radio
-                  </label>
+              <div className="flex place-content-center mx-auto mt-20">
+                <Navbar
+                  pages={pages}
+                  onChange={(i) => filterBy(i)}
+                  activePage={1}
+                />
               </div>
             </div>
             <div className="app mt-16 text-center">
