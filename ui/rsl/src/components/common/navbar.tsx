@@ -1,15 +1,19 @@
-import React, { useRef, useState, useEffect, createRef } from "react";
+import React from "react";
 
 import "./navbar.css";
 
-const Navbar = ({ pages, onChange, activePage }) => {
+const Navbar = (args: {
+  pages: string[];
+  onChange: (i: number) => void;
+  activePage: number;
+}) => {
   return (
     <ul className="navbar">
-      {pages.map((page, i) => (
+      {args.pages.map((page, i) => (
         <li
           key={i}
-          className={i === activePage ? "current" : ""}
-          onClick={() => onChange(i)}
+          className={i === args.activePage ? "current" : ""}
+          onClick={() => args.onChange(i)}
         >
           <button data-hover={page}>{page}</button>
         </li>
