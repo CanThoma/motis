@@ -89,7 +89,6 @@ const SankeyStationGraph = ({
   nodeWidth = 25,
   nodePadding = 15,
 }: Props): JSX.Element => {
-  // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfertigt.
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
