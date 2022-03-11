@@ -2,28 +2,14 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 
 import "./index.css";
-import SankeyPicker from "./components/SankeyPicker";
 import { QueryClient, QueryClientProvider } from "react-query";
 import TimeControl from "./components/TimeControl";
 import UniverseControl from "./components/UniverseControl";
-
-import { TripId } from "./api/protocol/motis";
 import getQueryParameters from "./util/queryParameters";
-import TripDetails from "./components/TripDetails";
-import SankeyStationGraph from "./components/SankeyStationGraph";
-
-//import "antd/dist/antd.css";
 import "./global-styles.css";
-//import "./components/common/styles/tooltip.css";
-
 import "./components/Modal.styles.css";
-import ScrollToUpdate from "./components/common/scrollToUpdate";
-
-import TimeInput from "./components/measures/TimeInput";
-import InputSlider from "./components/common/inputSlider";
 import Navbar from "./components/common/navbar";
 import Legend from "./components/legend";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/solid";
 import StationPage from "./components/StationPage";
 import TripPage from "./components/TripPage";
 
@@ -41,42 +27,17 @@ const queryClient = new QueryClient({
 const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 
 const App = (): JSX.Element => {
-  const [data, setDate] = useState(null);
   const [width, setWidth] = useState(1000);
-  const [height, setHeight] = useState(600);
-  const [hedline, setHeadline] = useState("");
-  const [subhedline, setSubHeadline] = useState("");
-  //const[target, setTarget] = useState(true)
-  const [key, setKey] = useState(1);
   const [selectedTrip, setSelectedTrip] = useState(null);
-  //  const [selectedStation, setSelectedStation] = useState("");
-  //  const [stationName, setStationName] = useState("");
   const [tripName, setTripName] = useState("");
   const [activePage, setActivePage] = useState(1);
-  const [showStationControls, setShowStationControls] = useState(false);
   const [simActive, setSimActive] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  //  const [startTime, setStartTime] = useState(new Date());
-  //  const [endTime, setEndTime] = useState(new Date());
-  const [startTmpTime, setStartTmpTime] = useState(new Date());
-  const [endTmpTime, setEndTmpTime] = useState(new Date());
-  const [factor, setFactor] = useState(15);
 
   const pages = ["Trip Graph", "Station Graph", "Bahn Memes"];
 
-  const svgRef = React.createRef();
-
-  const valueRef = React.createRef();
-
   const { selectedStation, setSelectedStation, stationName, setStationName } =
     useSankeyContext();
-
-  /*
-  toggleTarget(target: boolean, key: number) {
-    this.setState({ target: false });
-  }
-  */
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyboardNavigation);
@@ -86,28 +47,12 @@ const App = (): JSX.Element => {
     };
   }, [activePage]);
 
-  const handleKeyboardNavigation = (e) => {
+  const handleKeyboardNavigation = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft") {
       setActivePage(activePage === 0 ? pages.length - 1 : activePage - 1);
     } else if (e.key === "ArrowRight") {
       setActivePage(activePage === pages.length - 1 ? 0 : activePage + 1);
     }
-  };
-
-  const changeWidth = (width, height = 600) => {
-    setHeight(height);
-    setWidth(width);
-  };
-
-  const handleChange = (evt) => {
-    const newWidth = evt.target.validity.valid ? evt.target.value : width;
-
-    setWidth({ newWidth });
-  };
-
-  const handleFactorChange = (i) => {
-    console.log(i.target.value);
-    setFactor(i.target.value);
   };
 
   const handleStationSelect = () => {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import Navbar from "./common/navbar";
 import { Node } from "./SankeyTypes";
@@ -6,7 +6,6 @@ import "./Modal.styles.css";
 import SankeyUmsteigerGraph from "./SankeyUmsteigerGraph";
 import { TripId } from "../api/protocol/motis";
 
-const filterBy = (i: number) => {};
 type Props = {
   setIsOpen: (b: boolean) => void;
   param:
@@ -20,7 +19,28 @@ type Props = {
 };
 
 const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
+  const [currentPage, setCurrenPage] = useState(1);
+  const [selectedDir, changeDir] = useState("both");
+
   const pages = ["Einstiege", "Beide", "Ausstiege"];
+
+  const filterBy = (i: number) => {
+    switch (i) {
+      case 0:
+        changeDir("entering");
+        setCurrenPage(0);
+        break;
+      case 1:
+        changeDir("both");
+        setCurrenPage(1);
+        break;
+      case 2:
+        changeDir("exiting");
+        setCurrenPage(2);
+        break;
+    }
+  };
+
   if (typeof param === undefined) return <>not a node</>;
   else
     return (
@@ -41,15 +61,15 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                   ":"}
             </p>
             <div className="flex justify-center">
-              <div className="flex place-content-center mx-auto mt-20">
+              <div className="flex place-content-center mx-auto mt-5">
                 <Navbar
                   pages={pages}
                   onChange={(i) => filterBy(i)}
-                  activePage={1}
+                  activePage={currentPage}
                 />
               </div>
             </div>
-            <div className="app mt-16 text-center">
+            <div className="app mt-8 text-center">
               {param && (
                 <SankeyUmsteigerGraph
                   stationId={param.node.sId}
@@ -57,6 +77,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                   currentDepatureTime={param.currentDepatureTime}
                   maxCount={0}
                   onlyIncludeTripId={[param.tripId]}
+                  tripDir={selectedDir}
                 />
               )}
             </div>
