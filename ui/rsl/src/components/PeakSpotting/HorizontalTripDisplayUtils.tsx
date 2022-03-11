@@ -5,7 +5,7 @@ import {
   scaleLinear,
   interpolateHsl,
 } from "d3";
-import config from "../config";
+import config from "../../config";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit
@@ -162,12 +162,12 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
   return finalEdges;
 };
 
-const colour = scaleLinear()
+const colour = scaleLinear<string>()
   .domain([0, 0.4, 0.8, 0.99, 1])
   .range(["#dfe3e7", "#c1d5d7", "#ffc700", "#f04b4a", "#dd4141"])
   .interpolate(interpolateRgb.gamma(2.2));
 
-const colour2 = scaleLinear()
+const colour2 = scaleLinear<string>()
   .domain([0, 0.5, 1])
   .range(["grey", "yellow", "red"])
   .interpolate(interpolateHsl);

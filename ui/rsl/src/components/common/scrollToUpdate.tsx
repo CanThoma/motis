@@ -10,6 +10,7 @@ interface ScrollToUpdateProps {
   children: JSX.Element;
 }
 
+// TODO Pfeilrichtung
 /**
  *
  * @param onRefreshUP
@@ -221,7 +222,7 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
             <h3 className="arrow" style={{ color: "#cacaca" }}>
               Erneut Scrollen zum Laden weiterer Verbindungen!
             </h3>
-            <div className="arrow">
+            <div className="arrow ">
               <span />
               <span />
               <span />

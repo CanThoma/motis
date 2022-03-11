@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import {TripId, TripServiceInfo} from "../api/protocol/motis";
+import { TripId } from "../api/protocol/motis";
 import { usePaxMonGroupsInTripQuery } from "../api/paxmon";
 import { PaxMonEdgeLoadInfoWithStats } from "../data/loadInfo";
 import {

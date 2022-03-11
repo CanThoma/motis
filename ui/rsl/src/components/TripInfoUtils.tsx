@@ -10,8 +10,9 @@ import {
   SankeyInterfaceMinimal,
   NodeMinimal,
   LinkMinimal,
-} from "./SankeyTripTypes";
+} from "./Sankey/TripGraph/SankeyTripTypes";
 import { addEdgeStatistics } from "../util/statistics";
+import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
 
 interface EdgeInfo {
   enterStationID: string;
@@ -169,7 +170,10 @@ export function ExtractGroupInfoForThisTrain(
   return sankeyInterface;
 }
 
-export async function loadAndProcessTripInfo(universe: number, trip: TripId) {
+export async function loadAndProcessTripInfo(
+  universe: number,
+  trip: TripId
+): Promise<PaxMonTripLoadInfoWithStats> {
   const res = await sendPaxMonTripLoadInfosRequest({
     universe,
     trips: [trip],

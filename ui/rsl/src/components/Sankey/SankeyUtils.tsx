@@ -1,5 +1,5 @@
-import { Node } from "./SankeyStationTypes";
-import { TripId } from "../api/protocol/motis";
+import { Node } from "./StationGraph/SankeyStationTypes";
+import { TripId } from "../../api/protocol/motis";
 
 /**
  * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge

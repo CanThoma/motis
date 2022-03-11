@@ -5,16 +5,12 @@ import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
 import VerticalTripDisplay from "./VerticalTripDiplay";
 
 import "./HorizontalTripDisplay.css";
-import { colorSchema } from "../config";
+import { colorSchema } from "../../config";
 
 type TripPage2Props = {
   width: number; //
   height: number;
 };
-
-// TODO: Müsste doch 25 sein, oder?
-// so hätte man die Zeit zwischen 0:00Uhr und 1:00Uhr noch aufgeführt?
-const timeFrame = 25;
 
 const testData = {
   tsi: {
@@ -54,48 +50,6 @@ const testData = {
     ],
   },
   edges: [
-    // Der zusätzliche, der über 0 Uhr geht zum testäään
-    /*{
-      from: {
-        id: "8506302",
-        name: "St. Gallen",
-        pos: {
-          lat: 47.423179,
-          lng: 9.369897,
-        },
-      },
-      to: {
-        id: "8506000",
-        name: "Winterthur",
-        pos: {
-          lat: 47.500334,
-          lng: 8.723821,
-        },
-      },
-      departure_schedule_time: 1646433000, // 23:30
-      departure_current_time: 1646433000,
-      arrival_schedule_time: 1646436120, // 00:22
-      arrival_current_time: 1646436120,
-      capacity_type: "Known",
-      capacity: 522,
-      passenger_cdf: [
-        {
-          passengers: 673,
-          probability: 1,
-        },
-      ],
-      updated: false,
-      possibly_over_capacity: true,
-      expected_passengers: 673,
-      p_load_gt_100: 1,
-      q_20: 673,
-      q_50: 673,
-      q_80: 673,
-      q_5: 673,
-      q_95: 673,
-      min_pax: 673,
-      max_pax: 673,
-    },*/
     {
       from: {
         id: "8506302",
@@ -5152,7 +5106,7 @@ const data = [
   testData9,
 ];
 
-const TripPage2 = ({
+const PeakSpotting = ({
   width = Math.max(900, window.screen.availWidth / 2) - 10,
 }) => {
   return (
@@ -5186,4 +5140,4 @@ const TripPage2 = ({
   );
 };
 
-export default TripPage2;
+export default PeakSpotting;

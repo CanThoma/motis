@@ -1,28 +1,20 @@
-import {
-  select as d3Select,
-  interpolateRainbow,
-  interpolateRgb,
-  scaleLinear,
-  interpolateHsl,
-} from "d3";
+import { interpolateRgb, scaleLinear } from "d3";
 
 const calcMinutes = (hours: number, minutes: number): number => {
   return hours * 60 + minutes;
 };
 
-const colour = scaleLinear()
+const colour = scaleLinear<string>()
   .domain([0, 0.4, 0.8, 0.99, 1])
   .range(["#dfe3e7", "#c1d5d7", "#ffc700", "#f04b4a", "#dd4141"])
   .interpolate(interpolateRgb.gamma(2.2));
 
-const prepareEdges = (trip) => {};
-
-const prepareTimeEdges = (trip) => {
+const prepareTimeEdges = (trip: any): any[] => {
   const finalEdges = [];
 
   let offset = 20;
   const minHeight = 30;
-  const ballpadding = 4;
+  const ballPadding = 4;
   const heightMultiplier = 3;
   const widthMultiplier = 0.15;
 
@@ -56,12 +48,12 @@ const prepareTimeEdges = (trip) => {
     tmpEdge.leftWidth = tmpEdge.max_pax * widthMultiplier;
     tmpEdge.color = colour(Math.min(1, tmpEdge.max_pax / tmpEdge.capacity));
 
-    tmpEdge.y = offset + ballpadding;
+    tmpEdge.y = offset + ballPadding;
 
-    offset += tmpEdge.height + ballpadding;
+    offset += tmpEdge.height + ballPadding;
     finalEdges.push(tmpEdge);
   }
   return finalEdges;
 };
 
-export { prepareEdges, prepareTimeEdges };
+export { prepareTimeEdges };

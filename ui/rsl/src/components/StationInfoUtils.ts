@@ -1,15 +1,14 @@
-import { Trip, TripId, TripServiceInfo } from "../api/protocol/motis";
+import { TripId, TripServiceInfo } from "../api/protocol/motis";
 import {
   LinkMinimal,
   NodeMinimal,
   SankeyInterfaceMinimal,
-} from "./SankeyStationTypes";
+} from "./Sankey/StationGraph/SankeyStationTypes";
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
 import {
   PaxMonGetInterchangesRequest,
   PaxMonInterchangeInfo,
-  PaxMonTripInfo,
   PaxMonTripStopInfo,
 } from "../api/protocol/motis/paxmon";
 import {
@@ -19,9 +18,7 @@ import {
   usePaxMonStatusQuery,
 } from "../api/paxmon";
 import { useQuery, useQueryClient } from "react-query";
-import { loadAndProcessTripInfo } from "./TripInfoUtils";
 import { addEdgeStatistics } from "../util/statistics";
-import { formatLongDateTime } from "../util/dateFormat";
 
 export type StationInterchangeParameters = {
   stationId: string;
@@ -37,10 +34,6 @@ type TripIdAtStation = TripId & {
   cap: number;
   interstation_time: number;
   stationID: string;
-};
-type NodeCapacityInfo = {
-  cap: number;
-  max_pax: number;
 };
 function SameTripIdAtStation(
   tripIdAtStationA: TripIdAtStation,
@@ -210,13 +203,13 @@ function InterchangePointInfoHandle(
   ) {
     pointStationIndex = -2;
   } else {
-    let trip = info.trips[0];
+    const trip = info.trips[0];
     pointStationIndex = tripsInStationPoint.findIndex((tripId) =>
       SameTripIdAtStation(tripId, ToTripIdAtStation(trip.trip))
     );
-    let foundTripsInStation = tripsInStationPoint[pointStationIndex];
+    const foundTripsInStation = tripsInStationPoint[pointStationIndex];
     if (!foundTripsInStation) {
-      let tripIdAtStation = ToTripIdAtStation(trip.trip);
+      const tripIdAtStation = ToTripIdAtStation(trip.trip);
       tripIdAtStation.interstation_time = info.schedule_time;
 
       tripIdAtStation.pax = interchangePassengerCount;
@@ -304,9 +297,9 @@ export function ExtractStationData(
       let departureStationIndex = -1;
 
       // zwischenstop/endstop
-      let arrivalInfo = interchange.arrival[0];
+      const arrivalInfo = interchange.arrival[0];
       //zwischenstop/start
-      let departureInfo = interchange.departure[0];
+      const departureInfo = interchange.departure[0];
       /* do not include node/link information for trips that don't fit the filter criteria */
       if (params.onlyIncludeTripIds && params.onlyIncludeTripIds.length > 0) {
         if (
@@ -398,22 +391,22 @@ export function ExtractStationData(
       }
 
       /* take care of the links from the data we now gained */
-      let src =
+      const src =
         arrivingStationIndex === -1
           ? boardingNode.id
           : arrivingStationIndex === -2
           ? previousNode.id
           : ToTripId(arrivingTripsInStation[arrivingStationIndex]);
-      let trgt =
+      const trgt =
         departureStationIndex === -1
           ? exitingNode.id
           : departureStationIndex === -2
           ? futureNode.id
           : ToTripId(departingTripsInStation[departureStationIndex]);
-      let val = interchange.groups.max_passenger_count;
+      const val = interchange.groups.max_passenger_count;
 
       // in case of several groups going the same interchange points in arrival & departure at the same time
-      let foundLink = graph.links.find((link) => {
+      const foundLink = graph.links.find((link) => {
         let left = false;
         let right = false;
 
@@ -440,7 +433,7 @@ export function ExtractStationData(
 
   graph.fromNodes.push(boardingNode);
   graph.fromNodes.push(previousNode);
-  for (let arrivingTrip of arrivingTripsInStation) {
+  for (const arrivingTrip of arrivingTripsInStation) {
     const tripId = ToTripId(arrivingTrip);
     const node: NodeMinimal = {
       id: tripId,
@@ -451,7 +444,7 @@ export function ExtractStationData(
     };
     graph.fromNodes.push(node);
   }
-  for (let departingTrip of departingTripsInStation) {
+  for (const departingTrip of departingTripsInStation) {
     const tripId = ToTripId(departingTrip);
     const node: NodeMinimal = {
       id: tripId,

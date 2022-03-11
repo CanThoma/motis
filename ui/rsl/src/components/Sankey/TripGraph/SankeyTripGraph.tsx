@@ -10,10 +10,10 @@ import {
   renderTime,
   renderDelay,
 } from "./SankeyTripUtils";
-import { TripId } from "../api/protocol/motis";
-import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
-import Modal from "./Modal";
-import config from "../config";
+import { TripId } from "../../../api/protocol/motis";
+import { ExtractGroupInfoForThisTrain } from "../../TripInfoUtils";
+import Modal from "./Modal/Modal";
+import config from "../../../config";
 
 type Props = {
   tripId: TripId;

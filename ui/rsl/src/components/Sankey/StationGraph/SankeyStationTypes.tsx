@@ -1,4 +1,4 @@
-import { TripId } from "../api/protocol/motis";
+import { TripId } from "../../../api/protocol/motis";
 
 type Node = {
   id: TripId | string;

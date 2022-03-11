@@ -34,7 +34,7 @@ function shortTripName(tsi: TripServiceInfo) {
 }
 
 type TripPickerProps = {
-  onTripPicked: (tripID: TripId | undefined) => void;
+  onTripPicked: (tripID: TripId) => void;
   clearOnPick: boolean;
   longDistanceOnly: boolean;
   placeHolder?: string;
@@ -78,8 +78,8 @@ function TripPicker({
       }
     },
     onSelectedItemChange: (changes) => {
-      if (changes.selectedItem != null || !clearOnPick) {
-        onTripPicked(changes.selectedItem?.tsi.trip);
+      if (changes.selectedItem && !clearOnPick) {
+        onTripPicked(changes.selectedItem.tsi.trip);
       }
       if (changes.selectedItem != null && clearOnPick) {
         reset();

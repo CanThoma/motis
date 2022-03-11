@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import {TripId, TripServiceInfo} from "../api/protocol/motis";
+import { TripId } from "../api/protocol/motis";
 import { PaxMonEdgeLoadInfoWithStats } from "../data/loadInfo";
 
 import TripLoadForecastCharts from "./TripLoadForecastChart";
@@ -11,17 +11,21 @@ type TripDetailsProps = {
   onSectionDetailClick: (trip: TripId | undefined) => void;
 };
 
-function TripDetails({ tripId,onSectionDetailClick }: TripDetailsProps): JSX.Element {
+/**
+ *
+ * @param tripId
+ * @param onSectionDetailClick
+ * @constructor
+ */
+function TripDetails({
+  tripId,
+  onSectionDetailClick,
+}: TripDetailsProps): JSX.Element {
   const [selectedSection, setSelectedSection] =
     useState<PaxMonEdgeLoadInfoWithStats>();
 
   return (
     <div>
-      {/*< TripLoadForecastCharts.TripLoadForecastChart
-        tripId={tripId}
-        mode="Interactive"
-        onSectionClick={setSelectedSection}
-      />*/}
       <TripLoadForecastCharts.TripLoadForecastChartVertical
         tripId={tripId}
         mode="Interactive"

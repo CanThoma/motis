@@ -6,8 +6,8 @@ import {
   NodeMinimal,
   createGraphInterface,
 } from "./SankeyStationTypes";
-import { TripId } from "../api/protocol/motis";
-import { expandNode, sameId } from "./SankeyUtils";
+import { TripId } from "../../../api/protocol/motis";
+import { expandNode, sameId } from "../SankeyUtils";
 
 /**
  * Abstand zwischen Balken und der Zeit

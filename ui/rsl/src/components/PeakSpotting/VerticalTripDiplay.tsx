@@ -1,9 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { select as d3Select } from "d3";
-import config, { colorSchema } from "../config";
+import config, { colorSchema } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 
-const VerticalTripDisplay = ({ width, trip }) => {
+type Props = {
+  width: number;
+  trip: any;
+};
+
+/**
+ * TODO
+ * @param width
+ * @param trip
+ * @constructor
+ */
+const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
   const svgRef = useRef(null);
   const [height, setHeight] = useState(500);
 
@@ -71,7 +82,7 @@ const VerticalTripDisplay = ({ width, trip }) => {
           .attr("font-weight", "bold")
           .attr("font-family", config.font_family);
 
-        // ABFHARTSZEITEN
+        // ABFAHRTSZEITEN
         view
           .append("text")
           .attr("x", 50)
@@ -206,7 +217,7 @@ const VerticalTripDisplay = ({ width, trip }) => {
       .attr("font-weight", "bold")
       .attr("font-family", config.font_family);
 
-    // ANFANGSSTATION ANKUFTSZEIT
+    // ANFANGSSTATION ANKUNFTSZEIT
     view
       .append("text")
       .attr("x", 50)
@@ -250,7 +261,7 @@ const VerticalTripDisplay = ({ width, trip }) => {
       .attr("stroke-width", "2")
       .attr("fill", colorSchema.bluishGrey);
 
-    // ENDSTATION ANKUFTSZEIT
+    // ENDSTATION ANKUNFTSZEIT
     view
       .append("text")
       .attr("x", 50)
@@ -283,7 +294,7 @@ const VerticalTripDisplay = ({ width, trip }) => {
       .attr("font-family", config.font_family);
 
     setHeight(svgHeight + 130);
-  }, []);
+  }, [trip]);
 
   return (
     <div style={{ width, backgroundColor: colorSchema.lightGrey }}>

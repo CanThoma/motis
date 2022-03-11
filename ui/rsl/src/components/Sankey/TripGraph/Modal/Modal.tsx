@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-import Navbar from "./common/navbar";
-import { Node } from "./SankeyTripTypes";
+import Navbar from "../../../common/navbar";
+import { Node } from "../SankeyTripTypes";
 import "./Modal.styles.css";
-import SankeyUmsteigerGraph from "./SankeyUmsteigerGraph";
-import { TripId } from "../api/protocol/motis";
+import SankeyUmsteigerGraph from "../../UmsteigerGraph/SankeyUmsteigerGraph";
+import { TripId } from "../../../../api/protocol/motis";
 
 type Props = {
   setIsOpen: (b: boolean) => void;

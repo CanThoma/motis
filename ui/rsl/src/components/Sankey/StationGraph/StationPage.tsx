@@ -1,31 +1,22 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 
-import StationPicker from "./StationPicker";
+import StationPicker from "../../StationPicker";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/solid";
 
-import InputSlider from "./common/inputSlider";
-import ScrollToUpdate from "./common/scrollToUpdate";
-import TimeInput from "./measures/TimeInput";
+import InputSlider from "../../common/inputSlider";
+import ScrollToUpdate from "../../common/scrollToUpdate";
+import TimeInput from "../../measures/TimeInput";
 import SankeyStationGraph from "./SankeyStationGraph";
-import { TripId, Station } from "../api/protocol/motis";
+import { TripId } from "../../../api/protocol/motis";
 
-import config from "../config";
-import { useSankeyContext } from "./context/SankeyContext";
+import config from "../../../config";
+import { useSankeyContext } from "../../context/SankeyContext";
 
 type StationPageProps = {
-  stationName: string;
-  selectedStation: string;
-  onStationPicked: (station: Station | undefined) => void;
   onTripSelected: () => void;
 };
 
-const StationPage = ({
-  //selectedStation,
-  //stationName,
-  onTripSelected,
-  onStationPicked,
-  onLoad,
-}: StationPageProps): JSX.Element => {
+const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
   const {
     setSelectedTrip,
     setTripName,
@@ -42,46 +33,17 @@ const StationPage = ({
   } = useSankeyContext();
 
   const [showStationControls, setShowStationControls] = useState(false);
-  /*
-const [startTime, setStartTime] = useState<Date>(new Date());
-const [endTime, setEndTime] = useState<Date>(new Date());
-
-const [factor, setFactor] = useState(15); */
 
   const [tmpStartTime, setTmpStartTime] = useState<Date>(new Date());
   const [tmpEndTime, setTmpEndTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    /*
-    // TODO: besserer wäre sicherlicht Date.now()
-    const start = new Date(config.station_startDate);
-    const end = new Date(
-      start.getTime() + 1000 * 60 * config.station_timeInterval
-    );
-
-    setStartTime(start);
-    setTmpEndTime(end); */
-
     setTmpEndTime(endTime);
     setTmpStartTime(startTime);
-
-    window.addEventListener("keydown", toggleStationControls);
-
-    // TODO: ggf ist hier der richtige Platz für den "Loading Triggä"
-    return () => {
-      window.removeEventListener("keydown", toggleStationControls);
-    };
-  }, [showStationControls]);
-
-  const toggleStationControls = (e) => {
-    if (e.key === " ") {
-      e.preventDefault();
-
-      setShowStationControls(!showStationControls);
-    }
-  };
+  }, [showStationControls, endTime, startTime]);
 
   const handleTimeUpdate = () => {
+    if (!setStartTime || !setEndTime) return;
     setStartTime(tmpStartTime);
     setEndTime(tmpEndTime);
   };
@@ -94,23 +56,23 @@ const [factor, setFactor] = useState(15); */
   };
 
   const handleRefresh = (): void => {
-    const time = startTime;
-    const newTime = new Date(
-      time.getTime() - 1000 * 60 * config.station_timeInterval
+    const time = new Date(
+      startTime.getTime() - 1000 * 60 * config.station_timeInterval
     );
 
-    setStartTime(newTime);
-    setTmpStartTime(newTime);
+    if (!setStartTime) return;
+    setStartTime(time);
+    setTmpStartTime(time);
   };
 
   const handleRefreshDown = (): void => {
-    const time = endTime;
-    const newTime = new Date(
-      time.getTime() + 1000 * 60 * config.station_timeInterval
+    const time = new Date(
+      endTime.getTime() + 1000 * 60 * config.station_timeInterval
     );
 
-    setEndTime(newTime);
-    setTmpEndTime(newTime);
+    if (!setEndTime) return;
+    setEndTime(time);
+    setTmpEndTime(time);
   };
 
   return (
@@ -121,8 +83,9 @@ const [factor, setFactor] = useState(15); */
             <span>Station:</span>
             <StationPicker
               onStationPicked={(station) => {
-                setSelectedStation(station?.id);
-                setStationName(station?.name);
+                if (!setSelectedStation || !setStationName || !station) return;
+                setSelectedStation(station.id);
+                setStationName(station.name);
               }}
               clearOnPick={false}
               placeHolder={stationName}
@@ -149,7 +112,13 @@ const [factor, setFactor] = useState(15); */
                     label="Skalierungsfaktor:"
                     values={[1, 4, 10, 12, 15, 20, 25]}
                     unit="×"
-                    onChange={setFactor}
+                    onChange={(factor) => {
+                      if (setFactor) setFactor(factor);
+                      else
+                        console.warn(
+                          "Internal Server Error: setFactor not defined!"
+                        );
+                    }}
                     value={factor}
                   />
                 </div>
@@ -222,13 +191,21 @@ const [factor, setFactor] = useState(15); */
                 stationId={selectedStation}
                 startTime={startTime.getTime() / 1000}
                 endTime={endTime.getTime() / 1000}
-                width={1200} // TODO: ist mehr son Test.
+                width={1200}
                 onTripSelected={(
                   selectedTrip: TripId | string,
                   name: string
                 ) => {
-                  setSelectedTrip(selectedTrip);
-                  setTripName(name);
+                  if (setSelectedTrip) setSelectedTrip(selectedTrip);
+                  else
+                    console.warn(
+                      "Internal Server Error: setSelectedTrip not defined!"
+                    );
+                  if (setTripName) setTripName(name);
+                  else
+                    console.warn(
+                      "Internal Server Error: setTripName not defined!"
+                    );
                   onTripSelected();
                 }}
                 factor={factor}

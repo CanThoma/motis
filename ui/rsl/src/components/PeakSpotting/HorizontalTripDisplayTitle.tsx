@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { select as d3Select } from "d3";
-import config, { colorSchema } from "../config";
+import config, { colorSchema } from "../../config";
 
 const HorizontalTripDisplayTitle = ({ width, title }) => {
   const svgTitleRef = useRef(null);

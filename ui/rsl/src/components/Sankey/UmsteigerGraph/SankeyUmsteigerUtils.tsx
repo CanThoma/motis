@@ -5,9 +5,9 @@ import {
   SankeyInterface,
   NodeMinimal,
   createGraphInterface,
-} from "./SankeyStationTypes";
-import { TripId } from "../api/protocol/motis";
-import { expandNode } from "./SankeyUtils";
+} from "../StationGraph/SankeyStationTypes";
+import { TripId } from "../../../api/protocol/motis";
+import { expandNode } from "../SankeyUtils";
 
 export default class UmsteigerUtils {
   static tripIdCompare = (a: TripId, b: TripId) => {

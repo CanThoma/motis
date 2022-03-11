@@ -1,10 +1,10 @@
 import React from "react";
 
 import SankeyTripGraph from "./SankeyTripGraph";
-import TripPicker from "./TripPicker";
+import TripPicker from "../../TripPicker";
 
-import { TripId } from "../api/protocol/motis";
-import { useSankeyContext } from "./context/SankeyContext";
+import { TripId } from "../../../api/protocol/motis";
+import { useSankeyContext } from "../../context/SankeyContext";
 
 type TripPageProps = {
   tripName: string;
@@ -14,13 +14,7 @@ type TripPageProps = {
   onStationSelected: () => void;
 };
 
-const TripPage = ({
-  //tripName,
-  onTripPicked,
-  onStationSelected,
-  //selectedTrip,
-  width,
-}: TripPageProps): JSX.Element => {
+const TripPage = ({ onStationSelected, width }: TripPageProps): JSX.Element => {
   const {
     tripName,
     selectedTrip,
@@ -30,9 +24,10 @@ const TripPage = ({
     setStationName,
   } = useSankeyContext();
 
-  const handleTripPick = (trip) => {
+  const handleTripPick = (trip: TripId) => {
+    if (!setTripName || !setSelectedTrip) return;
     setSelectedTrip(trip);
-    setTripName(trip?.train_nr);
+    setTripName(String(trip.train_nr));
   };
 
   return (
@@ -58,8 +53,16 @@ const TripPage = ({
             width={width}
             onStationSelected={(selectedStation: string, name: string) => {
               // TODO: DIE ZEIT MUSS NOCH GESETZT WERDEN.
-              setSelectedStation(selectedStation);
-              setStationName(name);
+              if (setSelectedStation) setSelectedStation(selectedStation);
+              else
+                console.warn(
+                  "Internal Server Error: setSElectedStation not defined!"
+                );
+              if (setStationName) setStationName(name);
+              else
+                console.warn(
+                  "Internal Server Error: setStationName not defined!"
+                );
               onStationSelected();
             }}
           />

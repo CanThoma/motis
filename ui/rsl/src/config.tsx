@@ -10,6 +10,7 @@ const config = {
   horizontalRightPadding: 50, //
 };
 
+const factor = 15; // default scale factor 1/factor für Stationsgraphen
 const colorSchema = {
   lightGrey: "#e9ecef",
   lighterGrey: "#ebeef0",
@@ -21,6 +22,6 @@ const colorSchema = {
   white: "#fff",
 };
 
-export { colorSchema };
+export { colorSchema, factor };
 
 export default config;

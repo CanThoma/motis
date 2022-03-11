@@ -1,9 +1,9 @@
 import React from "react";
-import {useQuery, useQueryClient} from "react-query";
+import { useQuery } from "react-query";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
-import {Station, TripId, TripServiceInfo} from "../api/protocol/motis";
-import {GroupedPassengerGroups, PaxMonGetTripLoadInfosResponse} from "../api/protocol/motis/paxmon";
+import { Station, TripId } from "../api/protocol/motis";
+import { GroupedPassengerGroups } from "../api/protocol/motis/paxmon";
 import { sendRoutingRequest } from "../api/routing";
 import { connectionToJourney, Journey } from "../data/journey";
 import { formatTime } from "../util/dateFormat";
@@ -11,11 +11,6 @@ import { formatTime } from "../util/dateFormat";
 import TripLoadForecastCharts from "./TripLoadForecastChart";
 import JourneyTripNameView from "./JourneyTripNameView";
 import TripServiceInfoView from "./TripServiceInfoView";
-import TripPicker from "./TripPicker";
-import {useAtom} from "jotai";
-import {universeAtom} from "../data/simulation";
-import {sendPaxMonTripLoadInfosRequest, usePaxMonGroupsInTripQuery, usePaxMonStatusQuery} from "../api/paxmon";
-import {addEdgeStatistics} from "../util/statistics";
 
 export type GroupByDirection = "Origin" | "Destination";
 
@@ -130,9 +125,12 @@ function CombinedGroup(props: CombinedGroupProps): JSX.Element {
             {formatTime(getArrivalTime(j))}, {j.transfers} Umstiege:
             <span className="inline-flex gap-3 pl-2">
               {j.tripLegs.map((leg, legIdx) => (
-                <div onClick={()=> {
-                  props.onSectionDetailClick(leg.trips[0].trip.id);
-                }} key={legIdx}>
+                <div
+                  onClick={() => {
+                    props.onSectionDetailClick(leg.trips[0].trip.id);
+                  }}
+                  key={legIdx}
+                >
                   <Tooltip.Root>
                     <Tooltip.Trigger className="cursor-pointer hover:underline">
                       <JourneyTripNameView jt={leg.trips[0]} />
