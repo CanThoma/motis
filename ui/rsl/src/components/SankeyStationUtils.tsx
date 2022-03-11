@@ -139,9 +139,9 @@ export const createSankeyLink = (
   y0: number,
   y1: number
 ): string => {
-  return `M${nodeWidth + 70},${y0}C${width / 2},${y0},${width / 2},${y1},${
-    width - nodeWidth - 70
-  },${y1}`;
+  return `M${nodeWidth + timeOffset},${y0}C${width / 2},${y0},${
+    width / 2
+  },${y1},${width - nodeWidth - timeOffset},${y1}`;
 };
 
 /**
@@ -173,7 +173,6 @@ export const createGraph = ({
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
 
-  const timeOffset = 70;
   const minNodeHeight = 2;
   const yPadding = 10;
 

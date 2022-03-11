@@ -333,7 +333,7 @@ export default class UmsteigerUtils {
       width - 50 //magic
     );
 
-    onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20
+    onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20 //magic
 
     // berechnen der Links
 

@@ -89,7 +89,7 @@ const SankeyStationGraph = ({
   nodeWidth = 25,
   nodePadding = 15,
 }: Props): JSX.Element => {
-  // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
+  // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfertigt.
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
@@ -102,7 +102,6 @@ const SankeyStationGraph = ({
 
   const nodeOppacity = 0.9;
   const backdropOppacity = 0.7;
-  const rowBackgroundOppacity = 0.0; // AG wollte nicht die 0.2 die vom Team bevorzugt werden
 
   const timeOffset = 70;
 
