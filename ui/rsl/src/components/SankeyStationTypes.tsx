@@ -7,7 +7,7 @@ type Node = {
   cap: number;
   time: number;
 
-  colour?: string;
+  color?: string;
   backdropHeight?: number;
   nodeHeight?: number;
   y0_backdrop?: number;
@@ -27,7 +27,7 @@ type Link = {
   value: number;
 
   index?: number;
-  colour?: string;
+  color?: string;
   opacityScale?: number;
   y0?: number;
   y1?: number;

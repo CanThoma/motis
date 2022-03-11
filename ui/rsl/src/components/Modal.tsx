@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import Navbar from "./common/navbar";
-import { Node } from "./SankeyTypes";
+import { Node } from "./SankeyTripTypes";
 import "./Modal.styles.css";
 import SankeyUmsteigerGraph from "./SankeyUmsteigerGraph";
 import { TripId } from "../api/protocol/motis";
@@ -13,14 +13,16 @@ type Props = {
         node: Node;
         tripId: TripId;
         currentArrivalTime: number;
-        currentDepatureTime: number;
+        currentDepartureTime: number;
       }
     | undefined;
 };
 
 const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
   const [currentPage, setCurrenPage] = useState(1);
-  const [selectedDir, changeDir] = useState("both");
+  const [selectedDir, changeDir] = useState<"entering" | "both" | "exiting">(
+    "both"
+  );
 
   const pages = ["Einstiege", "Beide", "Ausstiege"];
 
@@ -74,7 +76,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                 <SankeyUmsteigerGraph
                   stationId={param.node.sId}
                   currentArrivalTime={param.currentArrivalTime}
-                  currentDepatureTime={param.currentDepatureTime}
+                  currentDepartureTime={param.currentDepartureTime}
                   maxCount={0}
                   onlyIncludeTripId={[param.tripId]}
                   tripDir={selectedDir}

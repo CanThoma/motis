@@ -4,11 +4,10 @@ import { Node, Link } from "./SankeyStationTypes";
 import {
   createGraph,
   formatTextNode,
-  formatTextTime,
   createSankeyLink,
   formatTextLink,
-  sameId,
 } from "./SankeyStationUtils";
+import { formatTextTime, sameId } from "./SankeyUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
@@ -19,7 +18,6 @@ type Props = {
   stationId: string;
   startTime: number;
   endTime: number;
-  maxCount: number;
   onTripSelected: (id: TripId | string, name: string) => void;
   factor: number;
   width?: number;
@@ -28,6 +26,12 @@ type Props = {
   nodePadding?: number;
   duration?: number;
 };
+
+/**
+ *
+ * @param url
+ * @param filename
+ */
 function downloadBlob(url: string, filename: string) {
   const link = document.createElement("a");
   link.href = url;
@@ -35,6 +39,10 @@ function downloadBlob(url: string, filename: string) {
   link.click();
 }
 
+/**
+ *
+ * @param svgEl
+ */
 function getSvgBlob(svgEl: SVGSVGElement) {
   const serializer = new XMLSerializer();
   let source = serializer.serializeToString(svgEl);
@@ -45,34 +53,47 @@ function getSvgBlob(svgEl: SVGSVGElement) {
   return new Blob([source], { type: "image/svg+xml;charset=utf-8" });
 }
 
+/**
+ *
+ * @param svgEl
+ * @param baseFileName
+ */
 function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
   if (!svgEl) {
     return;
   }
   const svgBlob = getSvgBlob(svgEl);
   const url = URL.createObjectURL(svgBlob);
-  console.log(url);
   downloadBlob(url, baseFileName + ".svg");
 }
+
+/**
+ *
+ * @param stationId
+ * @param startTime
+ * @param endTime
+ * @param onTripSelected
+ * @param factor
+ * @param width
+ * @param nodeWidth
+ * @param nodePadding
+ * @constructor
+ */
 const SankeyStationGraph = ({
   stationId,
   startTime,
   endTime,
-  maxCount,
   onTripSelected,
   factor,
   width = 1200,
-  height = 600,
   nodeWidth = 25,
   nodePadding = 15,
-  duration = 250,
 }: Props): JSX.Element => {
   // Sollte man nur im Notfall nutzen, in diesem ist es aber denke ich gerechtfretigt.
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
 
-  //const bahnRot = "#f01414";
   const rowBackgroundColour = "#cacaca";
 
   const linkOppacity = 0.4;
@@ -85,7 +106,8 @@ const SankeyStationGraph = ({
 
   const timeOffset = 70;
 
-  let thomas = true;
+  // TODO
+  let loadingStatus = true;
 
   const data = ExtractStationData({
     stationId: stationId,
@@ -93,14 +115,13 @@ const SankeyStationGraph = ({
     endTime: endTime,
     maxCount: 0,
     onStatusUpdate: (e) => {
-      thomas = e === "success" ? false : true;
+      loadingStatus = e !== "success";
     },
+    tripDirection: "both",
   });
 
-  //console.log(data); // for debug purposes
-
   React.useEffect(() => {
-    thomas = true;
+    loadingStatus = true;
     const handleSvgResize = (newSize: number) => {
       setSvgHeight(newSize);
     };
@@ -193,7 +214,7 @@ const SankeyStationGraph = ({
             : (d.y1 || 0) - (d.y0 || 0)
         )
       )
-      .attr("fill", (d) => d.colour || rowBackgroundColour)
+      .attr("fill", (d) => d.color || rowBackgroundColour)
       .attr("opacity", nodeOppacity);
 
     nodes
@@ -259,7 +280,7 @@ const SankeyStationGraph = ({
       .attr("d", (d) =>
         createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
-      .attr("stroke", (d) => d.colour || rowBackgroundColour)
+      .attr("stroke", (d) => d.color || rowBackgroundColour)
       .attr("stroke-opacity", linkOppacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
@@ -425,7 +446,7 @@ const SankeyStationGraph = ({
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
 
-    thomas = false;
+    loadingStatus = false;
   }, [data]);
 
   return (
@@ -433,8 +454,8 @@ const SankeyStationGraph = ({
       {(!data || !data.links.length) && (
         <div>Daten zum Zug nicht verfügbar</div>
       )}
-      {thomas && data.links.length > 0 && <Loading />}
-      {!thomas && (
+      {loadingStatus && data.links.length > 0 && <Loading />}
+      {!loadingStatus && (
         <>
           <svg
             ref={svgRef}
@@ -444,7 +465,7 @@ const SankeyStationGraph = ({
           />
           <div
             className="flex justify-center"
-            data-tooltip="Speicher das Geschehen an dieser Station als eine wunderschöne .svg. :)"
+            data-tooltip="Diagramm Download"
             data-tooltip-location="top"
           >
             <button

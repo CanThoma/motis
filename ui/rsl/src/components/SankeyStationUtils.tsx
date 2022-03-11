@@ -7,36 +7,12 @@ import {
   createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
+import { expandNode, sameId } from "./SankeyUtils";
 
 /**
- * vergleicht 2 tripIds abhängig von jedem Feld
- * benötigt um nach TripId sortieren zu können
- * @param a erste Trip Id
- * @param b zweite Trip Id
+ * Abstand zwischen Balken und der Zeit
  */
-const tripIdCompare = (a: TripId, b: TripId) => {
-  return (
-    a.station_id === b.station_id &&
-    a.train_nr === b.train_nr &&
-    a.time === b.time &&
-    a.target_station_id === b.target_station_id &&
-    a.line_id === b.line_id &&
-    a.target_time === b.target_time
-  );
-};
-
-/**
- * Vergleicht zwei Ids, können auch string sein wegen "previous" etc
- * benötigt um nach Id zu sortieren
- * @param a erste id
- * @param b zweite id
- */
-export const sameId = (a: TripId | string, b: TripId | string): boolean => {
-  if (typeof a !== "string" && typeof b !== "string")
-    return tripIdCompare(a, b);
-  if (typeof a !== typeof b) return false;
-  else return a === b;
-};
+const timeOffset = 70;
 
 /**
  * gibt die erste node mit gegebener Id zurück
@@ -56,7 +32,7 @@ const getNode = (nodes: NodeMinimal[], id: string | TripId): Node => {
  * @param a index der node
  * @param b Länge des Array
  */
-const colour = (a: number, b: number): string => {
+const color = (a: number, b: number): string => {
   const colourIntervallLength = 15;
   return interpolateRainbow(
     ((Number(a) + 1) % colourIntervallLength) /
@@ -91,21 +67,6 @@ const calcNodeHeight = (
  */
 const calcNodeHeightWithoutMinHeight = (value: number, factor = 4): number => {
   return value / factor;
-};
-
-/**
- * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
- * @param n Node
- */
-
-export const formatTextTime = (n: Node): string => {
-  const nodeArrivalTime = n.time;
-  const aDate = new Date(nodeArrivalTime * 1000);
-  const aHour =
-    aDate.getHours() < 10 ? "0" + aDate.getHours() : aDate.getHours();
-  const aMinute =
-    aDate.getMinutes() < 10 ? "0" + aDate.getMinutes() : aDate.getMinutes();
-  return aHour + ":" + aMinute + " Uhr";
 };
 
 /**
@@ -154,7 +115,7 @@ export const formatTextLink = (
     tNodeName.includes("\u2192")
       ? tNodeName.substr(0, tNodeName.indexOf(" \u2192"))
       : tNodeName
-  }}`;
+  }`;
 };
 
 /**
@@ -214,6 +175,7 @@ export const createGraph = ({
 
   const timeOffset = 70;
   const minNodeHeight = 2;
+  const yPadding = 10;
 
   // #####################################################################################
   // Berechnung der Nodes
@@ -223,7 +185,7 @@ export const createGraph = ({
 
   const prNode: Node = {
     ...getNode(fNodes, "previous"),
-    colour: prPaxColour,
+    color: prPaxColour,
   };
 
   if (prNode.pax > 0) {
@@ -235,7 +197,7 @@ export const createGraph = ({
 
   const boNode: Node = {
     ...getNode(fNodes, "boarding"),
-    colour: boPaxColour,
+    color: boPaxColour,
   };
 
   if (boNode.pax > 0) {
@@ -249,17 +211,7 @@ export const createGraph = ({
   for (const cNode of fNodes) {
     if (typeof cNode.id === "string") continue;
 
-    fNodesFinished.push({
-      ...cNode,
-      name:
-        cNode.name.substr(0, cNode.name.indexOf(" (")) +
-        " \u2192 " +
-        cNode.name.substr(
-          cNode.name.indexOf(" - ") + 2,
-          cNode.name.length - cNode.name.indexOf(" - ") - 3
-        ),
-      full: cNode.cap < cNode.pax,
-    });
+    fNodesFinished.push(expandNode(cNode));
     tNodesFinished.push({
       ...cNode,
       pax: 0,
@@ -298,17 +250,7 @@ export const createGraph = ({
         pax: 0,
         full: false,
       });
-      tNodesFinished.push({
-        ...cNode,
-        name:
-          cNode.name.substr(0, cNode.name.indexOf(" (")) +
-          " \u2192 " +
-          cNode.name.substr(
-            cNode.name.indexOf(" - ") + 2,
-            cNode.name.length - cNode.name.indexOf(" - ") - 3
-          ),
-        full: cNode.cap < cNode.pax,
-      });
+      tNodesFinished.push(expandNode(cNode));
     }
   }
 
@@ -316,7 +258,7 @@ export const createGraph = ({
 
   const exNode: Node = {
     ...getNode(tNodes, "exiting"),
-    colour: exPaxColour,
+    color: exPaxColour,
   };
 
   if (exNode.pax > 0) {
@@ -328,7 +270,7 @@ export const createGraph = ({
 
   const fuNode: Node = {
     ...getNode(tNodes, "future"),
-    colour: fuPaxColour,
+    color: fuPaxColour,
   };
 
   if (fuNode.pax > 0) {
@@ -363,11 +305,11 @@ export const createGraph = ({
     if (typeof fNodesFinished[i].id === "string") continue;
     fNodesFinished[i] = {
       ...fNodesFinished[i],
-      colour: colour(Number(i), fNodesFinished.length),
+      color: color(Number(i), fNodesFinished.length),
     };
     tNodesFinished[i] = {
       ...tNodesFinished[i],
-      colour: colour(Number(i), tNodesFinished.length),
+      color: color(Number(i), tNodesFinished.length),
     };
   }
 
@@ -465,8 +407,8 @@ export const createGraph = ({
     // Beginn des neuen Nodes ist das Ende des vorangegangen oder 0
     const y1_start =
       Math.max(
-        tNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5,
-        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || 5
+        tNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding,
+        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding
       ) + fullPadding;
 
     // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
@@ -509,7 +451,7 @@ export const createGraph = ({
     finalHeight = currentFNode.y0;
   }
 
-  onSvgResize(finalHeight + 10); // set height of svg to the bottom of the last node + 20
+  onSvgResize(finalHeight + yPadding); // set height of svg to the bottom of the last node + 10
 
   // #####################################################################################
   // Berechnung der Links für diesen Knoten, ggf später auslagern.
@@ -545,7 +487,7 @@ export const createGraph = ({
         ...cLink,
         width: width,
         y0: (cNode.y1 || 0) - offset - width / 2,
-        colour: cNode.colour,
+        color: cNode.color,
       };
       offset += width;
 
@@ -570,7 +512,6 @@ export const createGraph = ({
         return 1;
       else return 0;
     });
-    //.reverse();
 
     let offset = 0;
     for (const i in currentLinks) {
@@ -582,7 +523,7 @@ export const createGraph = ({
       offset += cLink.width || 0;
       if (cLink.width) {
         // Ziel bestimmt die Farbe der Knoten
-        // currentLink.colour = currentNode.colour;
+        // currentLink.color = currentNode.color;
         finishedLinks.push(l);
       }
     }

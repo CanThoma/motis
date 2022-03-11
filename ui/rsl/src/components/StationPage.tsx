@@ -222,7 +222,6 @@ const [factor, setFactor] = useState(15); */
                 stationId={selectedStation}
                 startTime={startTime.getTime() / 1000}
                 endTime={endTime.getTime() / 1000}
-                maxCount={0}
                 width={1200} // TODO: ist mehr son Test.
                 onTripSelected={(
                   selectedTrip: TripId | string,

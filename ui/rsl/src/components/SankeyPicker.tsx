@@ -7,7 +7,7 @@ import {
   NodeMinimal,
   SankeyInterface,
   SankeyInterfaceMinimal,
-} from "./SankeyTypes";
+} from "./SankeyTripTypes";
 import { TripId } from "../api/protocol/motis";
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";

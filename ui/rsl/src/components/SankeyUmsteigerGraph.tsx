@@ -7,12 +7,13 @@ import Utils from "./SankeyUmsteigerUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractStationData } from "./StationInfoUtils";
 import * as d3 from "d3";
+import { formatTextTime } from "./SankeyUtils";
 import config from "../config";
 
 type Props = {
   stationId: string;
   currentArrivalTime: number;
-  currentDepatureTime: number;
+  currentDepartureTime: number;
   maxCount: number;
   onlyIncludeTripId: TripId[];
   tripDir: "entering" | "exiting" | "both";
@@ -26,7 +27,7 @@ type Props = {
 const SankeyUmsteigerGraph = ({
   stationId,
   currentArrivalTime,
-  currentDepatureTime,
+  currentDepartureTime,
   maxCount,
   onlyIncludeTripId,
   tripDir,
@@ -39,18 +40,18 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const linkOppacity = 0.4;
-  const linkOppacityFocus = 0.7;
-  const linkOppacityClear = 0.05;
+  const linkOpacity = 0.4;
+  const linkOpacityFocus = 0.7;
+  const linkOpacityClear = 0.05;
 
-  const nodeOppacity = 0.9;
+  const nodeOpacity = 0.9;
   const rowBackgroundColour = "#cacaca";
-  const backdropOppacity = 0.7;
+  const backdropOpacity = 0.7;
 
   const data = ExtractStationData({
     stationId: stationId,
     startTime: 1635147900 - 2.5 * 60 * 600, //currentArrivalTime - 2.5*60*600,
-    endTime: 1635147900 + 2.5 * 60 * 600, //currentDepatureTime + 2.5*60*600 *2,
+    endTime: 1635147900 + 2.5 * 60 * 600, //currentDepartureTime + 2.5*60*600 *2,
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
     tripDirection: tripDir,
@@ -126,7 +127,7 @@ const SankeyUmsteigerGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity);
+      .attr("opacity", backdropOpacity);
 
     // Define the nodes.
     const nodes = view
@@ -146,8 +147,8 @@ const SankeyUmsteigerGraph = ({
             : (d.y1 || 0) - (d.y0 || 0)
         )
       )
-      .attr("fill", (d) => d.colour || rowBackgroundColour)
-      .attr("opacity", nodeOppacity);
+      .attr("fill", (d) => d.color || rowBackgroundColour)
+      .attr("opacity", nodeOpacity);
 
     view
       .selectAll("rect.nodeOverflowBack")
@@ -165,7 +166,7 @@ const SankeyUmsteigerGraph = ({
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
           rowBackgroundColour
       )
-      .attr("opacity", nodeOppacity);
+      .attr("opacity", nodeOpacity);
 
     //Define the Overflow
     const overflow = view
@@ -184,7 +185,7 @@ const SankeyUmsteigerGraph = ({
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
           rowBackgroundColour
       )
-      .attr("opacity", nodeOppacity)
+      .attr("opacity", nodeOpacity)
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
@@ -205,8 +206,8 @@ const SankeyUmsteigerGraph = ({
       .attr("d", (d) =>
         Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
-      .attr("stroke", (d) => d.colour || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacity)
+      .attr("stroke", (d) => d.color || rowBackgroundColour)
+      .attr("stroke-opacity", linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -265,7 +266,7 @@ const SankeyUmsteigerGraph = ({
         if (typeof d.id === "string") {
           return "";
         } else {
-          return Utils.formatTextTime(d);
+          return formatTextTime(d);
         }
       })
       .filter((d) => (d.x1 || 0) > width / 2)
@@ -311,7 +312,7 @@ const SankeyUmsteigerGraph = ({
           sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
         );
       });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+      focusLinks.attr("stroke-opacity", linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (
@@ -319,11 +320,11 @@ const SankeyUmsteigerGraph = ({
           !sameId((l as Link).fNId, node.id)
         );
       });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
+      clearLinks.attr("stroke-opacity", linkOpacityClear);
     }
 
     function branchClear() {
-      links.attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOpacity);
     }
 
     backdrop.on("mouseover", branchAnimate);
@@ -337,16 +338,16 @@ const SankeyUmsteigerGraph = ({
       const focusLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
       });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+      focusLinks.attr("stroke-opacity", linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id !== link.id;
       });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
+      clearLinks.attr("stroke-opacity", linkOpacityClear);
     }
 
     function linkClear() {
-      links.attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOpacity);
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);

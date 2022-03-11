@@ -32,7 +32,7 @@ import {
   LinkMinimal,
   NodeMinimal,
   SankeyInterfaceMinimal,
-} from "./components/SankeyTypes";
+} from "./components/SankeyTripTypes";
 import {
   ExtractStationData,
   StationInterchangeParameters,
@@ -80,8 +80,8 @@ type TestEnvParams = {
 };
 function TestEnv(): JSX.Element {
   const [station, setStation] = useState<string>();
-  var someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
-  var theUnixTime = someDate.getTime() / 1000;
+  const someDate = new Date("Mon, 25 Oct 2021 09:15:00 GMT+2");
+  const theUnixTime = someDate.getTime() / 1000;
   const startTime = theUnixTime - (theUnixTime % 1800); // dd-mm-yy 9:19 -> dd-mm-yy 9:00 ( this example timestamp 25-10-2021 9:15)
   const endTime = startTime + 180 * 60; // dd-mm-yy 9:30
   const StationInterchangesDisplayItem =

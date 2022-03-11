@@ -1,8 +1,7 @@
 import React, { MouseEvent, useRef, useState } from "react";
-import { select as d3Select } from "d3";
+import { BaseType, select as d3Select, Selection } from "d3";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
-
-import { Node, Link } from "./SankeyTypes";
+import { Node, Link } from "./SankeyTripTypes";
 import {
   createGraph,
   formatTextLink,
@@ -10,10 +9,9 @@ import {
   createSankeyLink,
   renderTime,
   renderDelay,
-} from "./SankeyUtilsAbsolute";
+} from "./SankeyTripUtils";
 import { TripId } from "../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "./TripInfoUtils";
-
 import Modal from "./Modal";
 import config from "../config";
 
@@ -31,13 +29,13 @@ type Props = {
 /**
  * Draw the Graph
  * @param tripId Id des Trips dessen Daten als Graph dargestellt werden sollen
- * @param onStationSelected Funktion die aufgerunfen wird wenn auf eine node geklickt wird
+ * @param onStationSelected Funktion die aufgerufen wird wenn auf eine node geklickt wird
  * @param width Breite des Graphen
- * @param nodeWidth basisbreite einer Node
- * @param nodePadding basisabstand zwischen 2 Nodes
+ * @param nodeWidth Basisbreite einer Node
+ * @param nodePadding Basisabstand zwischen 2 Nodes
  * @constructor
  */
-const SankeyGraph = ({
+const SankeyTripGraph = ({
   tripId,
   onStationSelected,
   width = 1000,
@@ -52,17 +50,17 @@ const SankeyGraph = ({
     node: Node;
     tripId: TripId;
     currentArrivalTime: number;
-    currentDepatureTime: number;
+    currentDepartureTime: number;
   }>();
 
   const rowBackgroundColour = "#cacaca";
 
-  const linkOppacity = 0.3;
-  const linkOppacityFocus = 0.7;
-  const linkOppacityClear = 0.01;
+  const linkOpacity = 0.3;
+  const linkOpacityFocus = 0.7;
+  const linkOpacityClear = 0.01;
 
-  const nodeOppacity = 0.9;
-  const backdropOppacity = 0.7;
+  const nodeOpacity = 0.9;
+  const backdropOpacity = 0.7;
 
   const leftTimeOffset = 100;
 
@@ -131,11 +129,11 @@ const SankeyGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity)
+      .attr("opacity", backdropOpacity)
       .attr("cursor", "pointer");
 
     // Add the onClick Action for Backdrops
-    // TODO: welche Zeit ist hier die richtige?!?! + Anpassen der restlichen Zeiten. (bzw. weitere onStationSelecteds)
+    // TODO: welche Zeit ist hier die richtige?!?! + Anpassen der restlichen Zeiten. (bzw. weitere onStationSelected)
     backdrops.on(
       "click",
       (_, i) => onStationSelected(i.sId, i.name) //, i.arrival_current_time)
@@ -153,8 +151,8 @@ const SankeyGraph = ({
       .attr("y", (d) => d.y0 || 0)
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
       .attr("height", (d) => Math.max(0, (d.y1 || 0) - (d.y0 || 0)))
-      .attr("fill", (d) => d.colour || rowBackgroundColour)
-      .attr("opacity", nodeOppacity);
+      .attr("fill", (d) => d.color || rowBackgroundColour)
+      .attr("opacity", nodeOpacity);
 
     // Add titles for node hover effects.
     nodes
@@ -176,8 +174,8 @@ const SankeyGraph = ({
       .attr("d", (d) =>
         createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0, leftTimeOffset)
       )
-      .attr("stroke", (d) => d.colour || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacity)
+      .attr("stroke", (d) => d.color || rowBackgroundColour)
+      .attr("stroke-opacity", linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -207,7 +205,7 @@ const SankeyGraph = ({
           node: d,
           tripId: tripId,
           currentArrivalTime: d.arrival_current_time,
-          currentDepatureTime: d.departure_current_time,
+          currentDepartureTime: d.departure_current_time,
         });
       })
       .attr("cursor", "pointer")
@@ -222,7 +220,7 @@ const SankeyGraph = ({
           node: d,
           tripId: tripId,
           currentArrivalTime: d.arrival_current_time,
-          currentDepatureTime: d.departure_current_time,
+          currentDepartureTime: d.departure_current_time,
         });
       });
 
@@ -230,7 +228,7 @@ const SankeyGraph = ({
       .selectAll("text.nodeTime")
       .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
       .join((enter) => {
-        const tmp = enter
+        const tmp: Selection<SVGTextElement, Node, SVGGElement, unknown> = enter
           .append("text")
           .classed("node", true)
           .attr("x", 0)
@@ -290,7 +288,7 @@ const SankeyGraph = ({
 
         // Die eigentliche Zeit
         tmp.append("tspan").text((d) => renderTime(d.arrival_current_time));
-        renderDelay(tmp, "depature");
+        renderDelay(tmp, "departure");
 
         tmp
           .append("title")
@@ -343,27 +341,27 @@ const SankeyGraph = ({
     });
 
     /**
-     * erhöht die opacity der links die mit der übergebenen Node verbuden sind
+     * erhöht die opacity der links die mit der übergebenen Node verbunden sind
      * @param _ Event (hier nicht benötigt)
-     * @param node node deren Links highlightet werden sollen
+     * @param node node deren Links highlighted werden sollen
      */
     function branchShow(_: MouseEvent, node: Node) {
-      view.selectAll("path.link").attr("stroke-opacity", linkOppacityClear);
+      view.selectAll("path.link").attr("stroke-opacity", linkOpacityClear);
 
-      let links: d3.Selection<d3.BaseType, unknown, SVGElement, unknown>;
+      let links: Selection<BaseType, unknown, SVGElement, unknown>;
 
       if (node.sourceLinks && node.sourceLinks.length > 0) {
         links = view.selectAll("path.link").filter((link) => {
           return (node.sourceLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links.attr("stroke-opacity", linkOppacityFocus);
+        links.attr("stroke-opacity", linkOpacityFocus);
       } else if (node.sourceLinks && node.sourceLinks.length === 0) {
         links = view.selectAll("path.link").filter((link) => {
           return (node.targetLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links.attr("stroke-opacity", linkOppacityFocus);
+        links.attr("stroke-opacity", linkOpacityFocus);
       }
     }
 
@@ -371,8 +369,8 @@ const SankeyGraph = ({
      * setzt die opacity aller links auf den Ursprungswert zurück
      */
     function branchClear() {
-      links.attr("stroke-opactiy", 0);
-      view.selectAll("path.link").attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", 0);
+      view.selectAll("path.link").attr("stroke-opacity", linkOpacity);
     }
 
     // Das für ein einfaches Show/Don't Show
@@ -380,27 +378,27 @@ const SankeyGraph = ({
     backdrops.on("mouseover", branchShow).on("mouseout", branchClear);
 
     /**
-     * erhöht die Opacity des Links über den gehovered wird und senkt die Opacity aller anderen Links
+     * erhöht die Opacity des Links über den hovered wird und senkt die Opacity aller anderen Links
      * @param _ Event (hier nicht benötigt)
-     * @param link Link der highlightet werden soll
+     * @param link Link der highlighted werden soll
      */
     function linkAnimate(_: MouseEvent, link: Link) {
       const links = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
       });
 
-      links.attr("stroke-opacity", linkOppacityFocus);
+      links.attr("stroke-opacity", linkOpacityFocus);
     }
 
     /**
      * setzt die Opacity aller Links auf den Ursprungswert zurück
      */
     function linkClear() {
-      links.attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOpacity);
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [graphData]);
+  }, [graphData, nodePadding, nodeWidth, width, onStationSelected, tripId]);
 
   return (
     <>
@@ -419,4 +417,4 @@ const SankeyGraph = ({
   );
 };
 
-export default SankeyGraph;
+export default SankeyTripGraph;

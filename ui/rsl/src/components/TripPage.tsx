@@ -1,6 +1,6 @@
 import React from "react";
 
-import SankeyGraph from "./SankeyGraph";
+import SankeyTripGraph from "./SankeyTripGraph";
 import TripPicker from "./TripPicker";
 
 import { TripId } from "../api/protocol/motis";
@@ -53,7 +53,7 @@ const TripPage = ({
       </div>
       <div className="app mt-16 text-center">
         {selectedTrip && (
-          <SankeyGraph
+          <SankeyTripGraph
             tripId={selectedTrip}
             width={width}
             onStationSelected={(selectedStation: string, name: string) => {

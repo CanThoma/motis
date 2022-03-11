@@ -10,6 +10,13 @@ interface ScrollToUpdateProps {
   children: JSX.Element;
 }
 
+/**
+ *
+ * @param onRefreshUP
+ * @param onRefreshDOWN
+ * @param children
+ * @constructor
+ */
 const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
   onRefreshUP,
   onRefreshDOWN,
@@ -20,10 +27,9 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
   const scrollDownRef = useRef<HTMLDivElement>(null);
   const scrollUpRef = useRef<HTMLDivElement>(null);
 
-  // TODO: !!! Da musst du dir nochemol gedankenmachen, ob die die Loading Variable nach hier weitergeben willst.
   const [loading, setLoading] = useState(false);
-  const [scrollDownOppacity, setScrollDownOppacity] = useState(0);
-  const [scrollUpOppacity, setScrollUpOppacity] = useState(0);
+  const [scrollDownOpacity, setScrollDownOpacity] = useState(0);
+  const [scrollUpOpacity, setScrollUpOpacity] = useState(0);
 
   let load = false;
   let topReached = true;
@@ -31,26 +37,29 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
   const maxPullDownDistance = 95;
   const resistance = 0.8;
   const scrollSpeed = 5;
-  let startY = 0;
-  let abort = false;
+  const startY = 0;
   let currentY = 0;
   let timerID: number | null = null;
   let timing = false;
 
   const timer = () =>
     setTimeout(() => {
-      childrenRef.current!.style.transform = `translateY(0px)`;
-      setScrollDownOppacity(0);
-      setScrollUpOppacity(0);
+      if (!childrenRef.current) return;
+      childrenRef.current.style.transform = `translateY(0px)`;
+      setScrollDownOpacity(0);
+      setScrollUpOpacity(0);
       currentY = 0;
       timing = false;
     }, 2000);
 
   useEffect(() => {
     //loading = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     topReached = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     bottomReached = true;
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     load = false;
 
     if (!childrenRef || !childrenRef.current) return;
@@ -67,21 +76,21 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
     };
   }, [children]);
 
-  const loadData = (refreshFunction) => {
+  const loadData = (refreshFunction: () => void) => {
     load = true;
     setLoading(true);
-    childrenRef.current!.style.transform = `translateY(0px)`;
+    if (!childrenRef.current) return;
+    childrenRef.current.style.transform = `translateY(0px)`;
     currentY = 0;
-    setScrollDownOppacity(0);
-    setScrollUpOppacity(0);
+    setScrollDownOpacity(0);
+    setScrollUpOpacity(0);
     refreshFunction();
-
-    console.log("Ahhhhhhhhh!!!! GENAU JETZT LADE ICH NEUE DATEN! ");
   };
 
   const setTopAndBottomFlags = () => {
     const { current } = containerRef;
 
+    if (!current) return;
     bottomReached =
       current.getBoundingClientRect().bottom - visualViewport.height < 10;
 
@@ -90,7 +99,8 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
 
     if (!bottomReached && !topReached) {
       currentY = 0;
-      childrenRef.current!.style.transform = `translateY(0px)`;
+      if (!childrenRef.current) return;
+      childrenRef.current.style.transform = `translateY(0px)`;
     }
   };
 
@@ -104,7 +114,7 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
 
     if (e.deltaY > 0) {
       // Scroll Down
-      setScrollUpOppacity(0);
+      setScrollUpOpacity(0);
 
       if (!bottomReached) return;
 
@@ -115,15 +125,16 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
         maxPullDownDistance
       );
 
-      childrenRef.current!.style.transform = `translateY(-${yDistanceMoved}px)`;
+      if (!childrenRef.current) return;
+      childrenRef.current.style.transform = `translateY(-${yDistanceMoved}px)`;
 
       if (!timing) {
         timing = true;
         timerID = timer();
       }
 
-      setScrollDownOppacity(yDistanceMoved / 50);
-      setScrollUpOppacity(0);
+      setScrollDownOpacity(yDistanceMoved / 50);
+      setScrollUpOpacity(0);
 
       if (!load && yDistanceMoved >= maxPullDownDistance) {
         loadData(onRefreshDOWN);
@@ -133,7 +144,7 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
       }
     } else {
       // Scroll UP
-      setScrollDownOppacity(0);
+      setScrollDownOpacity(0);
 
       if (!topReached) return;
 
@@ -144,20 +155,20 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
         maxPullDownDistance
       );
 
-      childrenRef.current!.style.transform = `translateY(${yDistanceMoved}px)`;
+      if (!childrenRef.current) return;
+      childrenRef.current.style.transform = `translateY(${yDistanceMoved}px)`;
 
       if (!timing) {
         timing = true;
         timerID = timer();
       }
 
-      setScrollUpOppacity(yDistanceMoved / 50);
-      setScrollDownOppacity(0);
+      setScrollUpOpacity(yDistanceMoved / 50);
+      setScrollDownOpacity(0);
 
       if (!load && yDistanceMoved >= maxPullDownDistance) {
         loadData(onRefreshUP);
 
-        //onEnd();
         return;
       }
     }
@@ -172,7 +183,7 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
       <section
         ref={scrollUpRef}
         className="scroll-up-container"
-        style={{ height: "60px", opacity: scrollUpOppacity }}
+        style={{ height: "60px", opacity: scrollUpOpacity }}
       >
         {loading && (
           <div className="reveal active">
@@ -182,12 +193,12 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
         {!loading && (
           <div className="reveal active">
             <h3 className="arrow" style={{ color: "#cacaca" }}>
-              Choo Choo! Auf nach Mexicoo 🚂 🇲🇽
+              Erneut Scrollen zum Laden weiterer Verbindungen!
             </h3>
             <div className="arrow arrow-up">
-              <span></span>
-              <span></span>
-              <span></span>
+              <span />
+              <span />
+              <span />
             </div>
           </div>
         )}
@@ -198,7 +209,7 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
       <section
         ref={scrollDownRef}
         className="scroll-down-container"
-        style={{ height: "60px", opacity: scrollDownOppacity }}
+        style={{ height: "60px", opacity: scrollDownOpacity }}
       >
         {loading && (
           <div className="reveal active">
@@ -208,12 +219,12 @@ const ScrollToUpdate: React.FC<ScrollToUpdateProps> = ({
         {!loading && (
           <div className="reveal active">
             <h3 className="arrow" style={{ color: "#cacaca" }}>
-              Trau dich und scroll weiter für neue Einträge 😘
+              Erneut Scrollen zum Laden weiterer Verbindungen!
             </h3>
             <div className="arrow">
-              <span></span>
-              <span></span>
-              <span></span>
+              <span />
+              <span />
+              <span />
             </div>
           </div>
         )}

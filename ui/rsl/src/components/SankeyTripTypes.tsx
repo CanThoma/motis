@@ -7,7 +7,7 @@ type Node = {
   departure_current_time: number;
   departure_schedule_time: number;
   offset?: number;
-  colour?: string;
+  color?: string;
   biggerNodeTotalValue?: number;
   totalNodeValue?: number;
   backdropHeight?: number;
@@ -28,8 +28,8 @@ type Link = {
   target: string;
   value: number;
   index?: number;
-  colour?: string;
-  oppacityScale?: number;
+  color?: string;
+  opacityScale?: number;
   y0?: number;
   y1?: number;
   width?: number;

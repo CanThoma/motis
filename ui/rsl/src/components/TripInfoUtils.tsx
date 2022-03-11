@@ -10,7 +10,7 @@ import {
   SankeyInterfaceMinimal,
   NodeMinimal,
   LinkMinimal,
-} from "./SankeyTypes";
+} from "./SankeyTripTypes";
 import { addEdgeStatistics } from "../util/statistics";
 
 interface EdgeInfo {

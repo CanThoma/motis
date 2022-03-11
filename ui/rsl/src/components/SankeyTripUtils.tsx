@@ -6,14 +6,14 @@
  *
  * Nutze diese Komponente, falls die AGs sich für eine komplett absolute Darstellung entscheiden
  */
-import { interpolateRainbow } from "d3";
+import { interpolateRainbow, Selection } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
   createGraphInterface,
   LinkMinimal,
-} from "./SankeyTypes";
+} from "./SankeyTripTypes";
 
 import config from "./SankeyTripConfig";
 
@@ -73,17 +73,17 @@ const renderTimeDifference = (time: number, sTime: number): number => {
 };
 
 /**
- *
- * @param tmp TODO define type of tmp
- * @param selector
+ * Erstellt einen String der den Zeitunterschied zur geplanten Ankunfts-/Abfahrtszeit darstellt
+ * @param tmp Eine Referenz an ein SVG Textelement
+ * @param selector "arrival" oder "departure"
  */
 export const renderDelay = (
-  tmp: any,
-  selector: "arrival" | "depature"
+  tmp: Selection<SVGTextElement, Node, SVGGElement, unknown>,
+  selector: "arrival" | "departure"
 ): string | void => {
   tmp
     .append("tspan")
-    .text((d: any) => {
+    .text((d: Node) => {
       const timeCurr =
         selector === "arrival"
           ? d.arrival_schedule_time // Umgedreht, da es bei der Ankunft besser ist früh dran zu sein
@@ -99,7 +99,7 @@ export const renderDelay = (
       if (diff > 0) return ` +${diff}min`;
       return ` ${diff}min`;
     })
-    .attr("fill", (d: any) => {
+    .attr("fill", (d: Node) => {
       const timeCurr =
         selector === "arrival"
           ? d.arrival_schedule_time
@@ -243,7 +243,7 @@ export const createGraph = ({
       arrival_schedule_time: 1635148200, //nodes[i].arrival_schedule_time,
       departure_current_time: 1635148320, //nodes[i].departure_current_time,
       departure_schedule_time: 1635148200, //nodes[i].departure_schedule_time,
-      colour: linkColour,
+      color: linkColour,
       biggerNodeTotalValue,
       totalNodeValue: leftLinkSum,
     });
@@ -255,7 +255,7 @@ export const createGraph = ({
       arrival_schedule_time: 1635148200, //nodes[i].arrival_schedule_time,
       departure_current_time: 1635148320, //nodes[i].departure_current_time,
       departure_schedule_time: 1635148200, //nodes[i].departure_schedule_time,
-      colour: linkColour,
+      color: linkColour,
       biggerNodeTotalValue,
       totalNodeValue: rightLinkSum,
     });
@@ -383,7 +383,7 @@ export const createGraph = ({
       offset += l.width;
 
       // Start bestimmt die Farbe der Knoten
-      l.colour = currentNode.colour;
+      l.color = currentNode.color;
       calculatedlinks.push(l);
 
       // Dieses or-Statement ist leider nur nötig, wegen dem Linter
@@ -407,6 +407,7 @@ export const createGraph = ({
     // Nur nötig, wenn in der Datengenerierung etwas schief gelaufen ist
     if (!currentNode) continue;
 
+    // initialisieren des sourceLink arrays, da vorher undefined
     rightNodes[currentNodeIndex].sourceLinks = [];
     rightNodes[currentNodeIndex].targetLinks = [];
     let offset = 0;

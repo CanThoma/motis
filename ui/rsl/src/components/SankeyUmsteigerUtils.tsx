@@ -4,10 +4,10 @@ import {
   Link,
   SankeyInterface,
   NodeMinimal,
-  LinkMinimal,
   createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
+import { expandNode } from "./SankeyUtils";
 
 export default class UmsteigerUtils {
   static tripIdCompare = (a: TripId, b: TripId) => {
@@ -40,7 +40,7 @@ export default class UmsteigerUtils {
     return nodes.filter((node) => this.sameId(node.id, id))[0];
   };
 
-  static colour = (value: number): string => {
+  static color = (value: number): string => {
     return interpolateRainbow(value);
   };
 
@@ -58,22 +58,9 @@ export default class UmsteigerUtils {
   };
 
   static calcNodeHeightWithoutMinHeight = (value: number): number => {
-    return value / 10;
+    return value / 10; //magic
   };
 
-  /**
-   * Konvertiert einen Link in einen Pfad-String
-   */
-
-  static formatTextTime = (n: Node) => {
-    const nodeArrivalTime = n.time;
-    const aDate = new Date(nodeArrivalTime * 1000);
-    const aHour =
-      aDate.getHours() < 10 ? "0" + aDate.getHours() : aDate.getHours();
-    const aMinute =
-      aDate.getMinutes() < 10 ? "0" + aDate.getMinutes() : aDate.getMinutes();
-    return aHour + ":" + aMinute + " Uhr";
-  };
   static formatTextNode = (name: string, node: Node): string => {
     return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
   };
@@ -109,7 +96,7 @@ export default class UmsteigerUtils {
     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
      */
     return `M${nodeWidth + 50},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth - 50
+      width - nodeWidth - 50 //magic
     },${y1}`;
   };
 
@@ -155,86 +142,66 @@ export default class UmsteigerUtils {
 
     const minNodeHeight = 2.5;
 
-    // fügt previous node zu falls umsteiger existieren und gibt ihr die farbe
+    // fügt previous node zu falls Umsteiger existieren und gibt ihr die Farbe
 
     const prNode: Node = {
       ...this.getNode(fNodes, "previous"),
-      colour: prPaxColour,
+      color: prPaxColour,
     };
 
     if (prNode.pax > 0) {
       fNodesFinished.push({ ...prNode, name: "previous" });
     }
 
-    // fügt boarding node zu falls umsteiger existieren und gibt ihr die farbe
+    // fügt boarding node zu falls Umsteiger existieren und gibt ihr die Farbe
 
     const boNode: Node = {
       ...this.getNode(fNodes, "boarding"),
-      colour: boPaxColour,
+      color: boPaxColour,
     };
 
     if (boNode.pax > 0) {
       fNodesFinished.push({ ...boNode, name: "boarding" });
     }
 
-    // fügt reguläre Nodes hinzu un bereitet daten vor
+    // fügt reguläre Nodes hinzu un bereitet Daten vor
     // beginnt nach previous und board node
 
     for (const cNode of fNodes) {
       if (typeof cNode.id === "string") continue;
 
-      fNodesFinished.push({
-        ...cNode,
-        name:
-          cNode.name.substr(0, cNode.name.indexOf(" (")) +
-          " \u2192 " +
-          cNode.name.substr(
-            cNode.name.indexOf(" - ") + 2,
-            cNode.name.length - cNode.name.indexOf(" - ") - 3
-          ),
-        full: cNode.cap < cNode.pax,
-      });
+      fNodesFinished.push(expandNode(cNode));
     }
 
     for (const cNode of tNodes) {
       if (typeof cNode.id === "string") continue;
 
-      tNodesFinished.push({
-        ...cNode,
-        name:
-          cNode.name.substr(0, cNode.name.indexOf(" (")) +
-          " \u2192 " +
-          cNode.name.substr(
-            cNode.name.indexOf(" - ") + 2,
-            cNode.name.length - cNode.name.indexOf(" - ") - 3
-          ),
-        full: cNode.cap < cNode.pax,
-      });
+      tNodesFinished.push(expandNode(cNode));
     }
 
-    // fügt exiting node zu falls umsteiger existieren und gibt ihr die farbe
+    // fügt exiting node zu falls Umsteiger existieren und gibt ihr die Farbe
 
     const exNode: Node = {
       ...this.getNode(tNodes, "exiting"),
-      colour: exPaxColour,
+      color: exPaxColour,
     };
 
     if (exNode.pax > 0) {
       tNodesFinished.push({ ...exNode, name: "exit" });
     }
 
-    // fügt future node zu falls umsteiger existieren und gibt ihr die farbe
+    // fügt future node zu falls Umsteiger existieren und gibt ihr die Farbe
 
     const fuNode: Node = {
       ...this.getNode(tNodes, "future"),
-      colour: fuPaxColour,
+      color: fuPaxColour,
     };
 
     if (fuNode.pax > 0) {
       tNodesFinished.push({ ...fuNode, name: "future" });
     }
 
-    // sort nodes by arival time first, then by departure time
+    // sort nodes by arrival time first, then by departure time
 
     fNodesFinished.sort((a, b) => {
       if (a.time < b.time) return -1;
@@ -250,25 +217,25 @@ export default class UmsteigerUtils {
 
     // assign every node a colour depending on the amount of nodes on every side
 
-    const calcColour = (nArray: Node[], n: number) => {
+    const calcColor = (nArray: Node[], n: number) => {
       const calcNodes = [];
       for (const i in nArray) {
         const cNode = nArray[i];
         if (typeof cNode.id === "string") continue;
         if (Number(i) === n) {
-          calcNodes.push({ ...cNode, colour: "#f20544" });
+          calcNodes.push({ ...cNode, color: "#f20544" });
         } else {
           calcNodes.push({
             ...cNode,
-            colour: this.colour((Number(i) + 1) / nArray.length),
+            color: this.color((Number(i) + 1) / nArray.length),
           });
         }
       }
       return calcNodes;
     };
 
-    fNodesFinished = calcColour(fNodesFinished, fNodesFinished.length - 1);
-    tNodesFinished = calcColour(tNodesFinished, 0);
+    fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
+    tNodesFinished = calcColor(tNodesFinished, 0);
 
     // Berechnen der Höhe der Nodes.
 
@@ -321,7 +288,7 @@ export default class UmsteigerUtils {
     fNodesFinished = addHeightDiff(fNodesFinished, "fNId");
     tNodesFinished = addHeightDiff(tNodesFinished, "tNId");
 
-    // berechnen der koordinaten der Nodes
+    // berechnen der Koordinaten der Nodes
 
     const calcNodeXY = (nArray: Node[], x0: number, x1: number) => {
       const calcNodes: Node[] = [];
@@ -341,7 +308,7 @@ export default class UmsteigerUtils {
         }
 
         const y1_start =
-          (nArray[Math.max(0, Number(i) - 1)].y1_backdrop || 5) + fullPadding;
+          (nArray[Math.max(0, Number(i) - 1)].y1_backdrop || 5) + fullPadding; //magic
 
         cNode.y0_backdrop =
           y1_start + (Number(i) === 0 ? 0 : nodePadding) + diff / 2;
@@ -359,11 +326,11 @@ export default class UmsteigerUtils {
       return calcNodes;
     };
 
-    fNodesFinished = calcNodeXY(fNodesFinished, 50, nodeWidth + 50);
+    fNodesFinished = calcNodeXY(fNodesFinished, 50, nodeWidth + 50); //magic
     tNodesFinished = calcNodeXY(
       tNodesFinished,
-      width - nodeWidth - 50,
-      width - 50
+      width - nodeWidth - 50, //magic
+      width - 50 //magic
     );
 
     onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20
@@ -405,7 +372,7 @@ export default class UmsteigerUtils {
           ...cLink,
           width: width,
           y0: (cNode.y1 || 0) - offset - width / 2,
-          colour: cNode.colour,
+          color: cNode.color,
         };
         offset += width;
 
