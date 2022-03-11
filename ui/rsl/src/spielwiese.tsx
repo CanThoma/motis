@@ -11,6 +11,7 @@ import "./components/Modal.styles.css";
 import Navbar from "./components/common/navbar";
 import Legend from "./components/legend";
 import StationPage from "./components/StationPage";
+import TripPage from "./components/TripPage";
 import TripPage2 from "./components/TripPage2";
 
 import {
