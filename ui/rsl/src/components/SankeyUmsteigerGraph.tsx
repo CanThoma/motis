@@ -15,6 +15,7 @@ type Props = {
   currentDepatureTime: number;
   maxCount: number;
   onlyIncludeTripId: TripId[];
+  tripDir: "entering" | "exiting" | "both";
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -28,6 +29,7 @@ const SankeyUmsteigerGraph = ({
   currentDepatureTime,
   maxCount,
   onlyIncludeTripId,
+  tripDir,
   width = 600,
   height = 600,
   nodeWidth = 25,
@@ -47,10 +49,11 @@ const SankeyUmsteigerGraph = ({
 
   const data = ExtractStationData({
     stationId: stationId,
-    startTime: 1635147900 - 2.5*60*600,//currentArrivalTime - 2.5*60*600,
-    endTime: 1635147900 + 2.5*60*600, //currentDepatureTime + 2.5*60*600 *2,
+    startTime: 1635147900 - 2.5 * 60 * 600, //currentArrivalTime - 2.5*60*600,
+    endTime: 1635147900 + 2.5 * 60 * 600, //currentDepatureTime + 2.5*60*600 *2,
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
+    tripDirection: tripDir,
   });
 
   React.useEffect(() => {
@@ -66,7 +69,7 @@ const SankeyUmsteigerGraph = ({
       width,
       nodeWidth,
       nodePadding,
-      factor: 10
+      factor: 10,
     });
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],

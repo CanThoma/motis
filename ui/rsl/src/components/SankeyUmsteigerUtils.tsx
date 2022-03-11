@@ -1,11 +1,11 @@
-import { interpolateRainbow} from "d3";
+import { interpolateRainbow } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
   NodeMinimal,
   LinkMinimal,
-  createGraphInterface
+  createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../api/protocol/motis";
 
@@ -58,7 +58,7 @@ export default class UmsteigerUtils {
   };
 
   static calcNodeHeightWithoutMinHeight = (value: number): number => {
-    return value / 4;
+    return value / 10;
   };
 
   /**
@@ -68,9 +68,11 @@ export default class UmsteigerUtils {
   static formatTextTime = (n: Node) => {
     const nodeArrivalTime = n.time;
     const aDate = new Date(nodeArrivalTime * 1000);
-    const aHour = aDate.getHours()<10?"0"+aDate.getHours():aDate.getHours()
-    const aMinute = aDate.getMinutes()<10?"0"+aDate.getMinutes():aDate.getMinutes();
-    return aHour+":"+aMinute+" Uhr";
+    const aHour =
+      aDate.getHours() < 10 ? "0" + aDate.getHours() : aDate.getHours();
+    const aMinute =
+      aDate.getMinutes() < 10 ? "0" + aDate.getMinutes() : aDate.getMinutes();
+    return aHour + ":" + aMinute + " Uhr";
   };
   static formatTextNode = (name: string, node: Node): string => {
     return `${name}\n${node.pax} Personen Steigen um. \nMax. Kapazität: ${node.cap} `;
@@ -80,7 +82,15 @@ export default class UmsteigerUtils {
     tNodeName: string,
     link: Link
   ): string => {
-    return `${link.value} Personen \n ${fNodeName.includes("\u2192")?fNodeName.substr(0,fNodeName.indexOf(" \u2192")):fNodeName} \u2192 ${tNodeName.includes("\u2192")?tNodeName.substr(0,tNodeName.indexOf(" \u2192")):tNodeName}`;
+    return `${link.value} Personen \n ${
+      fNodeName.includes("\u2192")
+        ? fNodeName.substr(0, fNodeName.indexOf(" \u2192"))
+        : fNodeName
+    } \u2192 ${
+      tNodeName.includes("\u2192")
+        ? tNodeName.substr(0, tNodeName.indexOf(" \u2192"))
+        : tNodeName
+    }`;
   };
 
   static createSankeyLink = (
@@ -98,8 +108,8 @@ export default class UmsteigerUtils {
     M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
     C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
      */
-    return `M${nodeWidth+50},${y0}C${width / 2},${y0},${width / 2},${y1},${
-      width - nodeWidth-50
+    return `M${nodeWidth + 50},${y0}C${width / 2},${y0},${width / 2},${y1},${
+      width - nodeWidth - 50
     },${y1}`;
   };
 
@@ -127,24 +137,21 @@ export default class UmsteigerUtils {
    * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
    */
   static createGraph = ({
-                          fNodes,
-                          tNodes,
-                          links,
-                          onSvgResize,
-                          width = 600,
-                          nodeWidth = 20,
-                          nodePadding = 20,
-                        }: createGraphInterface
-  ): SankeyInterface => {
-
-    let tNodesFinished:Node[] = [];
-    let fNodesFinished:Node[] = [];
+    fNodes,
+    tNodes,
+    links,
+    onSvgResize,
+    width = 600,
+    nodeWidth = 20,
+    nodePadding = 20,
+  }: createGraphInterface): SankeyInterface => {
+    let tNodesFinished: Node[] = [];
+    let fNodesFinished: Node[] = [];
 
     const prPaxColour = "#f20544";
     const boPaxColour = "#f27e93";
     const exPaxColour = "#f27e93";
     const fuPaxColour = "#f20544";
-
 
     const minNodeHeight = 2.5;
 
@@ -173,28 +180,34 @@ export default class UmsteigerUtils {
     // fügt reguläre Nodes hinzu un bereitet daten vor
     // beginnt nach previous und board node
 
-    for (const  cNode of fNodes) {
+    for (const cNode of fNodes) {
       if (typeof cNode.id === "string") continue;
 
       fNodesFinished.push({
         ...cNode,
         name:
-          cNode.name.substr(0, cNode.name.indexOf(" ("))
-          + " \u2192 "
-          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
+          cNode.name.substr(0, cNode.name.indexOf(" (")) +
+          " \u2192 " +
+          cNode.name.substr(
+            cNode.name.indexOf(" - ") + 2,
+            cNode.name.length - cNode.name.indexOf(" - ") - 3
+          ),
         full: cNode.cap < cNode.pax,
       });
     }
 
-    for (const  cNode of tNodes) {
+    for (const cNode of tNodes) {
       if (typeof cNode.id === "string") continue;
 
       tNodesFinished.push({
         ...cNode,
         name:
-          cNode.name.substr(0, cNode.name.indexOf(" ("))
-          + " \u2192 "
-          + cNode.name.substr(cNode.name.indexOf(" - ") +2, cNode.name.length - cNode.name.indexOf(" - ")-3) ,
+          cNode.name.substr(0, cNode.name.indexOf(" (")) +
+          " \u2192 " +
+          cNode.name.substr(
+            cNode.name.indexOf(" - ") + 2,
+            cNode.name.length - cNode.name.indexOf(" - ") - 3
+          ),
         full: cNode.cap < cNode.pax,
       });
     }
@@ -237,43 +250,37 @@ export default class UmsteigerUtils {
 
     // assign every node a colour depending on the amount of nodes on every side
 
-
     const calcColour = (nArray: Node[], n: number) => {
       const calcNodes = [];
       for (const i in nArray) {
         const cNode = nArray[i];
         if (typeof cNode.id === "string") continue;
         if (Number(i) === n) {
-          calcNodes
-            .push({...cNode,
-              colour: "#f20544"})
-          } else {
-          calcNodes
-            .push({...cNode,
-              colour: this.colour((Number(i) + 1) / nArray.length)})
-        };
-      };
-      return calcNodes
+          calcNodes.push({ ...cNode, colour: "#f20544" });
+        } else {
+          calcNodes.push({
+            ...cNode,
+            colour: this.colour((Number(i) + 1) / nArray.length),
+          });
+        }
+      }
+      return calcNodes;
     };
 
-    fNodesFinished = calcColour(fNodesFinished, fNodesFinished.length-1);
+    fNodesFinished = calcColour(fNodesFinished, fNodesFinished.length - 1);
     tNodesFinished = calcColour(tNodesFinished, 0);
 
     // Berechnen der Höhe der Nodes.
 
     let finalHeight = 0;
 
-    const assignHeight = (n:Node[]) => {
+    const assignHeight = (n: Node[]) => {
       const calcNodes = [];
       for (const cNode of n) {
-        cNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(
-          cNode.cap
-        );
-        cNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(
-          cNode.pax
-        );
+        cNode.backdropHeight = this.calcNodeHeightWithoutMinHeight(cNode.cap);
+        cNode.nodeHeight = this.calcNodeHeightWithoutMinHeight(cNode.pax);
         calcNodes.push(cNode);
-      };
+      }
       return calcNodes;
     };
 
@@ -282,8 +289,10 @@ export default class UmsteigerUtils {
 
     // Falls einer der Links einer Node unter Minimum height ist muss auf die höhe der Node die differenz
 
-    const addHeightDiff = <K extends keyof { fNId: TripId | string; tNId: TripId | string; }>(
-      n:Node[],
+    const addHeightDiff = <
+      K extends keyof { fNId: TripId | string; tNId: TripId | string }
+    >(
+      n: Node[],
       selector: K
     ) => {
       const calcNodes = [];
@@ -294,27 +303,29 @@ export default class UmsteigerUtils {
           this.sameId(a[selector], cNode.id)
         );
         for (const cLink of currentLinks) {
-          if (this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight) {
+          if (
+            this.calcNodeHeightWithoutMinHeight(cLink.value) < minNodeHeight
+          ) {
             const heightDiff =
               this.calcNodeHeight(cLink.value, minNodeHeight) -
               this.calcNodeHeightWithoutMinHeight(cLink.value);
             cNode.backdropHeight += heightDiff;
             cNode.nodeHeight += heightDiff;
-          };
-        };
+          }
+        }
         calcNodes.push(cNode);
-      };
+      }
       return calcNodes;
     };
 
-    fNodesFinished = addHeightDiff(fNodesFinished,"fNId");
-    tNodesFinished = addHeightDiff(tNodesFinished,"tNId");
+    fNodesFinished = addHeightDiff(fNodesFinished, "fNId");
+    tNodesFinished = addHeightDiff(tNodesFinished, "tNId");
 
     // berechnen der koordinaten der Nodes
 
-    const calcNodeXY = (nArray:Node[], x0:number, x1:number) => {
-    const calcNodes: Node[] = [];
-      for ( const i in nArray) {
+    const calcNodeXY = (nArray: Node[], x0: number, x1: number) => {
+      const calcNodes: Node[] = [];
+      for (const i in nArray) {
         const cNode = nArray[i];
         if (!(cNode.backdropHeight && cNode.nodeHeight)) continue;
 
@@ -323,36 +334,39 @@ export default class UmsteigerUtils {
         let diff = 0;
         if (cNode.backdropHeight < cNode.backdropHeight) {
           diff = cNode.backdropHeight - cNode.backdropHeight;
-        };
+        }
         let fullPadding = 0;
         if (cNode.full) {
-          fullPadding = cNode.nodeHeight - cNode.backdropHeight
-        };
+          fullPadding = cNode.nodeHeight - cNode.backdropHeight;
+        }
 
         const y1_start =
-          (nArray[Math.max(0, Number(i) - 1)].y1_backdrop || 0) + fullPadding;
+          (nArray[Math.max(0, Number(i) - 1)].y1_backdrop || 5) + fullPadding;
 
         cNode.y0_backdrop =
           y1_start + (Number(i) === 0 ? 0 : nodePadding) + diff / 2;
-        cNode.y1_backdrop =
-          cNode.y0_backdrop + cNode.backdropHeight;
+        cNode.y1_backdrop = cNode.y0_backdrop + cNode.backdropHeight;
 
         cNode.y1 = cNode.y1_backdrop;
-        cNode.y0 = cNode.y1- cNode.nodeHeight;
+        cNode.y0 = cNode.y1 - cNode.nodeHeight;
 
         cNode.x1 = x1;
         cNode.x0 = x0;
 
         calcNodes.push(cNode);
-        finalHeight = Math.max(finalHeight, cNode.y1)
-      };
+        finalHeight = Math.max(finalHeight, cNode.y1);
+      }
       return calcNodes;
     };
 
-    fNodesFinished = calcNodeXY(fNodesFinished,50,nodeWidth + 50);
-    tNodesFinished = calcNodeXY(tNodesFinished,width - nodeWidth - 50,width - 50);
+    fNodesFinished = calcNodeXY(fNodesFinished, 50, nodeWidth + 50);
+    tNodesFinished = calcNodeXY(
+      tNodesFinished,
+      width - nodeWidth - 50,
+      width - 50
+    );
 
-    onSvgResize( finalHeight + 20); // set height of svg to the bottom of the last node + 20
+    onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20
 
     // berechnen der Links
 
@@ -368,22 +382,20 @@ export default class UmsteigerUtils {
     for (const cNode of fNodesFinished) {
       const fNodeId = cNode.id;
 
-      const tempArray = tNodesFinished.map((n)=> n.id)
-      const currentLinks = links.filter((a) =>
-        this.sameId(a.fNId, fNodeId))
-        .sort((a, b) =>  {
-        if (
-          indexOfTripId(tempArray, a.tNId) >
-          indexOfTripId(tempArray, b.tNId)
-        )
-          return -1;
-        if (
-          indexOfTripId(tempArray, a.tNId) <
-          indexOfTripId(tempArray, b.tNId)
-        )
-          return 1;
-        else return 0;
-      });
+      const tempArray = tNodesFinished.map((n) => n.id);
+      const currentLinks = links
+        .filter((a) => this.sameId(a.fNId, fNodeId))
+        .sort((a, b) => {
+          if (
+            indexOfTripId(tempArray, a.tNId) > indexOfTripId(tempArray, b.tNId)
+          )
+            return -1;
+          if (
+            indexOfTripId(tempArray, a.tNId) < indexOfTripId(tempArray, b.tNId)
+          )
+            return 1;
+          else return 0;
+        });
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -399,13 +411,15 @@ export default class UmsteigerUtils {
 
         calculatedLinks.push(l);
       }
-    };
+    }
 
     const finishedLinks: Link[] = [];
 
     for (const cNode of tNodesFinished) {
       const tNodeId = cNode.id;
-      const currentLinks = calculatedLinks.filter((a) => this.sameId(a.tNId, tNodeId)).reverse();
+      const currentLinks = calculatedLinks
+        .filter((a) => this.sameId(a.tNId, tNodeId))
+        .reverse();
 
       let offset = 0;
       for (const i in currentLinks) {
@@ -420,7 +434,6 @@ export default class UmsteigerUtils {
         }
       }
     }
-
 
     return {
       toNodes: tNodesFinished,

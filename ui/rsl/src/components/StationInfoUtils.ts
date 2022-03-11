@@ -30,6 +30,7 @@ export type StationInterchangeParameters = {
   maxCount: number;
   onStatusUpdate?: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
+  tripDirection: "entering" | "exiting" | "both";
 };
 type TripIdAtStation = TripId & {
   pax: number;
@@ -231,14 +232,23 @@ function InterchangePointInfoHandle(
   return pointStationIndex;
 }
 /**
- * Returns true if the trip given could be found in tripIdList
+ * Returns true if the trip given could be found in tripIdList,
+ * if filter given and it equals the direction of this filter, it will also check for that
  * @param tripId
  * @param tripIdList
+ * @param direction
+ * @param filter
  * @constructor
  */
 function InterchangePassFilter(tripId: TripId, tripIdList: TripId[]) {
   return ArrayContains(tripId, tripIdList, SameTripId);
 }
+
+/**
+ * Extracts all data for this station. if params.onlyIncludeTripId is not-null and not-empty, params.includeTripDirection is MANDATORY
+ * @param params
+ * @constructor
+ */
 export function ExtractStationData(
   params: StationInterchangeParameters
 ): SankeyInterfaceMinimal {
@@ -251,7 +261,7 @@ export function ExtractStationData(
   };
   const [universe] = useAtom(universeAtom);
   const queryClient = useQueryClient();
-
+  const filterTripDirection = params.tripDirection || "both";
   const interchangeRequest: PaxMonGetInterchangesRequest = {
     start_time: params.startTime, // 25.10.2021 - 9:00
     end_time: params.endTime, // 25.10.2021 - 9:30
@@ -303,37 +313,49 @@ export function ExtractStationData(
           // when departure & arrival exist, make sure arrival or departureinfo is in onlyIncludeTripIds
           departureInfo &&
           arrivalInfo &&
-          !InterchangePassFilter(
+          ((!InterchangePassFilter(
             arrivalInfo.trips[0].trip,
             params.onlyIncludeTripIds
           ) &&
-          !InterchangePassFilter(
-            departureInfo.trips[0].trip,
-            params.onlyIncludeTripIds
-          )
+            !InterchangePassFilter(
+              departureInfo.trips[0].trip,
+              params.onlyIncludeTripIds
+            ) &&
+            filterTripDirection == "both") ||
+            (!InterchangePassFilter(
+              arrivalInfo.trips[0].trip,
+              params.onlyIncludeTripIds
+            ) &&
+              filterTripDirection == "exiting") ||
+            (!InterchangePassFilter(
+              departureInfo.trips[0].trip,
+              params.onlyIncludeTripIds
+            ) &&
+              filterTripDirection == "entering"))
         ) {
           continue;
         }
-        // if there is only departure existing (boarding)
+        // if there is only departure existing (boarding), skip if trip is not in trip list, or if we need trip to be in entering
         else if (
           !arrivalInfo &&
-          !InterchangePassFilter(
+          (!InterchangePassFilter(
             departureInfo.trips[0].trip,
             params.onlyIncludeTripIds
-          )
+          ) ||
+            filterTripDirection == "entering")
         )
           continue;
         // if there is only departure existing (boarding)
         else if (
           !departureInfo &&
-          !InterchangePassFilter(
+          (!InterchangePassFilter(
             arrivalInfo.trips[0].trip,
             params.onlyIncludeTripIds
-          )
+          ) ||
+            filterTripDirection == "exiting")
         )
           continue;
       }
-
       /* Push/modify trip point, for arrival, if exists; else -1 = "boarding" */
       if (arrivalInfo)
         arrivingStationIndex = InterchangePointInfoHandle(
