@@ -394,7 +394,7 @@ export const createGraph = ({
       tNodeFullPadding = currentTNode.nodeHeight - currentTNode.backdropHeight;
       fullPadding =
         Math.max(
-          fNodeFullPadding + currentFNode.backdropHeight / 2,
+          fNodeFullPadding + currentFNode.backdropHeight / 2, // halbieren der Höhe um den Mittelpunkt zu finden
           tNodeFullPadding + currentTNode.backdropHeight / 2
         ) -
         Math.max(
@@ -412,14 +412,14 @@ export const createGraph = ({
 
     // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
     currentTNode.y0_backdrop =
-      y1_start + (i === 0 ? 0 : nodePadding) + tDif / 2;
+      y1_start + (i === 0 ? 0 : nodePadding) + tDif / 2; // halbieren der Höhe um den Mittelpunkt zu finden
     // Ende des neuen Backdrops ist der Anfang plus die Knotenhöhe
     currentTNode.y1_backdrop =
       (currentTNode.y0_backdrop || 0) + (currentTNode.backdropHeight || 0);
 
     // Die y-Koordinaten beider Backdrops sind identisch
     currentFNode.y0_backdrop =
-      y1_start + (i === 0 ? 0 : nodePadding) + fDif / 2;
+      y1_start + (i === 0 ? 0 : nodePadding) + fDif / 2; // halbieren der Höhe um den Mittelpunkt zu finden
     currentFNode.y1_backdrop =
       (currentFNode.y0_backdrop || 0) + (currentFNode.backdropHeight || 0);
 

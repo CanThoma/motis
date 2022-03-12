@@ -36,12 +36,26 @@ type TripIdAtStation = TripId & {
   interstation_time: number;
   stationID: string;
 };
+
+/**
+ * Testet zwei TripIdAtStation auf Gleichheit indem sie vorerst zu TripId konvertiert werden.
+ * @param tripIdAtStationA
+ * @param tripIdAtStationB
+ * @constructor
+ */
 function SameTripIdAtStation(
   tripIdAtStationA: TripIdAtStation,
   tripIdAtStationB: TripIdAtStation
 ): boolean {
   return SameTripId(ToTripId(tripIdAtStationA), ToTripId(tripIdAtStationB));
 }
+
+/**
+ * Testet zwei TripIds auf Gleichheit
+ * @param tripIdA
+ * @param tripIdB
+ * @constructor
+ */
 export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
   return (
     tripIdA.time == tripIdB.time &&
@@ -52,6 +66,12 @@ export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
     tripIdA.target_time == tripIdB.target_time
   );
 }
+
+/**
+ * Gibt asynchron die tripInfos der trips im Universum zurück in form einer Promise
+ * @param universe Das Universum
+ * @param trips Die Trips aus denen die Informationen entnomen werden
+ */
 export async function loadAndProcessTripInfos(
   universe: number,
   trips: TripId[]
@@ -63,6 +83,12 @@ export async function loadAndProcessTripInfos(
   const load_infos = res.load_infos;
   return load_infos.map((tli) => addEdgeStatistics(tli));
 }
+
+/**
+ * Konvertiert eine tripIdAtStation in einen unspezifischeren Typ (Stationsinformationen gehen verloren, übrig bleibt nur die Trip Info)
+ * @param tripIdAtStation
+ * @constructor
+ */
 function ToTripId(tripIdAtStation: TripIdAtStation): TripId {
   return {
     time: tripIdAtStation.time,
@@ -73,6 +99,12 @@ function ToTripId(tripIdAtStation: TripIdAtStation): TripId {
     target_time: tripIdAtStation.target_time,
   };
 }
+
+/**
+ * Konvertiert TripId in einen spezifischeren Typ TripIdAtStation (TripId + Stationsinformationen an einem Punkt)
+ * @param tripId
+ * @constructor
+ */
 function ToTripIdAtStation(tripId: TripId): TripIdAtStation {
   return {
     time: tripId.time,
@@ -585,7 +617,12 @@ export function ExtractStationData(
     }
   }
 
-  /* Sort elements as output from MOTIS is not sorted */
+  /**
+   * Sort elements as output from MOTIS is not sorted
+   * @param a
+   * @param b
+   * @constructor
+   */
   const TimeSort = (a: NodeMinimal, b: NodeMinimal) => {
     /* number comparators */
     if (a.time < b.time) return -1;

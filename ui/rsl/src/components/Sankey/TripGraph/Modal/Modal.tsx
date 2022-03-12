@@ -6,18 +6,24 @@ import "./Modal.styles.css";
 import SankeyUmsteigerGraph from "../../UmsteigerGraph/SankeyUmsteigerGraph";
 import { TripId } from "../../../../api/protocol/motis";
 
-type Props = {
-  setIsOpen: (b: boolean) => void;
-  param:
-    | {
-        node: Node;
-        tripId: TripId;
-        currentArrivalTime: number;
-        currentDepartureTime: number;
-      }
-    | undefined;
+type NodeTripStationPointInfo = {
+  node: Node;
+  tripId: TripId;
+  currentArrivalTime: number;
+  currentDepartureTime: number;
 };
 
+type Props = {
+  setIsOpen: (b: boolean) => void;
+  param: NodeTripStationPointInfo | undefined;
+};
+
+/**
+ * erstellt ein JSX element welches über der Seite angezeigt wird
+ * @param setIsOpen State Funktion
+ * @param param Objekt aus Node, tripId, Ankunftszeit und Abfahrtszeit
+ * @constructor
+ */
 const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
   const [currentPage, setCurrenPage] = useState(1);
   const [selectedDir, changeDir] = useState<"entering" | "both" | "exiting">(
@@ -26,7 +32,11 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
 
   const pages = ["Einstiege", "Beide", "Ausstiege"];
 
-  const filterBy = (i: number) => {
+  /**
+   * Setzt die States currentPage und selectedDir welche die ausgewählte Seite speichern bzw. den Filter bestimmen.
+   * @param i der index des Tabs der ausgewählt wurde
+   */
+  const setFilter = (i: number) => {
     switch (i) {
       case 0:
         changeDir("entering");
@@ -78,14 +88,13 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                   stationId={param.node.sId}
                   currentArrivalTime={param.currentArrivalTime}
                   currentDepartureTime={param.currentDepartureTime}
-                  maxCount={0}
                   onlyIncludeTripId={[param.tripId]}
                   tripDir={selectedDir}
                 />
               )}
             </div>
             <button onClick={() => setIsOpen(false)} className="accept">
-              Danke 👍
+              Schließen
             </button>
             <div style={{ height: "50px", marginBottom: "-50px" }}>&#8202;</div>
           </div>

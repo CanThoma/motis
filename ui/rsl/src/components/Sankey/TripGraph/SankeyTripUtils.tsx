@@ -60,7 +60,7 @@ const calcLinkSum = (
 export const renderTime = (time: number): string => {
   const aDate = new Date(time * 1000);
   const dateString = aDate.toLocaleTimeString("de");
-  return dateString.substr(0, dateString.length - 3) + " Uhr";
+  return dateString.substr(0, dateString.length - 3) + " Uhr"; // -3 um Sekunden zu entfernen
 };
 
 /**
