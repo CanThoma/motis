@@ -473,7 +473,7 @@ export function ExtractStationData(
   const previousData = data;
   const { data: status } = usePaxMonStatusQuery();
   {
-    const { data, status: nina /*, isLoading, error*/ } = useQuery(
+    const { data, status: nina } = useQuery(
       queryKeys.tripsLoad(universe, arrivingTripIds),
       async () => loadAndProcessTripInfos(universe, arrivingTripIds),
       {
@@ -524,7 +524,7 @@ export function ExtractStationData(
     return typeof id === "string" ? [] : id;
   });
   {
-    const { data /*, isLoading, error*/ } = useQuery(
+    const { data } = useQuery(
       queryKeys.tripsLoad(universe, departingTripIds),
       async () => loadAndProcessTripInfos(universe, departingTripIds),
       {

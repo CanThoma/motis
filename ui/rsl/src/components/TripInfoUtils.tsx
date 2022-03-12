@@ -123,9 +123,6 @@ export function ExtractGroupInfoForThisTrain(
 
     let count = 1;
     groupsInTrip?.sections.forEach((groupsInTripSection) => {
-      //get entering station name
-      //const currentExitingStationID = groupsInTripSection.to.id;  // Value declared, but never used.
-      //const currentExitingStationName = groupsInTripSection.to.name; // Value declared, but never used.
       groupsInTripSection.groups.forEach((groupedPassengerGroup) => {
         groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo) => {
           // get groupInfo[id] from "Entering" with same id. If not exist: mistake from backend.
@@ -196,6 +193,11 @@ export function ExtractGroupInfoForThisTrain(
   return sankeyInterface;
 }
 
+/**
+ *
+ * @param universe
+ * @param trip
+ */
 export async function loadAndProcessTripInfo(
   universe: number,
   trip: TripId
