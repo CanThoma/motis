@@ -33,6 +33,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
         setCurrenPage(0);
         break;
       case 1:
+      default:
         changeDir("both");
         setCurrenPage(1);
         break;
@@ -66,7 +67,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
               <div className="flex place-content-center mx-auto mt-5">
                 <Navbar
                   pages={pages}
-                  onChange={(i) => filterBy(i)}
+                  onChange={(i) => setFilter(i)}
                   activePage={currentPage}
                 />
               </div>

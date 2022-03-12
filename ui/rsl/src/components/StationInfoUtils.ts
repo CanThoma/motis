@@ -7,6 +7,7 @@ import {
 import { useAtom } from "jotai";
 import { universeAtom } from "../data/simulation";
 import {
+  PaxMonCombinedGroups,
   PaxMonGetInterchangesRequest,
   PaxMonInterchangeInfo,
   PaxMonTripStopInfo,
@@ -59,11 +60,11 @@ export async function loadAndProcessTripInfos(
     universe,
     trips: trips,
   });
-  const tlis = res.load_infos;
-  return tlis.map((tli) => addEdgeStatistics(tli));
+  const load_infos = res.load_infos;
+  return load_infos.map((tli) => addEdgeStatistics(tli));
 }
 function ToTripId(tripIdAtStation: TripIdAtStation): TripId {
-  const tripId: TripId = {
+  return {
     time: tripIdAtStation.time,
     train_nr: tripIdAtStation.train_nr,
     target_station_id: tripIdAtStation.target_station_id,
@@ -71,10 +72,9 @@ function ToTripId(tripIdAtStation: TripIdAtStation): TripId {
     line_id: tripIdAtStation.line_id,
     target_time: tripIdAtStation.target_time,
   };
-  return tripId;
 }
 function ToTripIdAtStation(tripId: TripId): TripIdAtStation {
-  const tripIdAtStation: TripIdAtStation = {
+  return {
     time: tripId.time,
     train_nr: tripId.train_nr,
     target_station_id: tripId.target_station_id,
@@ -86,7 +86,23 @@ function ToTripIdAtStation(tripId: TripId): TripIdAtStation {
     interstation_time: 0,
     stationID: "",
   };
-  return tripIdAtStation;
+}
+
+/**
+ * Fügt bedingt nach condition zu der node groups.max_passenger_count hinzu
+ * @param node
+ * @param groups
+ * @param condition
+ */
+function setNodeConditionally(
+  node: NodeMinimal,
+  groups: PaxMonCombinedGroups,
+  condition: boolean
+) {
+  if (condition) {
+    node.pax += groups.max_passenger_count;
+    node.cap += groups.max_passenger_count;
+  }
 }
 enum InterchangePoint {
   ARRIVING,
@@ -116,14 +132,13 @@ function ArrayContains<T>(
  * @constructor
  */
 function SpecialNodeMinimal(name: string, time: number): NodeMinimal {
-  const node: NodeMinimal = {
+  return {
     id: name,
     cap: 0,
     pax: 0,
     time: time,
     name: "",
   };
-  return node;
 }
 /**
  * Will prevent the loop iteration to run, if the requirements of the structure are not met
@@ -173,11 +188,12 @@ function NameTrip(tsi: TripServiceInfo): string {
       )
     ),
   ];
-  const title = `${names.join(", ")} (${tsi.primary_station.name} - ${
+  return `${names.join(", ")} (${tsi.primary_station.name} - ${
     tsi.secondary_station.name
   })`;
-  return title;
 }
+const POINT_STATION_ENTERING_EXITING = -1;
+const POINT_STATION_OUT_OF_TIME_SEARCH = -2;
 /**
  * Returns an index if element info has been found/created only if the given limitTime is in the time range.
  * Returns index > 0 if in time Range,
@@ -186,6 +202,7 @@ function NameTrip(tsi: TripServiceInfo): string {
  * @param tripsInStationPoint
  * @param type
  * @param limitTime if type is ARRIVING, this will represent the startTime of the graph, if type is DEPARTING this will represent the endTime of the graph
+ * @param interchangePassengerCount
  * @constructor
  */
 function InterchangePointInfoHandle(
@@ -195,13 +212,13 @@ function InterchangePointInfoHandle(
   limitTime: number,
   interchangePassengerCount: number
 ): number {
-  let pointStationIndex = -1;
+  let pointStationIndex: number;
   /* Get arrival point */
   if (
     (type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
     (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime)
   ) {
-    pointStationIndex = -2;
+    pointStationIndex = POINT_STATION_OUT_OF_TIME_SEARCH;
   } else {
     const trip = info.trips[0];
     pointStationIndex = tripsInStationPoint.findIndex((tripId) =>
@@ -229,8 +246,6 @@ function InterchangePointInfoHandle(
  * if filter given and it equals the direction of this filter, it will also check for that
  * @param tripId
  * @param tripIdList
- * @param direction
- * @param filter
  * @constructor
  */
 function InterchangePassFilter(tripId: TripId, tripIdList: TripId[]) {
@@ -264,10 +279,7 @@ export function ExtractStationData(
     max_count: params.maxCount,
     universe: universe,
   };
-  const { data, status: thomas } =
-    usePaxMonGetInterchangesQuery(interchangeRequest);
-
-  //if(params.onStatusUpdate) params.onStatusUpdate(thomas);
+  const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
 
   const arrivingTripsInStation: TripIdAtStation[] = [];
   const departingTripsInStation: TripIdAtStation[] = [];
@@ -278,11 +290,11 @@ export function ExtractStationData(
   );
   const previousNode: NodeMinimal = SpecialNodeMinimal(
     "previous",
-    Number.MIN_VALUE * 2
+    Number.MIN_VALUE * 2 // *2 damit es nach boarding kommt
   );
   const futureNode: NodeMinimal = SpecialNodeMinimal(
     "future",
-    Number.MAX_VALUE - 1
+    Number.MAX_VALUE - 1 // -1 damit es vor exiting kommt
   );
   const exitingNode: NodeMinimal = SpecialNodeMinimal(
     "exiting",
@@ -293,8 +305,8 @@ export function ExtractStationData(
     for (const interchange of data.interchanges.filter(
       requirementsInterchangeMet
     )) {
-      let arrivingStationIndex = -1;
-      let departureStationIndex = -1;
+      let arrivingStationIndex = POINT_STATION_ENTERING_EXITING;
+      let departureStationIndex = POINT_STATION_ENTERING_EXITING;
 
       // zwischenstop/endstop
       const arrivalInfo = interchange.arrival[0];
@@ -369,46 +381,47 @@ export function ExtractStationData(
           interchange.groups.max_passenger_count
         );
 
-      /* If there is boarding/exiting , add passengers to previous/future node */
-      if (arrivingStationIndex === -1) {
-        //boarding
-        boardingNode.pax += interchange.groups.max_passenger_count;
-        boardingNode.cap += interchange.groups.max_passenger_count;
-      } else if (arrivingStationIndex === -2) {
-        // previous
-        previousNode.pax += interchange.groups.max_passenger_count;
-        previousNode.cap += interchange.groups.max_passenger_count;
-      }
+      setNodeConditionally(
+        boardingNode,
+        interchange.groups,
+        arrivingStationIndex === POINT_STATION_ENTERING_EXITING
+      );
+      setNodeConditionally(
+        previousNode,
+        interchange.groups,
+        arrivingStationIndex === POINT_STATION_OUT_OF_TIME_SEARCH
+      );
 
-      if (departureStationIndex === -1) {
-        //exiting
-        exitingNode.pax += interchange.groups.max_passenger_count;
-        exitingNode.cap += interchange.groups.max_passenger_count;
-      } else if (departureStationIndex === -2) {
-        // future
-        futureNode.pax += interchange.groups.max_passenger_count;
-        futureNode.cap += interchange.groups.max_passenger_count;
-      }
+      setNodeConditionally(
+        exitingNode,
+        interchange.groups,
+        departureStationIndex === POINT_STATION_ENTERING_EXITING
+      );
+      setNodeConditionally(
+        futureNode,
+        interchange.groups,
+        departureStationIndex === POINT_STATION_OUT_OF_TIME_SEARCH
+      );
 
       /* take care of the links from the data we now gained */
       const src =
-        arrivingStationIndex === -1
+        arrivingStationIndex === POINT_STATION_ENTERING_EXITING
           ? boardingNode.id
-          : arrivingStationIndex === -2
+          : arrivingStationIndex === POINT_STATION_OUT_OF_TIME_SEARCH
           ? previousNode.id
           : ToTripId(arrivingTripsInStation[arrivingStationIndex]);
       const trgt =
-        departureStationIndex === -1
+        departureStationIndex === POINT_STATION_ENTERING_EXITING
           ? exitingNode.id
-          : departureStationIndex === -2
+          : departureStationIndex === POINT_STATION_OUT_OF_TIME_SEARCH
           ? futureNode.id
           : ToTripId(departingTripsInStation[departureStationIndex]);
       const val = interchange.groups.max_passenger_count;
 
       // in case of several groups going the same interchange points in arrival & departure at the same time
       const foundLink = graph.links.find((link) => {
-        let left = false;
-        let right = false;
+        let left: boolean;
+        let right: boolean;
 
         left = SameLink(link.fNId, src);
 
@@ -473,7 +486,7 @@ export function ExtractStationData(
   const previousData = data;
   const { data: status } = usePaxMonStatusQuery();
   {
-    const { data, status: nina } = useQuery(
+    const { data, status: statusArrivingTripQuery } = useQuery(
       queryKeys.tripsLoad(universe, arrivingTripIds),
       async () => loadAndProcessTripInfos(universe, arrivingTripIds),
       {
@@ -486,7 +499,7 @@ export function ExtractStationData(
       }
     );
 
-    if (params.onStatusUpdate) params.onStatusUpdate(nina);
+    if (params.onStatusUpdate) params.onStatusUpdate(statusArrivingTripQuery);
 
     if (data) {
       console.assert(data.length + 2 == graph.fromNodes.length);
@@ -537,6 +550,7 @@ export function ExtractStationData(
       }
     );
     if (data) {
+      // assert that the amount of nodes +2 is the same as the graph.tonodes, because toNodes has exiting/future special node
       console.assert(data.length + 2 == graph.toNodes.length);
       for (let i = 0; i < data.length; i++) {
         const tsi = data[i];
