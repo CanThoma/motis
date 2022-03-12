@@ -20,6 +20,7 @@ import {
 } from "../api/paxmon";
 import { useQuery, useQueryClient } from "react-query";
 import { addEdgeStatistics } from "../util/statistics";
+import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
 
 export type StationInterchangeParameters = {
   stationId: string;
@@ -70,12 +71,12 @@ export function SameTripId(tripIdA: TripId, tripIdB: TripId): boolean {
 /**
  * Gibt asynchron die tripInfos der trips im Universum zurück in form einer Promise
  * @param universe Das Universum
- * @param trips Die Trips aus denen die Informationen entnomen werden
+ * @param trips Die Trips aus denen die Informationen entnommen werden
  */
 export async function loadAndProcessTripInfos(
   universe: number,
   trips: TripId[]
-) {
+): Promise<PaxMonTripLoadInfoWithStats[]> {
   const res = await sendPaxMonTripLoadInfosRequest({
     universe,
     trips: trips,
@@ -340,14 +341,14 @@ export function ExtractStationData(
       let arrivingStationIndex = POINT_STATION_ENTERING_EXITING;
       let departureStationIndex = POINT_STATION_ENTERING_EXITING;
 
-      // zwischenstop/endstop
+      // Zwischenstopp/Endstopp
       const arrivalInfo = interchange.arrival[0];
-      //zwischenstop/start
+      // Zwischenstopp/Start
       const departureInfo = interchange.departure[0];
       /* do not include node/link information for trips that don't fit the filter criteria */
       if (params.onlyIncludeTripIds && params.onlyIncludeTripIds.length > 0) {
         if (
-          // when departure & arrival exist, make sure arrival or departureinfo is in onlyIncludeTripIds
+          // when departure & arrival exist, make sure arrival or departureInfo is in onlyIncludeTripIds
           departureInfo &&
           arrivalInfo &&
           ((!InterchangePassFilter(
@@ -452,12 +453,8 @@ export function ExtractStationData(
 
       // in case of several groups going the same interchange points in arrival & departure at the same time
       const foundLink = graph.links.find((link) => {
-        let left: boolean;
-        let right: boolean;
-
-        left = SameLink(link.fNId, src);
-
-        right = SameLink(link.tNId, trgt);
+        const left = SameLink(link.fNId, src);
+        const right = SameLink(link.tNId, trgt);
 
         return left && right;
       });
@@ -467,8 +464,8 @@ export function ExtractStationData(
         const link: LinkMinimal = {
           id: graph.links.length,
           value: val,
-          fNId: src, // tripId if stationindex found, else string identifier
-          tNId: trgt, // tripId if stationindex found, else string identifier
+          fNId: src, // tripId if stationIndex found, else string identifier
+          tNId: trgt, // tripId if stationIndex found, else string identifier
         };
         graph.links.push(link);
       }
@@ -582,7 +579,7 @@ export function ExtractStationData(
       }
     );
     if (data) {
-      // assert that the amount of nodes +2 is the same as the graph.tonodes, because toNodes has exiting/future special node
+      // assert that the amount of nodes +2 is the same as the graph.toNodes, because toNodes has exiting/future special node
       console.assert(data.length + 2 == graph.toNodes.length);
       for (let i = 0; i < data.length; i++) {
         const tsi = data[i];
@@ -593,7 +590,7 @@ export function ExtractStationData(
           (edge) => edge.from.id === departingStationId
         );
         graph.toNodes[i].name = NameTrip(tsi.tsi);
-        // it will not find an edge, if the trip is nahverkehr but station is fernverkehr (?)
+        // it will not find an edge, if the trip is Nahverkehr but station is Fernverkehr (?)
         if (edge) {
           graph.toNodes[i].cap = edge.capacity;
           graph.toNodes[i].pax = edge.max_pax;
