@@ -18,7 +18,7 @@ type Props = {
   stationId: string;
   startTime: number;
   endTime: number;
-  onTripSelected: (id: TripId | string, name: string) => void;
+  onTripSelected: (id: TripId, name: string) => void;
   factor: number;
   width?: number;
   height?: number;
@@ -193,7 +193,9 @@ const SankeyStationGraph = ({
       .attr("fill", rowBackgroundColour)
       .attr("opacity", backdropOppacity)
       .attr("cursor", "pointer")
-      .on("click", (_, i) => onTripSelected(i.id, i.name));
+      .on("click", (_, i) => {
+        if (typeof i.id !== "string") onTripSelected(i.id, i.name);
+      });
 
     // Define the nodes.
     const nodes = view
@@ -219,7 +221,9 @@ const SankeyStationGraph = ({
     nodes
       .filter((n) => typeof n.id !== "string")
       .attr("cursor", "pointer")
-      .on("click", (_, i) => onTripSelected(i.id, i.name));
+      .on("click", (_, i) => {
+        if (typeof i.id !== "string") onTripSelected(i.id, i.name);
+      });
 
     view
       .selectAll("rect.nodeOverflowBack")
@@ -258,7 +262,9 @@ const SankeyStationGraph = ({
       )
       .attr("opacity", nodeOppacity)
       .attr("cursor", "pointer")
-      .on("click", (_, i) => onTripSelected(i.id, i.name))
+      .on("click", (_, i) => {
+        if (typeof i.id !== "string") onTripSelected(i.id, i.name);
+      })
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
@@ -301,14 +307,10 @@ const SankeyStationGraph = ({
       .attr("dy", "0.35em")
       .attr("fill", "black")
       .attr("text-anchor", "start")
-      .attr("font-size", 10)
+      .attr("font-size", 12)
       .attr("font-family", "Arial, sans-serif")
       .text((d) => {
-        if (typeof d.id === "string") {
-          return d.name;
-        } else {
-          return d.name;
-        }
+        return d.name;
       })
 
       .filter((d) => (d.x1 || 0) > width / 2)

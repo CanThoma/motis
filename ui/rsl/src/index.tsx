@@ -18,6 +18,7 @@ import {
   SankeyContextProvider,
   useSankeyContext,
 } from "./components/context/SankeyContext";
+import { TripId } from "./api/protocol/motis";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,7 +30,7 @@ const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 
 const App = (): JSX.Element => {
   const [width, setWidth] = useState(1000);
-  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [selectedTrip, setSelectedTrip] = useState<TripId | null>(null);
   const [tripName, setTripName] = useState("");
   const [activePage, setActivePage] = useState(1);
   const [simActive, setSimActive] = useState(false);
@@ -67,96 +68,90 @@ const App = (): JSX.Element => {
   return (
     <QueryClientProvider client={queryClient}>
       <SankeyContextProvider>
-        <div
-          className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
-            bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
-        >
-          <TimeControl allowForwarding={allowForwarding} />
-          <UniverseControl />
-          <div className="flex pl-4">
-            <button
-              type="button"
-              className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
-              onClick={() => setSimActive(!simActive)}
-            >
-              Maßnahmensimulation
-            </button>
-          </div>
-        </div>
-        <div className="flex place-content-center mx-auto mt-20">
-          <Navbar
-            pages={pages}
-            onChange={(page) => setActivePage(page)}
-            activePage={activePage}
-          />
-        </div>
-        <Legend />
-        {loading && (
-          <div className="flex justify-center max-w-sm mx-auto mt-20">
-            <div className="lds-ring">
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
+        <div>
+          <div
+            className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
+              bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
+          >
+            <TimeControl allowForwarding={allowForwarding} />
+            <UniverseControl />
+            <div className="flex pl-4">
+              <button
+                type="button"
+                className="bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+                onClick={() => setSimActive(!simActive)}
+              >
+                Maßnahmensimulation
+              </button>
             </div>
           </div>
-        )}
-        {activePage === 0 && (
-          <TripPage
-            tripName={tripName}
-            width={width}
-            selectedTrip={selectedTrip}
-            onTripPicked={(trip) => {
-              setSelectedTrip(trip);
-              setTripName(trip?.train_nr);
-            }}
-            onStationSelected={handleStationSelect}
-          />
-        )}
-        {activePage === 1 && (
-          <StationPage
-            selectedStation={selectedStation}
-            onStationPicked={(station) => {
-              setSelectedStation(station?.id);
-              setStationName(station?.name);
-            }}
-            onLoad={(b) => {
-              console.log("HAlihalo – " + b);
-              setLoading(b);
-            }}
-            onTripSelected={handleTripSelect}
-          />
-        )}
-        {activePage === 2 && (
-          <>
-            <img
-              className="m-auto"
-              src="https://img.pr0gramm.com/2021/10/15/2b2b32f223adaf2b.jpg"
-              alt="Bahn"
+          <div className="flex place-content-center mx-auto mt-20">
+            <Navbar
+              pages={pages}
+              onChange={(page) => setActivePage(page)}
+              activePage={activePage}
             />
-            <img
-              className="m-auto"
-              src="https://img.pr0gramm.com/2022/02/17/0d69eeb925d5d070.jpg"
-              alt="Bahn"
+          </div>
+          <Legend />
+          {loading && (
+            <div className="flex justify-center max-w-sm mx-auto mt-20">
+              <div className="lds-ring">
+                <div />
+                <div />
+                <div />
+                <div />
+              </div>
+            </div>
+          )}
+          {activePage === 0 && (
+            <TripPage
+              tripName={tripName}
+              width={width}
+              selectedTrip={selectedTrip}
+              onTripPicked={(trip) => {
+                if (trip) {
+                  setSelectedTrip(trip);
+                  setTripName(String(trip.train_nr));
+                } else
+                  console.warn("Internal Server Error: TripId not defined!");
+              }}
+              onStationSelected={handleStationSelect}
             />
-            <img
-              className="m-auto"
-              src="https://img.pr0gramm.com/2022/02/07/0e3af3882f0a2091.png"
-              alt="Bahn"
-            />
+          )}
+          {activePage === 1 && (
+            <StationPage onTripSelected={handleTripSelect} />
+          )}
+          {activePage === 2 && (
+            <>
+              <img
+                className="m-auto"
+                src="https://img.pr0gramm.com/2021/10/15/2b2b32f223adaf2b.jpg"
+                alt="Bahn"
+              />
+              <img
+                className="m-auto"
+                src="https://img.pr0gramm.com/2022/02/17/0d69eeb925d5d070.jpg"
+                alt="Bahn"
+              />
+              <img
+                className="m-auto"
+                src="https://img.pr0gramm.com/2022/02/07/0e3af3882f0a2091.png"
+                alt="Bahn"
+              />
 
-            <img
-              className="m-auto"
-              src="https://img.pr0gramm.com/2021/11/05/49c162d9523a7954.jpg"
-              alt="Bahn"
-            />
-          </>
-        )}
-        {activePage === 3 && (
-          <>
-            <PeakSpotting />
-          </>
-        )}
+              <img
+                className="m-auto"
+                src="https://img.pr0gramm.com/2021/11/05/49c162d9523a7954.jpg"
+                alt="Bahn"
+              />
+            </>
+          )}
+          {activePage === 3 && (
+            <>
+              <PeakSpotting />
+            </>
+          )}
+        </div>
       </SankeyContextProvider>
     </QueryClientProvider>
   );

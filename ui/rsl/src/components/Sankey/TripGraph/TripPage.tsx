@@ -9,7 +9,7 @@ import { useSankeyContext } from "../../context/SankeyContext";
 type TripPageProps = {
   tripName: string;
   width: number;
-  selectedTrip: TripId | undefined;
+  selectedTrip: TripId | null;
   onTripPicked: (tripId: TripId | undefined) => void;
   onStationSelected: () => void;
 };

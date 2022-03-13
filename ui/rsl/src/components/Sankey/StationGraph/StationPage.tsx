@@ -16,6 +16,11 @@ type StationPageProps = {
   onTripSelected: () => void;
 };
 
+/**
+ *
+ * @param onTripSelected
+ * @constructor
+ */
 const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
   const {
     setSelectedTrip,
@@ -192,10 +197,7 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
                 startTime={startTime.getTime() / 1000}
                 endTime={endTime.getTime() / 1000}
                 width={1200}
-                onTripSelected={(
-                  selectedTrip: TripId | string,
-                  name: string
-                ) => {
+                onTripSelected={(selectedTrip: TripId, name: string) => {
                   if (setSelectedTrip) setSelectedTrip(selectedTrip);
                   else
                     console.warn(
