@@ -17,7 +17,7 @@ import config from "../../../config";
 
 type Props = {
   tripId: TripId;
-  onStationSelected: (sId: string, name: string) => void;
+  onStationSelected: (sId: string, name: string, time: number) => void;
   width?: number;
   height?: number;
   nodeWidth?: number;
@@ -136,7 +136,12 @@ const SankeyTripGraph = ({
     // TODO: welche Zeit ist hier die richtige?!?! + Anpassen der restlichen Zeiten. (bzw. weitere onStationSelected)
     backdrops.on(
       "click",
-      (_, i) => onStationSelected(i.sId, i.name) //, i.arrival_current_time)
+      (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.arrival_schedule_time, i.arrival_current_time)
+        ) //, i.arrival_current_time)
     );
 
     // Define the nodes.
@@ -163,7 +168,13 @@ const SankeyTripGraph = ({
       .text((d) => formatTextNode(d.name, d.totalNodeValue || 0));
 
     // Add the onClick Action
-    nodes.on("click", (_, i) => onStationSelected(i.sId, i.name));
+    nodes.on("click", (_, i) =>
+      onStationSelected(
+        i.sId,
+        i.name,
+        Math.min(i.arrival_schedule_time, i.arrival_current_time)
+      )
+    );
 
     // Define the links.
     const links = view
