@@ -46,7 +46,7 @@ function TripPicker({
   clearOnPick,
   longDistanceOnly,
   placeHolder = "",
-  className,
+  className = "w-96",
 }: TripPickerProps): JSX.Element {
   const [universe] = useAtom(universeAtom);
   const [trainNr, setTrainNr] = useState<number>();
@@ -94,6 +94,7 @@ function TripPicker({
         <input
           {...getInputProps()}
           type="text"
+          inputMode="numeric"
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           placeholder={placeHolder}
         />

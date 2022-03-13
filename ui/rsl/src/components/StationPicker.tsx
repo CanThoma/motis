@@ -47,7 +47,7 @@ function StationPicker({
   });
 
   return (
-    <div className="relative flex">
+    <div className="relative flex w-96">
       {/* <label {...getLabelProps()}>Station:</label> */}
       <div {...getComboboxProps()} className="relative w-full">
         <input
@@ -69,7 +69,7 @@ function StationPicker({
         {...getMenuProps()}
         className={`${
           isOpen && stationList.length > 0 ? "" : "hidden"
-        } absolute z-50 top-12 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none p-2`}
+        } absolute w-full z-50 top-12 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none p-2`}
       >
         {isOpen &&
           stationList.map((item, index) => (

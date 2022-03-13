@@ -86,21 +86,23 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
         <div className="flex-grow">
           <div className="mt-6 flex items-center justify-center gap-2">
             <span>Station:</span>
-            <StationPicker
-              onStationPicked={(station) => {
-                if (!setSelectedStation || !setStationName || !station) return;
-                setSelectedStation(station.id);
-                setStationName(station.name);
-              }}
-              clearOnPick={false}
-              placeHolder={stationName}
-            />
+            <div className="justify-end">
+              <StationPicker
+                onStationPicked={(station) => {
+                  if (!setSelectedStation || !setStationName || !station)
+                    return;
+                  setSelectedStation(station.id);
+                  setStationName(station.name);
+                }}
+                clearOnPick={false}
+                placeHolder={stationName}
+              />
+            </div>
+            <div className="invisible">Station:</div>
           </div>
         </div>
       </div>
       <div className="App text-center">
-        {/** TEST GRIDLAYOUT */}
-
         <div
           className="relative rounded-xl"
           style={{ padding: "0 2rem 2rem 2rem" }}
@@ -167,14 +169,14 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
               >
                 {showStationControls ? (
                   <div
-                    data-tooltip="Weg mit den doofen Kontrolloptionen!"
+                    data-tooltip="Optionen schließen"
                     data-tooltip-location="top"
                   >
                     <ChevronUpIcon className="block m-auto h-4 w-4 text-gray-500" />
                   </div>
                 ) : (
                   <div
-                    data-tooltip="Zeige mir weitere Kontrolloptionen!"
+                    data-tooltip="Optionen öffnen"
                     data-tooltip-location="bottom"
                   >
                     <ChevronDownIcon className="block m-auto h-4 w-4 text-gray-500" />
@@ -184,7 +186,6 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
             </div>
           </div>
         </div>
-        {/** TEST GRIDLAYOUT END */}
 
         {selectedStation && (
           <ScrollToUpdate

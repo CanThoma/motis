@@ -36,7 +36,7 @@ const App = (): JSX.Element => {
   const [simActive, setSimActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const pages = ["Trip Graph", "Station Graph", "🫀", "Peak Spotting"];
+  const pages = ["Trip Graph", "Station Graph", "Peak Spotting"];
 
   const { selectedStation, setSelectedStation, stationName, setStationName } =
     useSankeyContext();
@@ -122,31 +122,6 @@ const App = (): JSX.Element => {
             <StationPage onTripSelected={handleTripSelect} />
           )}
           {activePage === 2 && (
-            <>
-              <img
-                className="m-auto"
-                src="https://img.pr0gramm.com/2021/10/15/2b2b32f223adaf2b.jpg"
-                alt="Bahn"
-              />
-              <img
-                className="m-auto"
-                src="https://img.pr0gramm.com/2022/02/17/0d69eeb925d5d070.jpg"
-                alt="Bahn"
-              />
-              <img
-                className="m-auto"
-                src="https://img.pr0gramm.com/2022/02/07/0e3af3882f0a2091.png"
-                alt="Bahn"
-              />
-
-              <img
-                className="m-auto"
-                src="https://img.pr0gramm.com/2021/11/05/49c162d9523a7954.jpg"
-                alt="Bahn"
-              />
-            </>
-          )}
-          {activePage === 3 && (
             <>
               <PeakSpotting />
             </>

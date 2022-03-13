@@ -38,13 +38,16 @@ const TripPage = ({ onStationSelected, width }: TripPageProps): JSX.Element => {
         <div className="flex-grow">
           <div className="mt-6 flex items-center justify-center gap-2">
             <span>Trip:</span>
-            <TripPicker
-              onTripPicked={handleTripPick}
-              clearOnPick={false}
-              longDistanceOnly={true}
-              placeHolder={tripName}
-              className="w-96"
-            />
+            <div className="justify-center">
+              <TripPicker
+                onTripPicked={handleTripPick}
+                clearOnPick={false}
+                longDistanceOnly={true}
+                placeHolder={tripName}
+                className="w-96"
+              />
+            </div>
+            <div className="invisible">Trip:</div>
           </div>
         </div>
       </div>
