@@ -92,9 +92,6 @@ export const createGraph = ({
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
 
-  const { timeOffset, width, minNodeHeight } = stationConfig;
-  const yPadding = 10;
-
   // #####################################################################################
   // Berechnung der Nodes
   // #####################################################################################
@@ -267,9 +264,12 @@ export const createGraph = ({
 
     for (const cLink of currentFLinks) {
       linkPaxSum += cLink.value;
-      if (calcNodeHeightWithoutMinHeight(cLink.value, factor) < minNodeHeight) {
+      if (
+        calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+        stationConfig.minNodeHeight
+      ) {
         const heightDiff =
-          calcNodeHeight(cLink.value, minNodeHeight, factor) -
+          calcNodeHeight(cLink.value, stationConfig.minNodeHeight, factor) -
           calcNodeHeightWithoutMinHeight(cLink.value, factor);
         currentFNode.backdropHeight += heightDiff;
         currentFNode.nodeHeight += heightDiff;
@@ -283,9 +283,12 @@ export const createGraph = ({
 
     for (const cLink of currentTLinks) {
       linkPaxSum += cLink.value;
-      if (calcNodeHeightWithoutMinHeight(cLink.value, factor) < minNodeHeight) {
+      if (
+        calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+        stationConfig.minNodeHeight
+      ) {
         const heightDiff =
-          calcNodeHeight(cLink.value, minNodeHeight, factor) -
+          calcNodeHeight(cLink.value, stationConfig.minNodeHeight, factor) -
           calcNodeHeightWithoutMinHeight(cLink.value, factor);
         currentTNode.backdropHeight += heightDiff;
         currentTNode.nodeHeight += heightDiff;
@@ -325,8 +328,9 @@ export const createGraph = ({
     // Beginn des neuen Nodes ist das Ende des vorangegangen oder 0
     const y1_start =
       Math.max(
-        tNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding,
-        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding
+        tNodesFinished[Math.max(0, i - 1)].y1_backdrop ||
+          stationConfig.yPadding,
+        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || stationConfig.yPadding
       ) + fullPadding;
 
     // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
@@ -357,11 +361,12 @@ export const createGraph = ({
       0
     ); //currentFNode.y0_backdrop
 
-    currentFNode.x0 = timeOffset;
-    currentFNode.x1 = nodeWidth + timeOffset;
+    currentFNode.x0 = stationConfig.timeOffset;
+    currentFNode.x1 = nodeWidth + stationConfig.timeOffset;
 
-    currentTNode.x0 = width - nodeWidth - timeOffset;
-    currentTNode.x1 = width - timeOffset;
+    currentTNode.x0 =
+      stationConfig.width - nodeWidth - stationConfig.timeOffset;
+    currentTNode.x1 = stationConfig.width - stationConfig.timeOffset;
 
     tNodesFinished[i] = currentTNode;
     fNodesFinished[i] = currentFNode;
@@ -369,7 +374,7 @@ export const createGraph = ({
     finalHeight = currentFNode.y0;
   }
 
-  onSvgResize(finalHeight + yPadding); // set height of svg to the bottom of the last node + 10
+  onSvgResize(finalHeight + stationConfig.yPadding); // set height of svg to the bottom of the last node + 10
 
   // #####################################################################################
   // Berechnung der Links für diesen Knoten, ggf später auslagern.
@@ -400,7 +405,11 @@ export const createGraph = ({
     let offset = 0;
     for (const i in currentLinks) {
       const cLink: Link = currentLinks[i];
-      const width = calcNodeHeight(cLink.value, minNodeHeight, factor);
+      const width = calcNodeHeight(
+        cLink.value,
+        stationConfig.minNodeHeight,
+        factor
+      );
       const l: Link = {
         ...cLink,
         width: width,

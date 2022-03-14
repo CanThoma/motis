@@ -225,7 +225,7 @@ export const createGraph = ({
 
       const y1_start =
         (nArray[Math.max(0, Number(i) - 1)].y1_backdrop ||
-          umsteigerConfig.yMargin) + fullPadding;
+          umsteigerConfig.yPadding) + fullPadding;
 
       cNode.y0_backdrop =
         y1_start + (Number(i) === 0 ? 0 : nodePadding) + diff / 2;
@@ -254,7 +254,7 @@ export const createGraph = ({
     width - timeOffset
   );
 
-  onSvgResize(finalHeight + umsteigerConfig.yMargin); // set height of svg to the bottom of the last node + buffer
+  onSvgResize(finalHeight + umsteigerConfig.yPadding); // set height of svg to the bottom of the last node + buffer
 
   // berechnen der Links
 

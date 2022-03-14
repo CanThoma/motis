@@ -20,6 +20,7 @@ const stationConfig = {
   width: 1200,
   minNodeHeight: 2, // Angabe in Pixeln.
   timeOffset: 70, // Abstand von Rand zu den Nodes um Platz für die Zeit zu lassen
+  yPadding: 10,
   station_startDate: "Mon, 25 Oct 2021 09:15:00 GMT+2",
   station_timeInterval: 30, // In Minuten
 };
@@ -29,7 +30,7 @@ const umsteigerConfig = {
   width: 600,
   minNodeHeight: 2.5,
   timeOffset: 50, // Abstand von Rand zu den Nodes um Platz für die Zeit zu lassen
-  yMargin: 10,
+  yPadding: 10,
   scaleFactor: 10,
 };
 
