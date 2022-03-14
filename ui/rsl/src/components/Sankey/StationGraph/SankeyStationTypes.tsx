@@ -53,7 +53,8 @@ interface createGraphInterface {
   onSvgResize(newSvgSize: number): void;
   nodeWidth: number;
   nodePadding: number;
-  factor: number;
+  factor?: number;
+  tripDir?: "entering" | "exiting" | "both";
 }
 
 type NodeMinimal = {

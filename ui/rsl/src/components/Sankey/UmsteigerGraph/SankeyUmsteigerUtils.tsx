@@ -51,6 +51,7 @@ export const createGraph = ({
   onSvgResize,
   nodeWidth = 20,
   nodePadding = 20,
+  tripDir,
 }: createGraphInterface): SankeyInterface => {
   let tNodesFinished: Node[] = [];
   let fNodesFinished: Node[] = [];
@@ -154,8 +155,18 @@ export const createGraph = ({
     return calcNodes;
   };
 
-  fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
-  tNodesFinished = calcColor(tNodesFinished, 0);
+  if (tripDir == "both") {
+    fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
+    tNodesFinished = calcColor(tNodesFinished, 0);
+  }
+  if (tripDir == "entering") {
+    fNodesFinished = calcColor(fNodesFinished, -1);
+    tNodesFinished = calcColor(tNodesFinished, 0);
+  }
+  if (tripDir == "exiting") {
+    fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
+    tNodesFinished = calcColor(tNodesFinished, -1);
+  }
 
   // Berechnen der Höhe der Nodes.
 
