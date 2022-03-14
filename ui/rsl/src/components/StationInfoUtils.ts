@@ -381,7 +381,7 @@ export function ExtractStationData(
             departureInfo.trips[0].trip,
             params.onlyIncludeTripIds
           ) ||
-            filterTripDirection == "entering")
+            filterTripDirection == "exiting")
         ) {
           continue;
         } // if there is only departure existing (boarding)
@@ -391,7 +391,7 @@ export function ExtractStationData(
             arrivalInfo.trips[0].trip,
             params.onlyIncludeTripIds
           ) ||
-            filterTripDirection == "exiting")
+            filterTripDirection == "entering")
         ) {
           continue;
         }
