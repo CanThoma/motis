@@ -1,11 +1,5 @@
-import {
-  select as d3Select,
-  interpolateRainbow,
-  interpolateRgb,
-  scaleLinear,
-  interpolateHsl,
-} from "d3";
-import config from "../../config";
+import { interpolateRgb, scaleLinear, interpolateHsl } from "d3";
+import { peakSpottingConfig as config } from "../../config";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit

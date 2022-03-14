@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { select as d3Select } from "d3";
-import config, { colorSchema } from "../../config";
+import { colorSchema, peakSpottingConfig as config } from "../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";

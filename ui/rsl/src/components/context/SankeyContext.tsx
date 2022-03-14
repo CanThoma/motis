@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext } from "react";
 
-import config, { factor as scaleFactor } from "../../config";
+import { factor as scaleFactor, stationConfig as config } from "../../config";
 import { TripId } from "../../api/protocol/motis";
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
   factor: number;
   setFactor?: (factor: number) => void;
 };
+
 const SankeyContext = createContext<Props>({
   stationId: "",
   startTime: new Date(0),
@@ -38,7 +39,12 @@ SankeyContext.displayName = "SankeyContext";
 
 export const useSankeyContext = (): Props => useContext(SankeyContext);
 
-// context provider
+/**
+ * context provider
+ * initialisiert context
+ * @param children
+ * @constructor
+ */
 export const SankeyContextProvider = ({
   children,
 }: {

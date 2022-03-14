@@ -14,8 +14,7 @@ import {
   createGraphInterface,
   LinkMinimal,
 } from "./SankeyTripTypes";
-
-import config from "./SankeyTripConfig";
+import { tripConfig } from "../../../config";
 
 /**
  * Erstellt eine Liste aus den Elementen eines Arrays in dem sie nach ihrem Wert im Feld K sortiert sind.
@@ -123,11 +122,11 @@ export const renderDelay = (
  * @param nodeValue Anzahl der Passagiere
  */
 const calcNodeHeight = (nodeValue: number): number => {
-  if (config.scaleFactor != 0) {
-    const height = nodeValue / config.scaleFactor;
-    return height > 0 ? Math.max(height, config.minNodeHeight) : 0;
+  if (tripConfig.scaleFactor != 0) {
+    const height = nodeValue / tripConfig.scaleFactor;
+    return height > 0 ? Math.max(height, tripConfig.minNodeHeight) : 0;
   } else {
-    return nodeValue > 0 ? Math.max(nodeValue, config.minNodeHeight) : 0;
+    return nodeValue > 0 ? Math.max(nodeValue, tripConfig.minNodeHeight) : 0;
   }
 };
 
@@ -136,7 +135,7 @@ const calcNodeHeight = (nodeValue: number): number => {
  * @param linkValue Anzahl der Passagiere
  */
 const calcLinkHeight = (linkValue: number): number => {
-  if (config.scaleFactor != 0) return linkValue / config.scaleFactor;
+  if (tripConfig.scaleFactor != 0) return linkValue / tripConfig.scaleFactor;
   else return linkValue;
 };
 
@@ -210,7 +209,6 @@ export const createGraph = ({
   nodes,
   links,
   onSvgResize,
-  width, // TODO: Ist hier die Übergabe die richtige Wahl oder die Config Datei?!
   nodeWidth,
   nodePadding,
   leftTimeOffset,
@@ -234,7 +232,6 @@ export const createGraph = ({
 
     const linkColour = interpolateRainbow(i / nodes.length);
 
-    // TODO Zeiten müssen noch übergeben werden
     leftNodes.push({
       id: nodes[i].id,
       sId: nodes[i].sId,
@@ -269,7 +266,7 @@ export const createGraph = ({
   for (let i = 0; i < nodes.length; i++) {
     rightNodes[i].backdropHeight = Math.max(
       calcNodeHeight(leftNodes[i].biggerNodeTotalValue || 0),
-      config.minNodeHeight
+      tripConfig.minNodeHeight
     );
     leftNodes[i].backdropHeight = rightNodes[i].backdropHeight;
 
@@ -322,20 +319,21 @@ export const createGraph = ({
     leftNodes[i].y1 = leftNodes[i].y1_backdrop;
     leftNodes[i].y0 = (leftNodes[i].y1 || 0) - (leftNodes[i].nodeHeight || 0);
 
-    leftNodes[i].x0 = leftTimeOffset; // AAAAAAAh , hiäär
+    leftNodes[i].x0 = leftTimeOffset;
     leftNodes[i].x1 = leftTimeOffset + nodeWidth;
 
-    rightNodes[i].x0 = width - nodeWidth - leftTimeOffset;
-    rightNodes[i].x1 = width - leftTimeOffset;
+    rightNodes[i].x0 = tripConfig.width - nodeWidth - leftTimeOffset;
+    rightNodes[i].x1 = tripConfig.width - leftTimeOffset;
   }
 
-  // Berechnung der Gesamthöhe, um die Höhe der .svg anzupassen
+  // Berechnung der Gesamthöhe, um die Höhe der .svg anzupassen.
+  // 100 Basishöhe
   const totalNodeHeight = leftNodes.reduce(
     (sum, current) => sum + calcNodeHeight(current.biggerNodeTotalValue || 0),
-    0
+    100
   );
 
-  // Setzen der .svg-Höhe in der aufrufenden Koponenten
+  // Setzen der .svg-Höhe in der aufrufenden Komponenten
   onSvgResize(totalNodeHeight + (leftNodes.length + 1) * nodePadding);
 
   // #####################################################################################
@@ -426,10 +424,8 @@ export const createGraph = ({
     }
   }
 
-  // Na, wenn die AGs das wollen ...
   // entfernen der "unmöglichen" Ein- und Ausstiege
   leftNodes.pop();
   rightNodes.shift();
-
   return { nodes: [...leftNodes, ...rightNodes], links: calculatedlinks };
 };

@@ -7,6 +7,7 @@ import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import * as d3 from "d3";
 import { formatTextTime } from "../SankeyUtils";
+import { umsteigerConfig } from "../../../config";
 
 type Props = {
   stationId: string;
@@ -36,14 +37,6 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const linkOpacity = 0.4;
-  const linkOpacityFocus = 0.7;
-  const linkOpacityClear = 0.05;
-
-  const nodeOpacity = 0.9;
-  const rowBackgroundColour = "#cacaca";
-  const backdropOpacity = 0.7;
-
   const data = ExtractStationData({
     stationId: stationId,
     startTime: currentArrivalTime - 2 * 60 * 60, // 2 Stunden vor Ankunft
@@ -63,7 +56,6 @@ const SankeyUmsteigerGraph = ({
       tNodes: data.toNodes,
       links: data.links,
       onSvgResize: handleSvgResize,
-      width,
       nodeWidth,
       nodePadding,
       factor: 10,
@@ -122,8 +114,8 @@ const SankeyUmsteigerGraph = ({
       .attr("height", (d) =>
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOpacity);
+      .attr("fill", umsteigerConfig.rowBackgroundColor)
+      .attr("opacity", umsteigerConfig.backdropOpacity);
 
     // Define the nodes.
     const nodes = view
@@ -143,8 +135,8 @@ const SankeyUmsteigerGraph = ({
             : (d.y1 || 0) - (d.y0 || 0)
         )
       )
-      .attr("fill", (d) => d.color || rowBackgroundColour)
-      .attr("opacity", nodeOpacity);
+      .attr("fill", (d) => d.color || umsteigerConfig.rowBackgroundColor)
+      .attr("opacity", umsteigerConfig.nodeOpacity);
 
     view
       .selectAll("rect.nodeOverflowBack")
@@ -160,9 +152,9 @@ const SankeyUmsteigerGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          umsteigerConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOpacity);
+      .attr("opacity", umsteigerConfig.nodeOpacity);
 
     //Define the Overflow
     const overflow = view
@@ -179,9 +171,9 @@ const SankeyUmsteigerGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          umsteigerConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOpacity)
+      .attr("opacity", umsteigerConfig.nodeOpacity)
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
@@ -200,10 +192,16 @@ const SankeyUmsteigerGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        createSankeyLink(
+          nodeWidth,
+          width,
+          d.y0 || 0,
+          d.y1 || 0,
+          umsteigerConfig.timeOffset
+        )
       )
-      .attr("stroke", (d) => d.color || rowBackgroundColour)
-      .attr("stroke-opacity", linkOpacity)
+      .attr("stroke", (d) => d.color || umsteigerConfig.rowBackgroundColor)
+      .attr("stroke-opacity", umsteigerConfig.linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -245,7 +243,7 @@ const SankeyUmsteigerGraph = ({
       .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
-      .attr("x", 20)
+      .attr("x", 0)
       .attr("dx", 0)
       .attr(
         "y",
@@ -266,7 +264,7 @@ const SankeyUmsteigerGraph = ({
         }
       })
       .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width - 20)
+      .attr("x", width)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
@@ -279,16 +277,13 @@ const SankeyUmsteigerGraph = ({
       return formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
 
-    // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
-    // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-
     function branchAnimate(_: MouseEvent, node: Node) {
       const focusLinks = view.selectAll("path.link").filter((l) => {
         return (
           sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
         );
       });
-      focusLinks.attr("stroke-opacity", linkOpacityFocus);
+      focusLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (
@@ -296,11 +291,11 @@ const SankeyUmsteigerGraph = ({
           !sameId((l as Link).fNId, node.id)
         );
       });
-      clearLinks.attr("stroke-opacity", linkOpacityClear);
+      clearLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityClear);
     }
 
     function branchClear() {
-      links.attr("stroke-opacity", linkOpacity);
+      links.attr("stroke-opacity", umsteigerConfig.linkOpacity);
     }
 
     backdrop.on("mouseover", branchAnimate);
@@ -314,16 +309,16 @@ const SankeyUmsteigerGraph = ({
       const focusLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
       });
-      focusLinks.attr("stroke-opacity", linkOpacityFocus);
+      focusLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id !== link.id;
       });
-      clearLinks.attr("stroke-opacity", linkOpacityClear);
+      clearLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityClear);
     }
 
     function linkClear() {
-      links.attr("stroke-opacity", linkOpacity);
+      links.attr("stroke-opacity", umsteigerConfig.linkOpacity);
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);

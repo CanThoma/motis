@@ -7,7 +7,7 @@ import {
 import { TripId } from "../../../api/protocol/motis";
 import { minimalToNode } from "../SankeyUtils";
 import { sameId, color, getNode } from "../SankeyUtils";
-import { timeOffset } from "../../../config";
+import { umsteigerConfig } from "../../../config";
 
 /**
  * Berechnet die relative Höhe eines Knotens basierend auf dem
@@ -49,7 +49,6 @@ export const createGraph = ({
   tNodes,
   links,
   onSvgResize,
-  width = 600,
   nodeWidth = 20,
   nodePadding = 20,
 }: createGraphInterface): SankeyInterface => {
@@ -61,7 +60,7 @@ export const createGraph = ({
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
 
-  const minNodeHeight = 2.5;
+  const { timeOffset, minNodeHeight, width } = umsteigerConfig;
 
   // fügt previous node zu falls Umsteiger existieren und gibt ihr die Farbe
 
@@ -307,7 +306,7 @@ export const createGraph = ({
       const cLink: Link = currentLinks[i];
       const l: Link = {
         ...cLink,
-        y1: (cNode.y1 || 0) - offset - (cLink.width || 0) / 2,
+        y1: (cNode.y1 || 0) - offset - (cLink.width || 0) / 2, // /2 um Mitte zu haben
       };
       offset += cLink.width || 0;
       if (cLink.width) {

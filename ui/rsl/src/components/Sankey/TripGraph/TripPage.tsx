@@ -71,14 +71,14 @@ const TripPage = ({ onStationSelected, width }: TripPageProps): JSX.Element => {
                 console.warn(
                   "Internal Server Error: setStationName not defined!"
                 );
-              // set startTime to arrival time of selected train - 1 minute ( - 60) and add ms ( * 1000 )
-              if (setStartTime) setStartTime(new Date((time - 60) * 1000));
+              // set startTime to arrival time of selected train - 5 minutes ( - 60 sec * 5) and add ms ( * 1000 )
+              if (setStartTime) setStartTime(new Date((time - 60 * 5) * 1000));
               else
                 console.warn(
                   "Internal Server Error: setStartTime not defined!"
                 );
-              // set endTime to arrival time of selected train +29 minutes ( + 1740) and add ms ( * 1000 )
-              if (setEndTime) setEndTime(new Date((time + 1740) * 1000));
+              // set endTime to arrival time of selected train +25 minutes ( + 60 sec * 25) and add ms ( * 1000 )
+              if (setEndTime) setEndTime(new Date((time + 60 * 25) * 1000));
               else
                 console.warn(
                   "Internal Server Error: setStartTime not defined!"

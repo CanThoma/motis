@@ -66,7 +66,6 @@ interface createGraphInterface {
   nodes: NodeMinimal[];
   links: LinkMinimal[];
   onSvgResize(newSvgSize: number): void;
-  width: number;
   nodeWidth: number;
   nodePadding: number;
   leftTimeOffset: number;

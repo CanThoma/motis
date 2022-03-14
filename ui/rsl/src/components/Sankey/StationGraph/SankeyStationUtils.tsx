@@ -6,7 +6,7 @@ import {
 } from "./SankeyStationTypes";
 import { TripId } from "../../../api/protocol/motis";
 import { minimalToNode, sameId, getNode, color } from "../SankeyUtils";
-import { timeOffset } from "../../../config";
+import { stationConfig } from "../../../config";
 
 /**
  * Berechnet die relative Höhe eines Knotens basierend auf dem
@@ -80,7 +80,6 @@ export const createGraph = ({
   tNodes,
   links,
   onSvgResize,
-  width = 600,
   nodeWidth = 20,
   nodePadding = 20,
   factor = 4,
@@ -93,7 +92,7 @@ export const createGraph = ({
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
 
-  const minNodeHeight = 2;
+  const { timeOffset, width, minNodeHeight } = stationConfig;
   const yPadding = 10;
 
   // #####################################################################################

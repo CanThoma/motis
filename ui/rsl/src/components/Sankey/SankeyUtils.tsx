@@ -1,7 +1,6 @@
 import { Link, Node, NodeMinimal } from "./StationGraph/SankeyStationTypes";
 import { TripId } from "../../api/protocol/motis";
 import { interpolateRainbow } from "d3";
-import { timeOffset } from "../../config";
 
 /**
  * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
@@ -36,7 +35,7 @@ export const getNode = (nodes: NodeMinimal[], id: string | TripId): Node => {
  * @param a erste Trip Id
  * @param b zweite Trip Id
  */
-export const tripIdCompare = (a: TripId, b: TripId) => {
+export const tripIdCompare = (a: TripId, b: TripId): boolean => {
   return (
     a.station_id === b.station_id &&
     a.train_nr === b.train_nr &&
@@ -128,12 +127,14 @@ export const minimalToNode = (cNode: Node): Node => {
  * @param width Basisbreite des Graphen
  * @param y0 y Koordinate der linken Node
  * @param y1 y Koordinate der rechten Node
+ * @param timeOffset Offset wie in der jeweiligen config festgelegt
  */
 export const createSankeyLink = (
   nodeWidth: number,
   width: number,
   y0: number,
-  y1: number
+  y1: number,
+  timeOffset: number
 ): string => {
   return `M${nodeWidth + timeOffset},${y0}C${width / 2},${y0},${
     width / 2

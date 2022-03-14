@@ -12,7 +12,8 @@ import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "../../common/Loading";
-import config from "../../../config";
+import { font_family } from "../../../config";
+import { stationConfig } from "../../../config";
 
 type Props = {
   stationId: string;
@@ -85,7 +86,6 @@ const SankeyStationGraph = ({
   endTime,
   onTripSelected,
   factor,
-  width = 1200,
   nodeWidth = 25,
   nodePadding = 15,
 }: Props): JSX.Element => {
@@ -93,17 +93,6 @@ const SankeyStationGraph = ({
 
   const [svgHeight, setSvgHeight] = useState(600);
   //const [loading, setLoading] = useState(false);
-
-  const rowBackgroundColour = "#cacaca";
-
-  const linkOpacity = 0.4;
-  const linkOpacityFocus = 0.7;
-  const linkOpacityClear = 0.05;
-
-  const nodeOpacity = 0.9;
-  const backdropOpacity = 0.7;
-
-  const timeOffset = 70;
 
   // TODO
   const loadingStatus = useRef(true);
@@ -130,14 +119,10 @@ const SankeyStationGraph = ({
       tNodes: data.toNodes,
       links: data.links,
       onSvgResize: handleSvgResize,
-      width,
       nodeWidth,
       nodePadding,
       factor,
     });
-
-    if (graph.links.length) console.log("yep", graph);
-    else console.log("nope");
 
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],
@@ -193,8 +178,8 @@ const SankeyStationGraph = ({
       .attr("height", (d) =>
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOpacity)
+      .attr("fill", stationConfig.rowBackgroundColor)
+      .attr("opacity", stationConfig.backdropOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -218,8 +203,8 @@ const SankeyStationGraph = ({
             : (d.y1 || 0) - (d.y0 || 0)
         )
       )
-      .attr("fill", (d) => d.color || rowBackgroundColour)
-      .attr("opacity", nodeOpacity);
+      .attr("fill", (d) => d.color || stationConfig.rowBackgroundColor)
+      .attr("opacity", stationConfig.nodeOpacity);
 
     nodes
       .filter((n) => typeof n.id !== "string")
@@ -242,9 +227,9 @@ const SankeyStationGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          stationConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOpacity);
+      .attr("opacity", stationConfig.nodeOpacity);
 
     //Define the Overflow
     const overflow = view
@@ -261,9 +246,9 @@ const SankeyStationGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          stationConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOpacity)
+      .attr("opacity", stationConfig.nodeOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -286,10 +271,16 @@ const SankeyStationGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        createSankeyLink(
+          nodeWidth,
+          stationConfig.width,
+          d.y0 || 0,
+          d.y1 || 0,
+          stationConfig.timeOffset
+        )
       )
-      .attr("stroke", (d) => d.color || rowBackgroundColour)
-      .attr("stroke-opacity", linkOpacity)
+      .attr("stroke", (d) => d.color || stationConfig.rowBackgroundColor)
+      .attr("stroke-opacity", stationConfig.linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -316,7 +307,7 @@ const SankeyStationGraph = ({
         return d.name;
       })
 
-      .filter((d) => (d.x1 || 0) > width / 2)
+      .filter((d) => (d.x1 || 0) > stationConfig.width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
       .attr("text-anchor", "end");
@@ -347,8 +338,8 @@ const SankeyStationGraph = ({
           return formatTextTime(d);
         }
       })
-      .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width - 20)
+      .filter((d) => (d.x1 || 0) > stationConfig.width / 2)
+      .attr("x", stationConfig.width - 20)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
@@ -375,12 +366,12 @@ const SankeyStationGraph = ({
 
     view
       .append("text")
-      .attr("x", timeOffset)
+      .attr("x", stationConfig.timeOffset)
       .attr("dx", -5) //
       .attr("y", tempFHeight)
       .attr("dy", 2.5)
       .attr("text-anchor", "end")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ANKUNFT");
@@ -395,11 +386,11 @@ const SankeyStationGraph = ({
 
     view
       .append("text")
-      .attr("x", width - timeOffset)
+      .attr("x", stationConfig.width - stationConfig.timeOffset)
       .attr("dx", 5) //
       .attr("y", tempTHeight)
       .attr("text-anchor", "start")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
@@ -410,7 +401,7 @@ const SankeyStationGraph = ({
           sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
         );
       });
-      focusLinks.attr("stroke-opacity", linkOpacityFocus);
+      focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (
@@ -418,11 +409,11 @@ const SankeyStationGraph = ({
           !sameId((l as Link).fNId, node.id)
         );
       });
-      clearLinks.attr("stroke-opacity", linkOpacityClear);
+      clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
     }
 
     function branchClear() {
-      links.attr("stroke-opacity", linkOpacity);
+      links.attr("stroke-opacity", stationConfig.linkOpacity);
     }
 
     backdrop.on("mouseover", branchAnimate);
@@ -436,26 +427,27 @@ const SankeyStationGraph = ({
       const focusLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
       });
-      focusLinks.attr("stroke-opacity", linkOpacityFocus);
+      focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id !== link.id;
       });
-      clearLinks.attr("stroke-opacity", linkOpacityClear);
+      clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
     }
 
     function linkClear() {
-      links.attr("stroke-opacity", linkOpacity);
+      links.attr("stroke-opacity", stationConfig.linkOpacity);
     }
 
     //setLoading(false);
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [data, factor, nodeWidth, nodePadding, onTripSelected, width]);
+  }, [data, factor, nodeWidth, nodePadding, onTripSelected]);
   loadingStatus.current = false;
 
   return (
     <>
-      {(!data || !data.links.length) && !loadingStatus.current && (
+      {!data && <div>Station nicht vorhanden</div>}
+      {data && !data.links.length && !loadingStatus.current && (
         <div>Keine Daten zu diesen Zeiten verfügbar</div>
       )}
       {/* BUG: state is never reached */}
@@ -464,7 +456,7 @@ const SankeyStationGraph = ({
         <>
           <svg
             ref={svgRef}
-            width={width}
+            width={stationConfig.width}
             height={svgHeight}
             className="m-auto"
           />

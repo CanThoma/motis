@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { select as d3Select } from "d3";
-import config, { colorSchema } from "../../config";
+import { colorSchema, font_family } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 
 type Props = {
@@ -60,7 +60,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           .attr("text-anchor", "start")
           .attr("font-size", 12)
           .attr("font-weight", "bold")
-          .attr("font-family", config.font_family);
+          .attr("font-family", font_family);
 
         // ANKUNFTSZEITEN
         view
@@ -80,7 +80,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           .attr("text-anchor", "end")
           .attr("font-size", 10)
           .attr("font-weight", "bold")
-          .attr("font-family", config.font_family);
+          .attr("font-family", font_family);
 
         // ABFAHRTSZEITEN
         view
@@ -100,7 +100,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           .attr("text-anchor", "end")
           .attr("font-size", 10)
           .attr("font-weight", "bold")
-          .attr("font-family", config.font_family);
+          .attr("font-family", font_family);
       }
 
       // "BUCHUNGEN"
@@ -130,7 +130,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .attr("text-anchor", "end")
         .attr("font-size", 12)
         .attr("font-weight", "inherit")
-        .attr("font-family", config.font_family);
+        .attr("font-family", font_family);
       view
         .append("text")
         .attr("x", 300 - Math.max(0, edge.leftWidth - edge.capWidth))
@@ -142,7 +142,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .attr("text-anchor", "end")
         .attr("font-size", 10)
         .attr("font-weight", "inherit")
-        .attr("font-family", config.font_family);
+        .attr("font-family", font_family);
       // "PROGNOSEN"
       view
         .append("rect")
@@ -172,7 +172,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .attr("text-anchor", "start")
         .attr("font-size", 12)
         .attr("font-weight", "inherit")
-        .attr("font-family", config.font_family);
+        .attr("font-family", font_family);
       view
         .append("text")
         .attr(
@@ -187,7 +187,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .attr("text-anchor", "start")
         .attr("font-size", 10)
         .attr("font-weight", "inherit")
-        .attr("font-family", config.font_family);
+        .attr("font-family", font_family);
     }
 
     //"BUCHUNGEN" TITEL
@@ -202,7 +202,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "end")
       .attr("font-size", 10)
       .attr("font-weight", "bold")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
     //"PROGNOSEN" TITEL
     view
       .append("text")
@@ -215,7 +215,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "start")
       .attr("font-size", 10)
       .attr("font-weight", "bold")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
 
     // ANFANGSSTATION ANKUNFTSZEIT
     view
@@ -235,7 +235,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "end")
       .attr("font-size", 12)
       .attr("font-weight", "inherit")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
 
     // ANFANGSSTATION Name
     view
@@ -249,7 +249,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "start")
       .attr("font-size", 12)
       .attr("font-weight", "inherit")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
 
     // ENDSTATION
     view
@@ -277,7 +277,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "end")
       .attr("font-size", 12)
       .attr("font-weight", "inherit")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
 
     // ENDSTATION Name
     view
@@ -291,7 +291,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("text-anchor", "start")
       .attr("font-size", 12)
       .attr("font-weight", "inherit")
-      .attr("font-family", config.font_family);
+      .attr("font-family", font_family);
 
     setHeight(svgHeight + 130);
   }, [trip]);

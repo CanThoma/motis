@@ -9,7 +9,7 @@ import TimeInput from "../../measures/TimeInput";
 import SankeyStationGraph from "./SankeyStationGraph";
 import { TripId } from "../../../api/protocol/motis";
 
-import config from "../../../config";
+import { stationConfig as config } from "../../../config";
 import { useSankeyContext } from "../../context/SankeyContext";
 
 type StationPageProps = {
