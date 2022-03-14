@@ -124,15 +124,6 @@ const SankeyTripGraph = ({
       .attr("opacity", tripConfig.backdropOpacity)
       .attr("cursor", "pointer");
 
-    // Add the onClick Action for Backdrops
-    backdrops.on("click", (_, i) =>
-      onStationSelected(
-        i.sId,
-        i.name,
-        Math.min(i.arrival_schedule_time, i.arrival_current_time)
-      )
-    );
-
     // Define the nodes.
     const nodes = view
       .selectAll("rect.node")
@@ -156,14 +147,45 @@ const SankeyTripGraph = ({
       .append("title")
       .text((d) => formatTextNode(d.name, d.totalNodeValue || 0));
 
+    // Add the onClick Action for Backdrops
+    backdrops
+      .filter((d) => (d.x1 || 0) < tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.departure_schedule_time, i.departure_current_time)
+        )
+      );
+    backdrops
+      .filter((d) => (d.x1 || 0) > tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.arrival_schedule_time, i.arrival_current_time)
+        )
+      );
+
     // Add the onClick Action
-    nodes.on("click", (_, i) =>
-      onStationSelected(
-        i.sId,
-        i.name,
-        Math.min(i.arrival_schedule_time, i.arrival_current_time)
-      )
-    );
+    nodes
+      .filter((d) => (d.x1 || 0) < tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.departure_schedule_time, i.departure_current_time)
+        )
+      );
+    nodes
+      .filter((d) => (d.x1 || 0) > tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.arrival_schedule_time, i.arrival_current_time)
+        )
+      );
 
     // Define the links.
     const links = view
@@ -230,6 +252,7 @@ const SankeyTripGraph = ({
         });
       });
 
+    // add time labels
     view
       .selectAll("text.nodeTime")
       .data(graph.nodes.filter((d) => (d.x1 || 0) < tripConfig.width / 2))
