@@ -60,7 +60,7 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
     }
   };
 
-  const handleRefresh = (): void => {
+  const handleRefreshUp = (): void => {
     const time = new Date(
       startTime.getTime() - 1000 * 60 * config.station_timeInterval
     );
@@ -189,7 +189,7 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
 
         {selectedStation && (
           <ScrollToUpdate
-            onRefreshUP={handleRefresh}
+            onRefreshUP={handleRefreshUp}
             onRefreshDOWN={handleRefreshDown}
           >
             <div style={{ height: "100%" }}>
