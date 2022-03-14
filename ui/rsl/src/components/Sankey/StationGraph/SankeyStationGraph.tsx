@@ -1,13 +1,13 @@
 import React, { MouseEvent, useRef, useState } from "react";
 import * as d3 from "d3";
 import { Node, Link } from "./SankeyStationTypes";
+import { createGraph, formatTextNode } from "./SankeyStationUtils";
 import {
-  createGraph,
-  formatTextNode,
-  createSankeyLink,
+  formatTextTime,
   formatTextLink,
-} from "./SankeyStationUtils";
-import { formatTextTime, sameId } from "../SankeyUtils";
+  createSankeyLink,
+  sameId,
+} from "../SankeyUtils";
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
@@ -92,20 +92,21 @@ const SankeyStationGraph = ({
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
+  //const [loading, setLoading] = useState(false);
 
   const rowBackgroundColour = "#cacaca";
 
-  const linkOppacity = 0.4;
-  const linkOppacityFocus = 0.7;
-  const linkOppacityClear = 0.05;
+  const linkOpacity = 0.4;
+  const linkOpacityFocus = 0.7;
+  const linkOpacityClear = 0.05;
 
-  const nodeOppacity = 0.9;
-  const backdropOppacity = 0.7;
+  const nodeOpacity = 0.9;
+  const backdropOpacity = 0.7;
 
   const timeOffset = 70;
 
   // TODO
-  let loadingStatus = true;
+  const loadingStatus = useRef(true);
 
   const data = ExtractStationData({
     stationId: stationId,
@@ -113,18 +114,17 @@ const SankeyStationGraph = ({
     endTime: endTime,
     maxCount: 0,
     onStatusUpdate: (e) => {
-      loadingStatus = e !== "success";
+      loadingStatus.current = e !== "success";
     },
     tripDirection: "both",
   });
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    loadingStatus = true;
+    loadingStatus.current = true;
+    //setLoading(true);
     const handleSvgResize = (newSize: number) => {
       setSvgHeight(newSize);
     };
-
     const graph = createGraph({
       fNodes: data.fromNodes,
       tNodes: data.toNodes,
@@ -135,6 +135,9 @@ const SankeyStationGraph = ({
       nodePadding,
       factor,
     });
+
+    if (graph.links.length) console.log("yep", graph);
+    else console.log("nope");
 
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],
@@ -191,7 +194,7 @@ const SankeyStationGraph = ({
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
       .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity)
+      .attr("opacity", backdropOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -216,7 +219,7 @@ const SankeyStationGraph = ({
         )
       )
       .attr("fill", (d) => d.color || rowBackgroundColour)
-      .attr("opacity", nodeOppacity);
+      .attr("opacity", nodeOpacity);
 
     nodes
       .filter((n) => typeof n.id !== "string")
@@ -241,7 +244,7 @@ const SankeyStationGraph = ({
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
           rowBackgroundColour
       )
-      .attr("opacity", nodeOppacity);
+      .attr("opacity", nodeOpacity);
 
     //Define the Overflow
     const overflow = view
@@ -260,7 +263,7 @@ const SankeyStationGraph = ({
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
           rowBackgroundColour
       )
-      .attr("opacity", nodeOppacity)
+      .attr("opacity", nodeOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -286,7 +289,7 @@ const SankeyStationGraph = ({
         createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
       .attr("stroke", (d) => d.color || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacity)
+      .attr("stroke-opacity", linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -407,7 +410,7 @@ const SankeyStationGraph = ({
           sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
         );
       });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+      focusLinks.attr("stroke-opacity", linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (
@@ -415,11 +418,11 @@ const SankeyStationGraph = ({
           !sameId((l as Link).fNId, node.id)
         );
       });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
+      clearLinks.attr("stroke-opacity", linkOpacityClear);
     }
 
     function branchClear() {
-      links.attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOpacity);
     }
 
     backdrop.on("mouseover", branchAnimate);
@@ -433,30 +436,31 @@ const SankeyStationGraph = ({
       const focusLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id === link.id;
       });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+      focusLinks.attr("stroke-opacity", linkOpacityFocus);
 
       const clearLinks = view.selectAll("path.link").filter((l) => {
         return (l as Link).id !== link.id;
       });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
+      clearLinks.attr("stroke-opacity", linkOpacityClear);
     }
 
     function linkClear() {
-      links.attr("stroke-opacity", linkOppacity);
+      links.attr("stroke-opacity", linkOpacity);
     }
 
+    //setLoading(false);
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-
-    loadingStatus = false;
-  }, [data]);
+  }, [data, factor, nodeWidth, nodePadding, onTripSelected, width]);
+  loadingStatus.current = false;
 
   return (
     <>
-      {(!data || !data.links.length) && (
-        <div>Daten zum Zug nicht verfügbar</div>
+      {(!data || !data.links.length) && !loadingStatus.current && (
+        <div>Keine Daten zu diesen Zeiten verfügbar</div>
       )}
-      {loadingStatus && data.links.length > 0 && <Loading />}
-      {!loadingStatus && (
+      {/* BUG: state is never reached */}
+      {loadingStatus.current && data.links.length > 0 && <Loading />}
+      {!loadingStatus.current && data.links.length > 0 && (
         <>
           <svg
             ref={svgRef}

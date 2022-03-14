@@ -11,6 +11,9 @@ const config = {
 };
 
 const factor = 15; // default scale factor 1/factor für Stationsgraphen
+
+const timeOffset = 70; // Abstand von Rand zu den Nodes um Platz für die Zeit zu lassen
+
 const colorSchema = {
   lightGrey: "#e9ecef",
   lighterGrey: "#ebeef0",
@@ -22,6 +25,6 @@ const colorSchema = {
   white: "#fff",
 };
 
-export { colorSchema, factor };
+export { colorSchema, factor, timeOffset };
 
 export default config;

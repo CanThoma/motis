@@ -1,7 +1,8 @@
 import React, { MouseEvent, useRef, useState } from "react";
 // Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
 import { Node, Link } from "../StationGraph/SankeyStationTypes";
-import Utils from "./SankeyUmsteigerUtils";
+import { createGraph, formatTextNode } from "./SankeyUmsteigerUtils";
+import { sameId, formatTextLink, createSankeyLink } from "../SankeyUtils";
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import * as d3 from "d3";
@@ -45,8 +46,8 @@ const SankeyUmsteigerGraph = ({
 
   const data = ExtractStationData({
     stationId: stationId,
-    startTime: 1635147900 - 2.5 * 60 * 600, //currentArrivalTime - 2.5*60*600,
-    endTime: 1635147900 + 2.5 * 60 * 600, //currentDepartureTime + 2.5*60*600 *2,
+    startTime: currentArrivalTime - 2 * 60 * 60, // 2 Stunden vor Ankunft
+    endTime: currentDepartureTime + 2 * 60 * 60, // 2 Stunden nach Abfahrt
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
     tripDirection: tripDir,
@@ -57,7 +58,7 @@ const SankeyUmsteigerGraph = ({
       setSvgHeight(newSize);
     };
 
-    const graph = Utils.createGraph({
+    const graph = createGraph({
       fNodes: data.fromNodes,
       tNodes: data.toNodes,
       links: data.links,
@@ -184,13 +185,13 @@ const SankeyUmsteigerGraph = ({
       .style("fill", "url(#diagonalHash)");
 
     // Add titles for node hover effects.
-    nodes.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    nodes.append("title").text((d) => formatTextNode(d.name, d));
 
     // Add titles for backdrop hover effects.
-    backdrop.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    backdrop.append("title").text((d) => formatTextNode(d.name, d));
 
     // Add titles for backdrop hover effects.
-    overflow.append("title").text((d) => Utils.formatTextNode(d.name, d));
+    overflow.append("title").text((d) => formatTextNode(d.name, d));
 
     // Define the links.
     const links = view
@@ -199,7 +200,7 @@ const SankeyUmsteigerGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        Utils.createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
       )
       .attr("stroke", (d) => d.color || rowBackgroundColour)
       .attr("stroke-opacity", linkOpacity)
@@ -244,7 +245,7 @@ const SankeyUmsteigerGraph = ({
       .data(graphTemp.nodes.filter((n) => n.pax > 0))
       .join("text")
       .classed("node", true)
-      .attr("x", 0)
+      .attr("x", 20)
       .attr("dx", 0)
       .attr(
         "y",
@@ -265,41 +266,21 @@ const SankeyUmsteigerGraph = ({
         }
       })
       .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width)
+      .attr("x", width - 20)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
     // Add <title> hover effect on links.
     links.append("title").text((d) => {
       const sourceName = graph.fromNodes.find((n) =>
-        Utils.sameId(n.id, d.fNId)
+        sameId(n.id, d.fNId)
       )?.name;
-      const targetName = graph.toNodes.find((n) =>
-        Utils.sameId(n.id, d.tNId)
-      )?.name;
-      return Utils.formatTextLink(sourceName || " – ", targetName || " – ", d);
+      const targetName = graph.toNodes.find((n) => sameId(n.id, d.tNId))?.name;
+      return formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
 
     // der erste Parameter ist das Event, wird hier allerdings nicht gebraucht.
     // eigentlich ist der Import von dem Interface auch unnötig, aber nun ja...
-
-    const tripIdCompare = (a: TripId, b: TripId) => {
-      return (
-        a.station_id === b.station_id &&
-        a.train_nr === b.train_nr &&
-        a.time === b.time &&
-        a.target_station_id === b.target_station_id &&
-        a.line_id === b.line_id &&
-        a.target_time === b.target_time
-      );
-    };
-
-    const sameId = (a: TripId | string, b: TripId | string) => {
-      if (typeof a !== "string" && typeof b !== "string")
-        return tripIdCompare(a, b);
-      if (typeof a !== typeof b) return false;
-      else return a === b;
-    };
 
     function branchAnimate(_: MouseEvent, node: Node) {
       const focusLinks = view.selectAll("path.link").filter((l) => {
@@ -359,6 +340,12 @@ const SankeyUmsteigerGraph = ({
   return (
     <>
       {!data && <div>Daten zum Zug nicht verfügbar</div>}
+      {!data.links.length && tripDir === "both" && (
+        <div>Keine Umsteiger gefunden</div>
+      )}
+      {!data.links.length && tripDir !== "both" && (
+        <div>Keine Umsteiger in ausgewählter Richtung gefunden</div>
+      )}
       {data && (
         <svg
           ref={svgRef}
