@@ -29,7 +29,7 @@ const calcNodeHeight = (nodeValue: number, minHeight: number): number => {
  * @param value
  */
 const calcNodeHeightWithoutMinHeight = (value: number): number => {
-  return value / 10; //magic
+  return value / umsteigerConfig.scaleFactor;
 };
 
 /**
@@ -224,7 +224,8 @@ export const createGraph = ({
       }
 
       const y1_start =
-        (nArray[Math.max(0, Number(i) - 1)].y1_backdrop || 5) + fullPadding; //magic
+        (nArray[Math.max(0, Number(i) - 1)].y1_backdrop ||
+          umsteigerConfig.yMargin) + fullPadding;
 
       cNode.y0_backdrop =
         y1_start + (Number(i) === 0 ? 0 : nodePadding) + diff / 2;
@@ -246,14 +247,14 @@ export const createGraph = ({
     fNodesFinished,
     timeOffset,
     nodeWidth + timeOffset
-  ); //magic
+  );
   tNodesFinished = calcNodeXY(
     tNodesFinished,
-    width - nodeWidth - timeOffset, //magic
-    width - timeOffset //magic
+    width - nodeWidth - timeOffset,
+    width - timeOffset
   );
 
-  onSvgResize(finalHeight + 20); // set height of svg to the bottom of the last node + 20 //magic
+  onSvgResize(finalHeight + umsteigerConfig.yMargin); // set height of svg to the bottom of the last node + buffer
 
   // berechnen der Links
 

@@ -347,7 +347,7 @@ const SankeyUmsteigerGraph = ({
           width={width}
           height={svgHeightUmsteiger}
           className="m-auto"
-          style={{ marginBottom: "1.45rem" }} // TODO: das ist nur testweise wegen der besseren Lesbarkeit.
+          style={{ marginBottom: "1.45rem" }}
         />
       )}
     </>
