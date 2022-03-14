@@ -142,7 +142,10 @@ export const createGraph = ({
     const calcNodes = [];
     for (const i in nArray) {
       const cNode = nArray[i];
-      if (typeof cNode.id === "string") continue;
+      if (typeof cNode.id === "string") {
+        calcNodes.push(cNode);
+        continue;
+      }
       if (Number(i) === n) {
         calcNodes.push({ ...cNode, color: "#f20544" });
       } else {
