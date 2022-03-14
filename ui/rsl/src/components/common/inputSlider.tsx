@@ -16,6 +16,7 @@ const mapRangePercentage = (
   max: number,
   value: number
 ): number => {
+  if (min >= max) return 0;
   return ((value - min) / (max - min)) * 100;
 };
 
@@ -45,6 +46,9 @@ const InputSlider = ({
   values,
   ...restProps
 }: InputSliderProps): JSX.Element => {
+  const TRACKREF_LEFT_OFFSET = 14;
+  const TRACKREF_WIDTH_LESS = 28;
+
   const knobRef = useRef<HTMLDivElement>(null);
   const boundRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -94,8 +98,10 @@ const InputSlider = ({
     //setSelectedIndex(values.indexOf(value));
 
     if (!trackRef.current) return;
-    setLeft(trackRef.current.getBoundingClientRect().x + 14);
-    setWidth(trackRef.current.getBoundingClientRect().width - 28);
+    setLeft(trackRef.current?.getBoundingClientRect().x + TRACKREF_LEFT_OFFSET);
+    setWidth(
+      trackRef.current?.getBoundingClientRect().width - TRACKREF_WIDTH_LESS
+    );
 
     handleLabelClick(values.indexOf(value));
   }, [value, values]);

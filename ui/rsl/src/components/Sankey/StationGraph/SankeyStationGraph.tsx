@@ -31,7 +31,7 @@ type Props = {
 };
 
 /**
- *
+ * download URL as filename
  * @param url
  * @param filename
  */
@@ -43,7 +43,7 @@ function downloadBlob(url: string, filename: string) {
 }
 
 /**
- *
+ * Get Blob of SVG Element
  * @param svgEl
  */
 function getSvgBlob(svgEl: SVGSVGElement) {
@@ -57,7 +57,7 @@ function getSvgBlob(svgEl: SVGSVGElement) {
 }
 
 /**
- *
+ * Save a SVG Element blob by creating url for it and downloading it
  * @param svgEl
  * @param baseFileName
  */
