@@ -51,7 +51,7 @@ export const createGraph = ({
   onSvgResize,
   nodeWidth = 20,
   nodePadding = 20,
-  tripDir,
+  filteredTripId,
 }: createGraphInterface): SankeyInterface => {
   let tNodesFinished: Node[] = [];
   let fNodesFinished: Node[] = [];
@@ -138,7 +138,7 @@ export const createGraph = ({
 
   // assign every node a colour depending on the amount of nodes on every side
 
-  const calcColor = (nArray: Node[], n: number) => {
+  const calcColor = (nArray: Node[]) => {
     const calcNodes = [];
     for (const i in nArray) {
       const cNode = nArray[i];
@@ -146,7 +146,8 @@ export const createGraph = ({
         calcNodes.push(cNode);
         continue;
       }
-      if (Number(i) === n) {
+      if (!filteredTripId) continue;
+      if (sameId(cNode.id, filteredTripId)) {
         calcNodes.push({ ...cNode, color: "#f20544" });
       } else {
         calcNodes.push({
@@ -158,18 +159,8 @@ export const createGraph = ({
     return calcNodes;
   };
 
-  if (tripDir == "both") {
-    fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
-    tNodesFinished = calcColor(tNodesFinished, 0);
-  }
-  if (tripDir == "entering") {
-    fNodesFinished = calcColor(fNodesFinished, -1);
-    tNodesFinished = calcColor(tNodesFinished, 0);
-  }
-  if (tripDir == "exiting") {
-    fNodesFinished = calcColor(fNodesFinished, fNodesFinished.length - 1);
-    tNodesFinished = calcColor(tNodesFinished, -1);
-  }
+  fNodesFinished = calcColor(fNodesFinished);
+  tNodesFinished = calcColor(tNodesFinished);
 
   // Berechnen der Höhe der Nodes.
 

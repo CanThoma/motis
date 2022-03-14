@@ -54,7 +54,7 @@ interface createGraphInterface {
   nodeWidth: number;
   nodePadding: number;
   factor?: number;
-  tripDir?: "entering" | "exiting" | "both";
+  filteredTripId?: TripId;
 }
 
 type NodeMinimal = {

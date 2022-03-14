@@ -61,7 +61,7 @@ const SankeyUmsteigerGraph = ({
       onSvgResize: handleSvgResize,
       nodeWidth,
       nodePadding,
-      tripDir,
+      filteredTripId: onlyIncludeTripId[0],
     });
     const graphTemp = {
       nodes: [...graph.toNodes, ...graph.fromNodes],
