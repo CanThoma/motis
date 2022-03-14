@@ -1,8 +1,13 @@
-import React, { MouseEvent, useRef, useState } from "react";
-// Wenn die Imports nicht erkannt werden -> pnpm install -D @types/d3-sankey
-import { Node, Link } from "../StationGraph/SankeyStationTypes";
+import React, { useRef, useState } from "react";
 import { createGraph, formatTextNode } from "./SankeyUmsteigerUtils";
-import { sameId, formatTextLink, createSankeyLink } from "../SankeyUtils";
+import {
+  sameId,
+  formatTextLink,
+  createSankeyLink,
+  nodeFocus,
+  linksClear,
+  linkFocus,
+} from "../SankeyUtils";
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import * as d3 from "d3";
@@ -277,51 +282,22 @@ const SankeyUmsteigerGraph = ({
       return formatTextLink(sourceName || " – ", targetName || " – ", d);
     });
 
-    function branchAnimate(_: MouseEvent, node: Node) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
-        );
-      });
-      focusLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityFocus);
+    backdrop.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    backdrop.on("mouseout", () => linksClear(links));
+    nodes.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    nodes.on("mouseout", () => linksClear(links));
+    overflow.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    overflow.on("mouseout", () => linksClear(links));
 
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          !sameId((l as Link).tNId, node.id) &&
-          !sameId((l as Link).fNId, node.id)
-        );
-      });
-      clearLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityClear);
-    }
-
-    function branchClear() {
-      links.attr("stroke-opacity", umsteigerConfig.linkOpacity);
-    }
-
-    backdrop.on("mouseover", branchAnimate);
-    backdrop.on("mouseout", branchClear);
-    nodes.on("mouseover", branchAnimate);
-    nodes.on("mouseout", branchClear);
-    overflow.on("mouseover", branchAnimate);
-    overflow.on("mouseout", branchClear);
-
-    function linkAnimate(_: MouseEvent, link: Link) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id === link.id;
-      });
-      focusLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityFocus);
-
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id !== link.id;
-      });
-      clearLinks.attr("stroke-opacity", umsteigerConfig.linkOpacityClear);
-    }
-
-    function linkClear() {
-      links.attr("stroke-opacity", umsteigerConfig.linkOpacity);
-    }
-
-    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
+    links
+      .on("mouseover", (_, l) => linkFocus(_, l, view))
+      .on("mouseout", () => linksClear(links));
   }, [
     data,
     height,

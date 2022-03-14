@@ -1,6 +1,8 @@
 import { Link, Node, NodeMinimal } from "./StationGraph/SankeyStationTypes";
 import { TripId } from "../../api/protocol/motis";
-import { interpolateRainbow } from "d3";
+import { BaseType, interpolateRainbow, Selection } from "d3";
+import { MouseEvent } from "react";
+import { stationConfig } from "../../config";
 
 /**
  * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
@@ -139,4 +141,64 @@ export const createSankeyLink = (
   return `M${nodeWidth + timeOffset},${y0}C${width / 2},${y0},${
     width / 2
   },${y1},${width - nodeWidth - timeOffset},${y1}`;
+};
+
+/**
+ * Setzt die Opacity des Links der Node über die man hovered auf linkOpacityFocus und die alle anderen auf linkOpacityClear.
+ * Hebt die focus Node hervor.
+ * @param _
+ * @param node die Node deren links hervorgehoben werden sollen
+ * @param view das element welches die SVG enthält
+ */
+export const nodeFocus = (
+  _: MouseEvent,
+  node: Node,
+  view: Selection<SVGGElement, unknown, null, undefined>
+): void => {
+  const focusLinks = view.selectAll("path.link").filter((l) => {
+    return (
+      sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
+    );
+  });
+  focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
+
+  const clearLinks = view.selectAll("path.link").filter((l) => {
+    return (
+      !sameId((l as Link).tNId, node.id) && !sameId((l as Link).fNId, node.id)
+    );
+  });
+  clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
+};
+
+/**
+ * Setzt die Opacity des Links über den man hovered auf linkOpacityFocus und die alle anderen auf linkOpacityClear.
+ * Hebt den focus Link hervor.
+ * @param _ mouseEvent - hier nicht benötigt
+ * @param link der link der Hervorgehoben werden soll
+ * @param view das element welches die SVG enthält
+ */
+export const linkFocus = (
+  _: MouseEvent,
+  link: Link,
+  view: Selection<SVGGElement, unknown, null, undefined>
+): void => {
+  const focusLinks = view.selectAll("path.link").filter((l) => {
+    return (l as Link).id === link.id;
+  });
+  focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
+
+  const clearLinks = view.selectAll("path.link").filter((l) => {
+    return (l as Link).id !== link.id;
+  });
+  clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
+};
+
+/**
+ * Setzt die Opacity aller Links zurück auf den Startwert der in der Config festgelegt ist
+ * @param links Selection aller links aus view
+ */
+export const linksClear = (
+  links: Selection<BaseType | SVGPathElement, Link, SVGGElement, unknown>
+): void => {
+  links.attr("stroke-opacity", stationConfig.linkOpacity);
 };

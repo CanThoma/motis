@@ -1,12 +1,14 @@
-import React, { MouseEvent, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import * as d3 from "d3";
-import { Node, Link } from "./SankeyStationTypes";
 import { createGraph, formatTextNode } from "./SankeyStationUtils";
 import {
   formatTextTime,
   formatTextLink,
   createSankeyLink,
   sameId,
+  nodeFocus,
+  linksClear,
+  linkFocus,
 } from "../SankeyUtils";
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
@@ -395,52 +397,23 @@ const SankeyStationGraph = ({
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
 
-    function branchAnimate(_: MouseEvent, node: Node) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
-        );
-      });
-      focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
-
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          !sameId((l as Link).tNId, node.id) &&
-          !sameId((l as Link).fNId, node.id)
-        );
-      });
-      clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
-    }
-
-    function branchClear() {
-      links.attr("stroke-opacity", stationConfig.linkOpacity);
-    }
-
-    backdrop.on("mouseover", branchAnimate);
-    backdrop.on("mouseout", branchClear);
-    nodes.on("mouseover", branchAnimate);
-    nodes.on("mouseout", branchClear);
-    overflow.on("mouseover", branchAnimate);
-    overflow.on("mouseout", branchClear);
-
-    function linkAnimate(_: MouseEvent, link: Link) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id === link.id;
-      });
-      focusLinks.attr("stroke-opacity", stationConfig.linkOpacityFocus);
-
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id !== link.id;
-      });
-      clearLinks.attr("stroke-opacity", stationConfig.linkOpacityClear);
-    }
-
-    function linkClear() {
-      links.attr("stroke-opacity", stationConfig.linkOpacity);
-    }
+    backdrop.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    backdrop.on("mouseout", () => linksClear(links));
+    nodes.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    nodes.on("mouseout", () => linksClear(links));
+    overflow.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    overflow.on("mouseout", () => linksClear(links));
 
     //setLoading(false);
-    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
+    links
+      .on("mouseover", (_, l) => linkFocus(_, l, view))
+      .on("mouseout", () => linksClear(links));
   }, [data, factor, nodeWidth, nodePadding, onTripSelected]);
   loadingStatus.current = false;
 
