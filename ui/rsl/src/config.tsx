@@ -2,15 +2,13 @@ const sankeyConfig = {
   linkOpacity: 0.4,
   linkOpacityFocus: 0.7,
   linkOpacityClear: 0.05,
-
   nodeOpacity: 0.9,
-  rowBackgroundColor: "#cacaca",
   backdropOpacity: 0.7,
+  rowBackgroundColor: "#cacaca",
 };
 
 const tripConfig = {
   ...sankeyConfig,
-
   leftTimeOffset: 100,
   width: 1200,
   minNodeHeight: 6, // Angabe in Pixeln.
@@ -19,18 +17,15 @@ const tripConfig = {
 
 const stationConfig = {
   ...sankeyConfig,
-
   width: 1200,
   minNodeHeight: 2, // Angabe in Pixeln.
   timeOffset: 70, // Abstand von Rand zu den Nodes um Platz für die Zeit zu lassen
-
   station_startDate: "Mon, 25 Oct 2021 09:15:00 GMT+2",
   station_timeInterval: 30, // In Minuten
 };
 
 const umsteigerConfig = {
   ...sankeyConfig,
-
   width: 600,
   minNodeHeight: 2.5,
   timeOffset: 50, // Abstand von Rand zu den Nodes um Platz für die Zeit zu lassen

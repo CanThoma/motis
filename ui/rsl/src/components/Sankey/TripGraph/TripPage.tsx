@@ -8,13 +8,12 @@ import { useSankeyContext } from "../../context/SankeyContext";
 
 type TripPageProps = {
   tripName: string;
-  width: number;
   selectedTrip: TripId | null;
   onTripPicked: (tripId: TripId | undefined) => void;
   onStationSelected: () => void;
 };
 
-const TripPage = ({ onStationSelected, width }: TripPageProps): JSX.Element => {
+const TripPage = ({ onStationSelected }: TripPageProps): JSX.Element => {
   const {
     selectedTrip,
     setSelectedTrip,
@@ -55,7 +54,6 @@ const TripPage = ({ onStationSelected, width }: TripPageProps): JSX.Element => {
         {selectedTrip && (
           <SankeyTripGraph
             tripId={selectedTrip}
-            width={width}
             onStationSelected={(
               selectedStation: string,
               name: string,
