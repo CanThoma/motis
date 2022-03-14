@@ -14,6 +14,7 @@ import {
 import { addEdgeStatistics } from "../util/statistics";
 import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
 import { GroupsInTripSection } from "../api/protocol/motis/paxmon";
+import { formatDateTime } from "../util/dateFormat";
 
 interface EdgeInfo {
   enterStationID: string;
@@ -30,6 +31,7 @@ interface EdgeInfo {
 function addGroupsInTripSection(
   sankeyInterface: SankeyInterfaceMinimal,
   groupsInTripSection: GroupsInTripSection,
+  previousGroupsInTripSection: GroupsInTripSection | null,
   direction: "from" | "to"
 ) {
   //get entering station
@@ -47,8 +49,13 @@ function addGroupsInTripSection(
     id: nodeIdx,
     sId: currentEnteringStationID,
     name: currentEnteringStationName,
-    arrival_current_time: groupsInTripSection.arrival_current_time,
-    arrival_schedule_time: groupsInTripSection.arrival_schedule_time,
+    // arrival is taken from n-1th node, so do it afterwards
+    arrival_current_time: previousGroupsInTripSection
+      ? previousGroupsInTripSection.arrival_current_time
+      : 0,
+    arrival_schedule_time: previousGroupsInTripSection
+      ? previousGroupsInTripSection.arrival_schedule_time
+      : 0,
     departure_current_time: groupsInTripSection.departure_current_time,
     departure_schedule_time: groupsInTripSection.departure_schedule_time,
   };
@@ -83,11 +90,17 @@ export function ExtractGroupInfoForThisTrain(
     if (groupsInTrip) {
       // Jede der sections im Trip wird durchgegangen und es wird eine Node (from-node) gepusht. Am Ende der letzten section wird dann die to-node gepusht.
       // node wird komplett befüllt mit nötiger Information. groupInfo wird zum berechnen der links erstellt
-
+      let previousGroupsInTripSection: GroupsInTripSection | null = null;
       groupsInTrip.sections.forEach((groupsInTripSection) => {
         const nodeIdx = sankeyInterface.nodes.length.toString();
         // add the gITS from this section's from-node information to sankeyInterface node array
-        addGroupsInTripSection(sankeyInterface, groupsInTripSection, "from");
+        addGroupsInTripSection(
+          sankeyInterface,
+          groupsInTripSection,
+          previousGroupsInTripSection,
+          "from"
+        );
+        previousGroupsInTripSection = groupsInTripSection;
         // prepare data for links in groupInfo
         groupsInTripSection.groups.forEach((groupedPassengerGroup) => {
           groupedPassengerGroup.info.groups.forEach((paxMonGroupBaseInfo) => {
@@ -104,7 +117,12 @@ export function ExtractGroupInfoForThisTrain(
       if (groupsInTrip.sections.length > 0) {
         const lastSection =
           groupsInTrip.sections[groupsInTrip.sections.length - 1];
-        addGroupsInTripSection(sankeyInterface, lastSection, "to");
+        addGroupsInTripSection(
+          sankeyInterface,
+          lastSection,
+          previousGroupsInTripSection,
+          "to"
+        );
       }
     } else {
       success = false;
