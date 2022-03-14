@@ -108,6 +108,7 @@ const SankeyStationGraph = ({
       loadingStatus.current = e !== "success";
     },
     tripDirection: "both",
+    showOutOfTime: false,
   });
 
   React.useEffect(() => {

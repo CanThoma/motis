@@ -31,6 +31,7 @@ export type StationInterchangeParameters = {
   onStatusUpdate?: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
   tripDirection: "entering" | "exiting" | "both";
+  showOutOfTime: boolean;
 };
 type TripIdAtStation = TripId & {
   pax: number;
@@ -244,13 +245,15 @@ function InterchangePointInfoHandle(
   tripsInStationPoint: TripIdAtStation[],
   type: InterchangePoint,
   limitTime: number,
-  interchangePassengerCount: number
+  interchangePassengerCount: number,
+  showOutOfTime: boolean
 ): number {
   let pointStationIndex: number;
   /* Get arrival point */
   if (
-    (type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
-    (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime)
+    !showOutOfTime &&
+    ((type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
+      (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime))
   ) {
     pointStationIndex = POINT_STATION_OUT_OF_TIME_SEARCH;
   } else {
@@ -403,7 +406,8 @@ export function ExtractStationData(
           arrivingTripsInStation,
           InterchangePoint.ARRIVING,
           params.startTime,
-          interchange.groups.max_passenger_count
+          interchange.groups.max_passenger_count,
+          params.showOutOfTime
         );
 
       /* Push/modify trip point, for departure, if exists; else -1 = "exiting" */
@@ -413,7 +417,8 @@ export function ExtractStationData(
           departingTripsInStation,
           InterchangePoint.DEPARTING,
           params.endTime,
-          interchange.groups.max_passenger_count
+          interchange.groups.max_passenger_count,
+          params.showOutOfTime
         );
       setNodeConditionally(
         boardingNode,
