@@ -248,7 +248,10 @@ function InterchangePointInfoHandle(
 ): number {
   let pointStationIndex: number;
   /* Get arrival point */
-  if (false) {
+  if (
+    (type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
+    (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime)
+  ) {
     pointStationIndex = POINT_STATION_OUT_OF_TIME_SEARCH;
   } else {
     const trip = info.trips[0];
@@ -543,7 +546,6 @@ export function ExtractStationData(
           const edge = tsi.edges[edgeIndex];
           graph.fromNodes[i + 2].cap = edge.capacity;
           graph.fromNodes[i + 2].pax = edge.max_pax;
-          graph.fromNodes[i + 2].time = edge.departure_schedule_time;
         } else {
           // situation: we do not have information about the train at params.stationId, because the trip we have found searching
           // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
@@ -597,7 +599,6 @@ export function ExtractStationData(
           const edge = tsi.edges[edgeIndex];
           graph.toNodes[i].cap = edge.capacity;
           graph.toNodes[i].pax = edge.max_pax;
-          graph.toNodes[i].time = edge.departure_schedule_time;
         } else {
           // situation: we do not have information about the train at params.stationId, because the trip we have found searching
           // for stationId, does not visit stationId. make the best out of it and take the biggest capacity in this trains entire trip.
