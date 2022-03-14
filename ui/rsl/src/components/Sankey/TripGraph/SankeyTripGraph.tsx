@@ -253,7 +253,7 @@ const SankeyTripGraph = ({
           .attr("font-weight", "bold");
 
         // Die eigentliche Zeit
-        tmp.append("tspan").text((d) => renderTime(d.arrival_current_time));
+        tmp.append("tspan").text((d) => renderTime(d.departure_current_time));
 
         renderDelay(tmp, "arrival");
 
@@ -301,9 +301,9 @@ const SankeyTripGraph = ({
           .text(
             (d) =>
               `Geplante Ankunftszeit: ${renderTime(
-                d.departure_schedule_time
+                d.arrival_schedule_time
               )} – Tatsächliche Ankunftszeit: ${renderTime(
-                d.departure_current_time
+                d.arrival_current_time
               )} `
           );
         return tmp;
