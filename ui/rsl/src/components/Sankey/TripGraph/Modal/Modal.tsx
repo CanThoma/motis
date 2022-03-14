@@ -9,8 +9,7 @@ import { TripId } from "../../../../api/protocol/motis";
 type NodeTripStationPointInfo = {
   node: Node;
   tripId: TripId;
-  currentArrivalTime: number;
-  currentDepartureTime: number;
+  time: number;
 };
 
 type Props = {
@@ -86,8 +85,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
               {param && (
                 <SankeyUmsteigerGraph
                   stationId={param.node.sId}
-                  currentArrivalTime={param.currentArrivalTime}
-                  currentDepartureTime={param.currentDepartureTime}
+                  time={param.time}
                   onlyIncludeTripId={[param.tripId]}
                   tripDir={selectedDir}
                 />

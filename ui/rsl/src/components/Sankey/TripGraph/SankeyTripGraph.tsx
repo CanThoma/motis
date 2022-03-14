@@ -53,8 +53,7 @@ const SankeyTripGraph = ({
   const [clickedNode, setClickedNode] = useState<{
     node: Node;
     tripId: TripId;
-    currentArrivalTime: number;
-    currentDepartureTime: number;
+    time: number;
   }>();
 
   const graphData = ExtractGroupInfoForThisTrain(tripId);
@@ -232,8 +231,7 @@ const SankeyTripGraph = ({
         setClickedNode({
           node: d,
           tripId: tripId,
-          currentArrivalTime: d.arrival_current_time,
-          currentDepartureTime: d.departure_current_time,
+          time: d.departure_current_time,
         });
       })
       .attr("cursor", "pointer")
@@ -247,8 +245,7 @@ const SankeyTripGraph = ({
         setClickedNode({
           node: d,
           tripId: tripId,
-          currentArrivalTime: d.arrival_current_time,
-          currentDepartureTime: d.departure_current_time,
+          time: d.arrival_current_time,
         });
       });
 

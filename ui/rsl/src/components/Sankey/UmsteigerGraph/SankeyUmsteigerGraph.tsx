@@ -16,8 +16,7 @@ import { umsteigerConfig } from "../../../config";
 
 type Props = {
   stationId: string;
-  currentArrivalTime: number;
-  currentDepartureTime: number;
+  time: number;
   onlyIncludeTripId: TripId[];
   tripDir: "entering" | "exiting" | "both";
   width?: number;
@@ -29,8 +28,7 @@ type Props = {
 
 const SankeyUmsteigerGraph = ({
   stationId,
-  currentArrivalTime,
-  currentDepartureTime,
+  time,
   onlyIncludeTripId,
   tripDir,
   width = 600,
@@ -44,8 +42,8 @@ const SankeyUmsteigerGraph = ({
 
   const data = ExtractStationData({
     stationId: stationId,
-    startTime: currentArrivalTime - 2 * 60 * 60, // 2 Stunden vor Ankunft
-    endTime: currentDepartureTime + 2 * 60 * 60, // 2 Stunden nach Abfahrt
+    startTime: time - 2.5 * 60 * 60, // 2 Stunden vor Ankunft
+    endTime: time + 2.5 * 60 * 60, // 2 Stunden nach Abfahrt
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
     tripDirection: tripDir,
@@ -306,6 +304,7 @@ const SankeyUmsteigerGraph = ({
     nodePadding,
     duration,
     svgHeightUmsteiger,
+    tripDir,
   ]);
 
   return (
