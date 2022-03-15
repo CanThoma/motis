@@ -1,74 +1,43 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { select as d3Select } from "d3";
-import { useQuery, useQueryClient } from "react-query";
-import { DownloadIcon } from "@heroicons/react/solid";
-import { useAtom } from "jotai";
+import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
 
 import {
-  formatLongDateTime,
-  formatFileNameTime,
-  formatTime,
-} from "../../util/dateFormat";
-import {
-  PaxMonEdgeLoadInfoWithStats,
-  PaxMonTripLoadInfoWithStats,
-} from "../../data/loadInfo";
-import { TripId } from "../../api/protocol/motis";
-import {
-  queryKeys,
-  sendPaxMonTripLoadInfosRequest,
-  sendPaxMonFilterTripsRequest,
-  usePaxMonStatusQuery,
-} from "../../api/paxmon";
-import { addEdgeStatistics } from "../../util/statistics";
-import { universeAtom } from "../../data/simulation";
-
-import { colorSchema, peakSpottingConfig as config } from "../../config";
+  font_family,
+  colorSchema,
+  peakSpottingConfig as config,
+} from "../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
 
-async function loadAndProcessTripInfo(universe: number, trip: TripId[]) {
-  const res = await sendPaxMonFilterTripsRequest({
-    universe: 0,
-    ignore_past_sections: false,
-    include_load_threshold: 0.0,
-    critical_load_threshold: 1.0,
-    crowded_load_threshold: 0.8,
-    include_edges: true,
-    sort_by: "FirstDeparture",
-    max_results: 100,
-    skip_first: 0,
-  });
-  const tli = res.load_infos[0];
-  return addEdgeStatistics(tli);
-}
+type Props = {
+  width: number;
+  trip: PaxMonFilteredTripInfo;
+  selectedTrip: PaxMonFilteredTripInfo | undefined;
+  onClick: () => void;
+  height?: number;
+};
 
 const HorizontalTripDisplay = ({
-  tripData,
+  trip,
   width,
   selectedTrip,
   onClick,
   height = 80,
-}) => {
+}: Props): JSX.Element => {
   const svgRef = useRef(null);
-  const [overflow, setOverflow] = useState(false);
 
   const train_infos = selectedTrip ? selectedTrip.tsi.service_infos : null;
-
-  const onOverflow = (flag: boolean) => {
-    setOverflow(flag);
-  };
 
   const graphWidth =
     width - (config.horizontalLeftPadding + config.horizontalRightPadding);
 
   useEffect(() => {
     const data = prepareEdges({
-      data: tripData,
+      trip: trip,
       width: graphWidth,
       height,
-      onOverflow,
     });
 
     const svg = d3Select(svgRef.current);
@@ -101,29 +70,34 @@ const HorizontalTripDisplay = ({
     }
 
     for (const edge of data) {
-      const tim = view
-        .append("rect")
-        .attr("x", edge.x)
-        .attr("y", height - edge.capHeight)
-        .attr("height", edge.capHeight)
-        .attr("width", edge.width)
-        .attr("fill", colorSchema.lightGrey);
+      let tim;
+      if (!edge.noCap) {
+        tim = view
+          .append("rect")
+          .attr("x", edge.x || 0)
+          .attr("y", height - (edge.capHeight || 0))
+          .attr("height", edge.capHeight || 0)
+          .attr("width", edge.horizontalWidth || 0)
+          .attr("fill", colorSchema.lightGrey);
+      }
 
       const tom = view
         .append("rect")
-        .attr("x", edge.x)
-        .attr("y", edge.y) // height - edge.expectedPassengers / config.horizontalCapacityScale)
-        .attr("height", edge.height)
-        .attr("width", edge.width)
-        .attr("fill", edge.colour)
+        .attr("x", edge.x || 0)
+        .attr("y", edge.y || 0) // height - edge.expectedPassengers / config.horizontalCapacityScale)
+        .attr("height", edge.height || 0)
+        .attr("width", edge.horizontalWidth || 0)
+        .attr("fill", edge.color || colorSchema.grey)
         .attr("opacity", edge.opacity ? edge.opacity : 1);
 
       tom.append("title").text(formatEdgeInfo(edge));
-      tim
-        .append("title")
-        .text(
-          `${edge.from.name} \u279E ${edge.to.name}\n${edge.expectedPassengers} erwartete Passagiere`
-        );
+      if (tim) {
+        tim
+          .append("title")
+          .text(
+            `${edge.from.name} \u279E ${edge.to.name}\n${edge.expected_passengers} erwartete Passagiere`
+          );
+      }
     }
 
     // Anhängen der ersten Station
@@ -134,9 +108,9 @@ const HorizontalTripDisplay = ({
       .attr("fill", colorSchema.darkBluishGrey)
       .attr("text-anchor", "end")
       .attr("font-size", 10)
-      .attr("font-family", config.font_family)
-      .attr("x", data[0].x)
-      .attr("y", height - data[0].capHeight / 2);
+      .attr("font-family", font_family)
+      .attr("x", data[0].x || 0)
+      .attr("y", height - (data[0].capHeight || 0) / 2);
 
     // Anhängen der letzten Station
     view
@@ -146,10 +120,14 @@ const HorizontalTripDisplay = ({
       .attr("fill", colorSchema.darkBluishGrey)
       .attr("text-anchor", "start")
       .attr("font-size", 10)
-      .attr("font-family", config.font_family)
-      .attr("x", data[data.length - 1].x + data[data.length - 1].width)
-      .attr("y", height - data[0].capHeight / 2);
-  }, []);
+      .attr("font-family", font_family)
+      .attr(
+        "x",
+        (data[data.length - 1].x || 0) +
+          (data[data.length - 1].horizontalWidth || 0)
+      )
+      .attr("y", height - (data[0].capHeight || 0) / 2);
+  }, [graphWidth, height, trip]);
 
   return (
     <div
@@ -159,7 +137,7 @@ const HorizontalTripDisplay = ({
         border: "2px solid",
         borderColor: colorSchema.white,
         width: width,
-        fontFamily: config.font_family,
+        fontFamily: font_family,
         marginBottom: "5px",
         display: "flex",
         boxShadow: "0 0 13px rgba(255, 255, 255, 0.2) ",
@@ -169,7 +147,7 @@ const HorizontalTripDisplay = ({
       }}
       //className="tripRow grid grid-flow-col"
       className={
-        train_infos === tripData.tsi.service_infos
+        train_infos === trip.tsi.service_infos
           ? "horizontalTripSelected tripRow grid grid-flow-col"
           : "tripRow grid grid-flow-col"
       }
@@ -197,23 +175,23 @@ const HorizontalTripDisplay = ({
             data-tooltip="Die Zuchnummer"
             data-tooltip-location="top"
           >
-            {tripData.tsi.service_infos[0].train_nr}
+            {trip.tsi.service_infos[0].train_nr}
           </h3>
           <p
             style={{ color: colorSchema.darkBluishGrey, fontWeight: "bold" }}
             data-tooltip="Der Zuchname"
             data-tooltip-location="top"
           >
-            {tripData.tsi.service_infos[0].name}
+            {trip.tsi.service_infos[0].name}
           </p>
         </div>
-        {overflow && (
+        {trip.max_excess_pax > 0 && (
           <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
         )}
-        {tripData.critical_sections > 0 && (
+        {trip.critical_sections > 0 && (
           <WarningSymbol color="#ff8200" symbol="critical" width={15} />
         )}
-        {tripData.crowded_sections > 0 && (
+        {trip.crowded_sections > 0 && (
           <WarningSymbol color="#444444" symbol="crowded" width={15} />
         )}
       </div>

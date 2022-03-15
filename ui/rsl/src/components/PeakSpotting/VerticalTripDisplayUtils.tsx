@@ -1,31 +1,55 @@
 import { interpolateRgb, scaleLinear } from "d3";
+import {
+  PaxMonEdgeLoadInfo,
+  PaxMonFilteredTripInfo,
+} from "../../api/protocol/motis/paxmon";
+import { peakSpottingConfig as config } from "../../config";
 
 const calcMinutes = (hours: number, minutes: number): number => {
   return hours * 60 + minutes;
 };
 
-const colour = scaleLinear<string>()
+const color = scaleLinear<string>()
   .domain([0, 0.4, 0.8, 0.99, 1])
   .range(["#dfe3e7", "#c1d5d7", "#ffc700", "#f04b4a", "#dd4141"])
   .interpolate(interpolateRgb.gamma(2.2));
 
-const prepareTimeEdges = (trip: any): any[] => {
+export interface tripEdge extends PaxMonEdgeLoadInfo {
+  departureTime?: Date;
+  arrivalTime?: Date;
+  departureHours?: number;
+  departureMinutes?: number;
+  arrivalHours?: number;
+  arrivalMinutes?: number;
+  traveledMinutes?: number;
+  height?: number;
+  capWidth?: number;
+  capHeight?: number;
+  horizontalWidth?: number;
+  rightWidth?: number;
+  leftWidth?: number;
+  color?: string;
+  noCap?: boolean;
+  opacity?: number;
+  y?: number;
+  x?: number;
+}
+
+const prepareTimeEdges = (trip: PaxMonFilteredTripInfo): tripEdge[] => {
   const finalEdges = [];
 
-  let offset = 20;
-  const minHeight = 30;
-  const minWidth = 5;
-  const ballPadding = 4;
-  const heightMultiplier = 3;
-  const widthMultiplier = 0.15;
+  let offset = config.verticalInitialOffset;
 
   for (let i = 0; i < trip.edges.length; i++) {
     const edge = trip.edges[i];
 
-    const tmpEdge = { ...edge };
+    const tmpEdge: tripEdge = { ...edge };
 
     const departureTime = new Date(edge.departure_current_time * 1000);
     const arrivalTime = new Date(edge.arrival_current_time * 1000);
+
+    const leftValue = edge.passenger_cdf[0].passengers;
+    const rightValue = edge.expected_passengers;
 
     tmpEdge.departureTime = departureTime;
     tmpEdge.arrivalTime = arrivalTime;
@@ -40,22 +64,24 @@ const prepareTimeEdges = (trip: any): any[] => {
       calcMinutes(tmpEdge.departureHours, tmpEdge.departureMinutes);
 
     tmpEdge.height = Math.max(
-      minHeight,
-      tmpEdge.traveledMinutes * heightMultiplier
+      config.verticalMinHeight,
+      tmpEdge.traveledMinutes * config.verticalHeightMultiplier
     );
 
-    tmpEdge.capWidth = Math.max(minWidth, tmpEdge.capacity * widthMultiplier);
-    tmpEdge.rightWidth = tmpEdge.expected_passengers * widthMultiplier;
-
-    // TODO: Was soll links jetzt genau angezeigt werden?
-    tmpEdge.leftWidth = tmpEdge.expected_passengers * 0.3 * widthMultiplier;
-    tmpEdge.color = colour(
-      Math.min(1, tmpEdge.expected_passengers / tmpEdge.capacity)
+    tmpEdge.capWidth = Math.max(
+      config.verticalMinWidth,
+      tmpEdge.capacity * config.verticalWidthMultiplier
     );
+    tmpEdge.rightWidth = rightValue * config.verticalWidthMultiplier;
 
-    tmpEdge.y = offset + ballPadding;
+    // TODO: Sollen wir hier noch die Wahrscheinlichkeit irgendwie mit einbeziehen?
+    tmpEdge.leftWidth =
+      leftValue * config.testMultiplier * config.verticalWidthMultiplier;
+    tmpEdge.color = color(Math.min(1, rightValue / tmpEdge.capacity));
 
-    offset += tmpEdge.height + ballPadding;
+    tmpEdge.y = offset + config.verticalBallPadding;
+
+    offset += tmpEdge.height + config.verticalBallPadding;
     finalEdges.push(tmpEdge);
   }
   return finalEdges;

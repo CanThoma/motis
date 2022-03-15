@@ -1,43 +1,40 @@
 import React, { useState, useEffect } from "react";
-import HorizontalTripDisplay from "./HorizontalTripDisplay";
-
-import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
-import VerticalTripDisplay from "./VerticalTripDiplay";
-
-import "./HorizontalTripDisplay.css";
-import { colorSchema } from "../../config";
-
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery } from "react-query";
 import { useAtom } from "jotai";
-
 import { PaxMonFilterTripsRequest } from "../../api/protocol/motis/paxmon";
-
 import {
   queryKeys,
   sendPaxMonFilterTripsRequest,
   usePaxMonStatusQuery,
 } from "../../api/paxmon";
+
 import { universeAtom } from "../../data/simulation";
 import Pagination from "../common/pagination";
 import { paginate } from "./HorizontalTripDisplayUtils";
 import { useSankeyContext } from "../context/SankeyContext";
 import Loading from "../common/Loading";
+import { colorSchema, peakSpottingConfig as config } from "../../config";
+import HorizontalTripDisplay from "./HorizontalTripDisplay";
+import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
+import VerticalTripDisplay from "./VerticalTripDiplay";
 
 import "./HorizontalTripDisplay.css";
 
-const PeakSpotting = ({
-  width = Math.max(900, window.screen.availWidth / 2) - 10,
-}) => {
-  // Voll so das Sammeln der Daten aus
+type PeakSpottingProps = {
+  width: number;
+};
 
+const PeakSpotting = ({
+  width = Math.max(config.minWidth, window.screen.availWidth / 2) -
+    config.globalPadding,
+}: PeakSpottingProps): JSX.Element => {
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery(universe);
 
-  const [pageSize, setPageSize] = useState(7);
-
+  const [pageSize] = useState(config.pageSize);
   const [refetchFlag, setRefetchFlag] = useState(false);
-  const [maxResults, setMaxResults] = useState(50);
-
+  const [maxResults, setMaxResults] = useState(config.initialSearchResults);
+  const [showDropDown, setShowDropDown] = useState(false);
   const [componentIsRendered, setComponentIsRendered] = useState(false);
 
   const {
@@ -53,22 +50,23 @@ const PeakSpotting = ({
     setPeakSpottingSortBy: setSortBy,
   } = useSankeyContext();
 
-  const queryClient = useQueryClient();
-
-  const [showDropDown, setShowDropDown] = useState(false);
-
   const filterTripRequest: PaxMonFilterTripsRequest = {
     universe,
-    ignore_past_sections: false,
-    include_load_threshold: 0.0,
-    critical_load_threshold: 1.0,
-    crowded_load_threshold: 0.8,
-    include_edges: true,
+    ignore_past_sections: config.initialIgnorePastSections,
+    include_load_threshold: config.initialIncludeLoadThreshold,
+    critical_load_threshold: config.initialCriticalLoadThreshold,
+    crowded_load_threshold: config.initialCrowdedLoad_threshold,
+    include_edges: true, // Muss gesetzt sein, da die edges wichtig für die Darstellung sind.
     sort_by: sortBy.value,
     max_results: maxResults,
-    skip_first: 0,
+    skip_first: config.initialSkipFirst,
   };
 
+  /**
+   * Läd die Fahrten entsprechend der in filterTripRequest gesetzten Parameter
+   * @param filterTripRequest Suchfilterparamter
+   * @returns
+   */
   async function loadAndProcessTripInfo(
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
@@ -78,23 +76,28 @@ const PeakSpotting = ({
 
     if (!res.trips) return;
 
-    setPaginatedTrips(paginate(res.trips, 1, pageSize));
+    if (setPaginatedTrips) setPaginatedTrips(paginate(res.trips, 1, pageSize));
 
-    //if (!selectedTrip || refetchFlag)
-    setSelectedTrip(res.trips[0]);
-    //if (!peakSpottingTrips || refetchFlag)
-    setPeakSpottingTrips(res.trips);
-    setCurrentPage(1);
+    if (setSelectedTrip) setSelectedTrip(res.trips[0]);
+
+    if (setPeakSpottingTrips) setPeakSpottingTrips(res.trips);
+
+    if (setCurrentPage) setCurrentPage(1);
     setRefetchFlag(false);
   }
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    setPaginatedTrips(paginate(peakSpottingTrips, page, pageSize));
+  /**
+   * Teilt die Liste aller Züge in Seiten ein und zeigt die entsprechende an.
+   * @param page Welche Seite soll angezeigt werden?
+   */
+  const handlePageChange = (page: number) => {
+    if (setCurrentPage) setCurrentPage(page);
+
+    if (setPaginatedTrips)
+      setPaginatedTrips(paginate(peakSpottingTrips, page, pageSize));
   };
 
   const {
-    data,
     status: loadingStatus,
     isLoading,
     refetch,
@@ -103,27 +106,42 @@ const PeakSpotting = ({
     async () => loadAndProcessTripInfo(filterTripRequest),
     {
       enabled: !!status,
-      placeholderData: () => {
-        return universe != 0
-          ? queryKeys.filterTrips(filterTripRequest)
-          : undefined;
-      },
     }
   );
-  const handleSelect = async ({ displayText, value }) => {
+
+  /**
+   * Passt den Sortierparameter an und setzt ein paar Frontendflags zur Darstellung der Ladeanimation
+   *
+   * @param param0 Ein Objekt zur Sortierung der Trips.
+   * Label ist der Anzeigetext und value der eigentliche Sortierparameter
+   */
+  const handleSelect = async ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
+  }) => {
     await setRefetchFlag(true);
     await setComponentIsRendered(false);
-    await setSortBy({ displayText, value });
+    if (setSortBy) await setSortBy({ label, value });
     setShowDropDown(false);
+
     refetch();
   };
-  const handleMaxResultChange = async (num) => {
+
+  /**
+   * Passt den MaxResults-parameter an und setzt ein paar Frontendflags zur Darstellung der Ladeanimation
+   *
+   * @param num Wie viele Züge sollen maximal angezeigt werden können?
+   */
+  const handleMaxResultChange = async (num: number) => {
     await setComponentIsRendered(false);
     await setRefetchFlag(true);
     await setMaxResults(num);
+
     refetch();
   };
-  // ENDE
 
   useEffect(() => {
     setComponentIsRendered(true);
@@ -161,7 +179,7 @@ const PeakSpotting = ({
                 setShowDropDown(!showDropDown);
               }}
             >
-              {sortBy.displayText}
+              {sortBy.label}
             </button>
             <ul
               className={showDropDown ? "dropdown-menu show" : "dropdown-menu"}
@@ -172,7 +190,7 @@ const PeakSpotting = ({
                   className="dropdown-item"
                   onClick={() =>
                     handleSelect({
-                      displayText: "den Erwarteten Passagieren",
+                      label: "den Erwarteten Passagieren",
                       value: "ExpectedPax",
                     })
                   }
@@ -185,7 +203,7 @@ const PeakSpotting = ({
                   className="dropdown-item"
                   onClick={() =>
                     handleSelect({
-                      displayText: "der Kritikalität der Fahrten",
+                      label: "der Kritikalität der Fahrten",
                       value: "MostCritical",
                     })
                   }
@@ -198,7 +216,7 @@ const PeakSpotting = ({
                   className="dropdown-item"
                   onClick={() =>
                     handleSelect({
-                      displayText: "der Abfahrtszeit",
+                      label: "der Abfahrtszeit",
                       value: "FirstDeparture",
                     })
                   }
@@ -231,9 +249,10 @@ const PeakSpotting = ({
             }}
             onKeyDown={(v) => {
               if (v.key !== "Enter") return;
-              const tim = parseInt(v.target.value);
+              const target = v.target as HTMLTextAreaElement;
+              const tim = parseInt(target.value);
               if (isNaN(tim)) return;
-              v.target.blur();
+              target.blur();
             }}
           />
         </div>
@@ -263,10 +282,12 @@ const PeakSpotting = ({
                   {paginatedTrips.map((d) => (
                     <HorizontalTripDisplay
                       key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}
-                      tripData={d}
+                      trip={d}
                       width={width}
                       selectedTrip={selectedTrip}
-                      onClick={() => setSelectedTrip(d)}
+                      onClick={() => {
+                        if (setSelectedTrip) setSelectedTrip(d);
+                      }}
                     />
                   ))}
                   <Pagination

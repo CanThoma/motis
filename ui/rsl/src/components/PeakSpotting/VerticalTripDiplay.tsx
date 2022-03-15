@@ -1,27 +1,45 @@
 import React, { useEffect, useRef, useState } from "react";
 import { select as d3Select } from "d3";
-import { colorSchema, font_family } from "../../config";
+import {
+  colorSchema,
+  font_family,
+  peakSpottingConfig as config,
+} from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
+import {
+  PaxMonEdgeLoadInfo,
+  PaxMonFilteredTripInfo,
+} from "../../api/protocol/motis/paxmon";
 
 import "./VerticalTripDisplay.css";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
 
 type Props = {
   width: number;
-  trip: any;
+  trip: PaxMonFilteredTripInfo;
 };
 
-const renderTimeDisplay = (t) => {
+/**
+ * Konvertiert eine Zeitzahl in Epoch/Unix-Time in die Form hh:mm
+ * @param t Zeit in epoch-time
+ * @returns Die Zeit im Textformat
+ */
+const renderTimeDisplay = (t: number): string => {
   const dt = new Date(t * 1000);
-  let hr = dt.getHours();
-  let m = dt.getMinutes();
-  hr = hr < 10 ? "0" + hr : hr;
-  m = m < 10 ? "0" + m : m;
+  const h = dt.getHours();
+  const m = dt.getMinutes();
+  const hh = h < 10 ? "0" + h : h;
+  const mm = m < 10 ? "0" + m : m;
 
-  return hr + ":" + m;
+  return hh + ":" + mm;
 };
 
-const findCapacities = (edges) => {
+/**
+ * Reduziert ein Array aus Edges auf die darin vorkommenden Kapazitäten
+ * @param edges Ein Array aus Edges
+ * @returns Einen String aller einzigartigen Kapazitäten im Edges-Array
+ */
+const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
   const uniqueCapacities = edges.map((e) => {
     return e.capacity;
   });
@@ -30,14 +48,46 @@ const findCapacities = (edges) => {
 };
 
 /**
- * TODO
- * @param width
- * @param trip
+ * Gibt eine vertikale Darstellung einer Strecke mit einem Optionsfenster zurück.
+ * @param width Wie viel Platz steht zur Verfügung?
+ * @param trip Der darzustellende Trip.
  * @constructor
  */
 const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
   const svgRef = useRef(null);
   const [height, setHeight] = useState(500);
+
+  const xTimelineOffset = 50;
+  // Breite des grauen Zeitstrahls auf der linken Seite
+  const timelineWidth = 2;
+  // Radius der Stationen (Darsgestellt durch Kreise) auf dem Zeitstrahl
+  const timelineStationRadius = 4;
+  // Die weiße Umrandung um die einzelnen Stationen.
+  const timelineStationStrokeWidth = timelineWidth;
+
+  // Wie weit der Text von den einzelnen Stationen der Timeline entfernt?
+  const timelineTextXOffset = 10;
+  // Höhenverschiebung der Zeitangaben an den Stationen der Timeline
+  const timelineStationNameOffset = 2;
+  const timelineArrivalYOffset = -5;
+  const timelineDepartureYOffset = 8;
+
+  const fontSizeS = 10;
+  const fontSizeM = 12;
+
+  const xGraphOffet = 300;
+  const graphNumberXOffset = 10;
+  const graphLargeNumberYOffset = -3;
+  const graphPercentageYOffset = 12;
+
+  const spaceBetweenLeftAndRight = 2.5;
+
+  const titleYOffset = 10;
+  const titleXOffset = 10;
+
+  const svgPadding = 70;
+  const svgWidth = 580;
+  const infoPadding = 30;
 
   useEffect(() => {
     let svgHeight = 0;
@@ -49,77 +99,68 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
 
     for (let i = 0; i < data.length; i++) {
       const edge = data[i];
-      svgHeight += edge.height + 4;
+      svgHeight += (edge.height || 0) + config.verticalBallPadding;
+
+      const leftValue = edge.passenger_cdf[0].passengers;
+      const rightValue = edge.expected_passengers;
 
       view
         .append("rect")
-        .attr("x", 50)
-        .attr("y", edge.y)
-        .attr("height", edge.height)
-        .attr("width", 2)
+        .attr("x", xTimelineOffset)
+        .attr("y", edge.y || 0)
+        .attr("height", edge.height || 0)
+        .attr("width", timelineWidth)
         .attr("fill", colorSchema.lighterGrey);
 
       view
         .append("circle")
-        .attr("r", 4)
-        .attr("cx", 51)
-        .attr("cy", edge.y - 2)
+        .attr("r", timelineStationRadius)
+        .attr("cx", xTimelineOffset + timelineWidth / 2)
+        .attr("cy", (edge.y || 0) - timelineStationRadius / 2)
         .attr("stroke", colorSchema.white)
-        .attr("stroke-width", "2")
+        .attr("stroke-width", timelineStationStrokeWidth)
         .attr("fill", colorSchema.bluishGrey);
 
       if (i > 0) {
         // STATIONSNAMEN
         view
           .append("text")
-          .attr("x", 50)
-          .attr("y", edge.y)
+          .attr("x", xTimelineOffset)
+          .attr("y", edge.y || 0)
           .text(edge.from.name)
-          .attr("dx", 10)
-          .attr("dy", 2)
+          .attr("dx", timelineTextXOffset)
+          .attr("dy", timelineStationNameOffset)
           .attr("fill", colorSchema.grey)
           .attr("text-anchor", "start")
-          .attr("font-size", 12)
+          .attr("font-size", fontSizeM)
           .attr("font-weight", "bold")
           .attr("font-family", font_family);
 
         // ANKUNFTSZEITEN
         view
           .append("text")
-          .attr("x", 50)
-          .attr("y", edge.y)
-          .text(
-            `${data[i - 1].arrivalHours}:${
-              data[i - 1].arrivalMinutes < 10
-                ? "0" + data[i - 1].arrivalMinutes
-                : data[i - 1].arrivalMinutes
-            }`
-          ) // TODO:in ne Funktion auslagern !
-          .attr("dx", -10)
-          .attr("dy", -5)
+          .attr("x", xTimelineOffset)
+          .attr("y", edge.y || 0)
+          .text(renderTimeDisplay(data[i - 1].arrival_current_time))
+          .attr("dx", -timelineTextXOffset)
+          .attr("dy", timelineArrivalYOffset)
           .attr("fill", colorSchema.bluishGrey)
           .attr("text-anchor", "end")
-          .attr("font-size", 10)
+          .attr("font-size", fontSizeS)
           .attr("font-weight", "bold")
           .attr("font-family", font_family);
 
         // ABFAHRTSZEITEN
         view
           .append("text")
-          .attr("x", 50)
-          .attr("y", edge.y)
-          .text(
-            `${edge.departureHours}:${
-              edge.departureMinutes < 10
-                ? "0" + edge.departureMinutes
-                : edge.departureMinutes
-            }`
-          )
-          .attr("dx", -10)
-          .attr("dy", 8)
+          .attr("x", xTimelineOffset)
+          .attr("y", edge.y || 0)
+          .text(renderTimeDisplay(edge.departure_current_time))
+          .attr("dx", -timelineTextXOffset)
+          .attr("dy", timelineDepartureYOffset)
           .attr("fill", colorSchema.grey)
           .attr("text-anchor", "end")
-          .attr("font-size", 10)
+          .attr("font-size", fontSizeS)
           .attr("font-weight", "bold")
           .attr("font-family", font_family);
       }
@@ -127,92 +168,118 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       // "BUCHUNGEN"
       view
         .append("rect")
-        .attr("x", 300)
-        .attr("y", edge.y)
-        .attr("height", edge.height)
-        .attr("width", edge.capWidth)
+        .attr("x", xGraphOffet)
+        .attr("y", edge.y || 0)
+        .attr("height", edge.height || 0)
+        .attr("width", edge.capWidth || 0)
         .attr("fill", colorSchema.lighterGrey);
       view
         .append("rect")
-        .attr("x", 300 + (edge.capWidth - edge.leftWidth))
-        .attr("y", edge.y)
-        .attr("height", edge.height)
-        .attr("width", edge.leftWidth)
+        .attr("x", xGraphOffet + ((edge.capWidth || 0) - (edge.leftWidth || 0)))
+        .attr("y", edge.y || 0)
+        .attr("height", edge.height || 0)
+        .attr("width", edge.leftWidth || 0)
         .attr("fill", colorSchema.darkGrey);
 
+      // Linke Seite "Buchungen" große/absolute Zahl
       view
         .append("text")
-        .attr("x", 300 - Math.max(0, edge.leftWidth - edge.capWidth))
-        .attr("y", edge.y + edge.height / 2)
-        .text(Math.round(edge.expected_passengers * 0.3))
-        .attr("dx", -10)
-        .attr("dy", -3)
+        .attr(
+          "x",
+          xGraphOffet -
+            Math.max(0, (edge.leftWidth || 0) - (edge.capWidth || 0))
+        )
+        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
+        .text(Math.round(leftValue * config.testMultiplier))
+        .attr("dx", -graphNumberXOffset)
+        .attr("dy", graphLargeNumberYOffset)
         .attr("fill", colorSchema.grey)
         .attr("text-anchor", "end")
-        .attr("font-size", 12)
+        .attr("font-size", fontSizeM)
         .attr("font-weight", "inherit")
         .attr("font-family", font_family);
+
+      // Linke Seite "Buchungen" Prozente
       view
         .append("text")
-        .attr("x", 300 - Math.max(0, edge.leftWidth - edge.capWidth))
-        .attr("y", edge.y + edge.height / 2)
+        .attr(
+          "x",
+          xGraphOffet -
+            Math.max(0, (edge.leftWidth || 0) - (edge.capWidth || 0))
+        )
+        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
         .text(
           `${Math.round(
-            ((edge.expected_passengers * 0.3) / edge.capacity) * 100
+            ((leftValue * config.testMultiplier) / edge.capacity) * 100
           )}%`
         )
-        .attr("dx", -10)
-        .attr("dy", 12)
+        .attr("dx", -graphNumberXOffset)
+        .attr("dy", graphPercentageYOffset)
         .attr("fill", colorSchema.bluishGrey)
         .attr("text-anchor", "end")
-        .attr("font-size", 10)
+        .attr("font-size", fontSizeS)
         .attr("font-weight", "inherit")
         .attr("font-family", font_family);
+
       // "PROGNOSEN"
       view
         .append("rect")
-        .attr("x", 300 + edge.capWidth + 2.5)
-        .attr("y", edge.y)
-        .attr("height", edge.height)
-        .attr("width", edge.capWidth)
+        .attr(
+          "x",
+          xGraphOffet + (edge.capWidth || 0) + spaceBetweenLeftAndRight
+        )
+        .attr("y", edge.y || 0)
+        .attr("height", edge.height || 0)
+        .attr("width", edge.capWidth || 0)
         .attr("fill", colorSchema.lighterGrey);
       view
         .append("rect")
-        .attr("x", 300 + edge.capWidth + 2.5)
-        .attr("y", edge.y)
-        .attr("height", edge.height)
-        .attr("width", edge.rightWidth)
-        .attr("fill", edge.color);
+        .attr(
+          "x",
+          xGraphOffet + (edge.capWidth || 0) + spaceBetweenLeftAndRight
+        )
+        .attr("y", edge.y || 0)
+        .attr("height", edge.height || 0)
+        .attr("width", edge.rightWidth || 0)
+        .attr("fill", edge.color || 0);
+
+      // "Prognosen" absolute Zahl
       view
         .append("text")
         .attr(
           "x",
-          300 + edge.capWidth + 2.5 + Math.max(edge.capWidth, edge.rightWidth)
+          xGraphOffet +
+            (edge.capWidth || 0) +
+            spaceBetweenLeftAndRight +
+            Math.max(edge.capWidth || 0, edge.rightWidth || 0)
         )
-        .attr("y", edge.y + edge.height / 2)
-        .text(edge.expected_passengers)
-        .attr("dx", 10)
-        .attr("dy", -3)
+        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
+        .text(rightValue)
+        .attr("dx", graphNumberXOffset)
+        .attr("dy", graphLargeNumberYOffset)
         .attr("fill", colorSchema.grey)
         .attr("text-anchor", "start")
-        .attr("font-size", 12)
+        .attr("font-size", fontSizeM)
         .attr("font-weight", "inherit")
         .attr("font-family", font_family);
+
+      // "Prognose" Prozent
       view
         .append("text")
         .attr(
           "x",
-          300 + edge.capWidth + 2.5 + Math.max(edge.capWidth, edge.rightWidth)
+          xGraphOffet +
+            (edge.capWidth || 0) +
+            spaceBetweenLeftAndRight +
+            Math.max(edge.capWidth || 0, edge.rightWidth || 0)
         )
-        .attr("y", edge.y + edge.height / 2)
-        .text(
-          `${Math.round((edge.expected_passengers / edge.capacity) * 100)}%`
-        )
-        .attr("dx", 10)
-        .attr("dy", 12)
+        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
+        .text(`${Math.round((rightValue / edge.capacity) * 100)}%`)
+        .attr("dx", graphNumberXOffset)
+        .attr("dy", graphPercentageYOffset)
         .attr("fill", colorSchema.bluishGrey)
         .attr("text-anchor", "start")
-        .attr("font-size", 10)
+        .attr("font-size", fontSizeS)
         .attr("font-weight", "inherit")
         .attr("font-family", font_family);
     }
@@ -220,110 +287,115 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
     //"BUCHUNGEN" TITEL
     view
       .append("text")
-      .attr("x", 300 + data[0].capWidth)
-      .attr("y", 10)
+      .attr("x", xGraphOffet + (data[0].capWidth || 0))
+      .attr("y", titleYOffset)
       .text("Buchungen")
-      .attr("dx", -10)
-      //.attr("dy", 8)
+      .attr("dx", -titleXOffset)
       .attr("fill", colorSchema.grey)
       .attr("text-anchor", "end")
-      .attr("font-size", 10)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "bold")
       .attr("font-family", font_family);
     //"PROGNOSEN" TITEL
     view
       .append("text")
-      .attr("x", 300 + data[0].capWidth + 2.5)
-      .attr("y", 10)
+      .attr(
+        "x",
+        xGraphOffet + (data[0].capWidth || 0) + spaceBetweenLeftAndRight
+      )
+      .attr("y", titleYOffset)
       .text("Prognose")
-      .attr("dx", 10)
-      //.attr("dy", 8)
+      .attr("dx", titleXOffset)
       .attr("fill", colorSchema.grey)
       .attr("text-anchor", "start")
-      .attr("font-size", 10)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "bold")
       .attr("font-family", font_family);
 
     // ANFANGSSTATION ANKUNFTSZEIT
     view
       .append("text")
-      .attr("x", 50)
-      .attr("y", data[0].y)
-      .text(
-        `${data[0].departureHours}:${
-          data[0].departureMinutes < 10
-            ? "0" + data[0].departureMinutes
-            : data[0].departureMinutes
-        }`
-      )
-      .attr("dx", -10)
-      .attr("dy", 2)
+      .attr("x", xTimelineOffset)
+      .attr("y", data[0].y || 0)
+      .text(renderTimeDisplay(data[0].departure_current_time))
+      .attr("dx", -timelineTextXOffset)
+      .attr("dy", timelineStationNameOffset)
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "end")
-      .attr("font-size", 12)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "inherit")
       .attr("font-family", font_family);
 
     // ANFANGSSTATION Name
     view
       .append("text")
-      .attr("x", 50)
-      .attr("y", data[0].y)
+      .attr("x", xTimelineOffset)
+      .attr("y", data[0].y || 0)
       .text(data[0].from.name)
-      .attr("dx", 10)
-      .attr("dy", 2)
+      .attr("dx", timelineTextXOffset)
+      .attr("dy", timelineStationNameOffset)
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
-      .attr("font-size", 12)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "inherit")
       .attr("font-family", font_family);
 
     // ENDSTATION
     view
       .append("circle")
-      .attr("r", 4)
-      .attr("cx", 51)
-      .attr("cy", data[data.length - 1].y + data[data.length - 1].height - 2)
+      .attr("r", timelineStationRadius)
+      .attr("cx", xTimelineOffset + timelineWidth / 2)
+      .attr(
+        "cy",
+        (data[data.length - 1].y || 0) +
+          (data[data.length - 1].height || 0) -
+          timelineStationRadius / 2
+      )
       .attr("stroke", colorSchema.white)
-      .attr("stroke-width", "2")
+      .attr("stroke-width", timelineStationStrokeWidth)
       .attr("fill", colorSchema.bluishGrey);
 
     // ENDSTATION ANKUNFTSZEIT
     view
       .append("text")
-      .attr("x", 50)
-      .attr("y", data[data.length - 1].y + data[data.length - 1].height)
-      .text(
-        `${data[data.length - 1].arrivalHours}:${
-          data[data.length - 1].arrivalMinutes < 10
-            ? "0" + data[data.length - 1].arrivalMinutes
-            : data[data.length - 1].arrivalMinutes
-        }`
+      .attr("x", xTimelineOffset)
+      .attr(
+        "y",
+        (data[data.length - 1].y || 0) + (data[data.length - 1].height || 0)
       )
-      .attr("dx", -10)
-      .attr("dy", 2)
+      .text(renderTimeDisplay(data[data.length - 1].arrival_current_time))
+      .attr("dx", -timelineTextXOffset)
+      .attr("dy", timelineStationNameOffset)
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "end")
-      .attr("font-size", 12)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "inherit")
       .attr("font-family", font_family);
 
     // ENDSTATION Name
     view
       .append("text")
-      .attr("x", 50)
-      .attr("y", data[data.length - 1].y + data[data.length - 1].height)
+      .attr("x", xTimelineOffset)
+      .attr(
+        "y",
+        (data[data.length - 1].y || 0) + (data[data.length - 1].height || 0)
+      )
       .text(data[data.length - 1].to.name)
-      .attr("dx", 10)
-      .attr("dy", 2)
+      .attr("dx", timelineTextXOffset)
+      .attr("dy", timelineStationNameOffset)
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
-      .attr("font-size", 12)
+      .attr("font-size", fontSizeM)
       .attr("font-weight", "inherit")
       .attr("font-family", font_family);
 
-    setHeight(svgHeight + 70);
-  }, [trip]);
+    setHeight(svgHeight + svgPadding);
+  }, [
+    trip,
+    graphLargeNumberYOffset,
+    timelineArrivalYOffset,
+    timelineStationStrokeWidth,
+  ]);
 
   return (
     <div
@@ -345,7 +417,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         <div>
           <svg
             ref={svgRef}
-            width={580}
+            width={svgWidth}
             height={height}
             style={{
               backgroundColor: colorSchema.white,
@@ -359,7 +431,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       </div>
       <div
         style={{
-          width: `${width - 580 - 30}px` /** TODO: Magische Nummern un so*/,
+          width: `${width - svgWidth - infoPadding}px`,
         }}
       >
         {/** Infosanzeige */}
@@ -482,16 +554,5 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
     </div>
   );
 };
-/**
- * {overflow && (
-          <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
-        )}
-        {tripData.critical_sections > 0 && (
-          <WarningSymbol color="#ff8200" symbol="critical" width={15} />
-        )}
-        {tripData.crowded_sections > 0 && (
-          <WarningSymbol color="#444444" symbol="crowded" width={15} />
-        )}
- */
 
 export default VerticalTripDisplay;

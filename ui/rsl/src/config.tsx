@@ -39,6 +39,23 @@ const peakSpottingConfig = {
   horizontalCapacityScale: 21, // Skalierung für die horizontale Tripdarstellung
   horizontalLeftPadding: 150, // Breite für die Anzeige vom Zugnamen, etc.
   horizontalRightPadding: 50, //
+  pageSize: 7, // Wie viele trips werden auf der linken Seite angezeigt
+  initialSearchResults: 50, // Wieviele Trips werden beim ersten Laden der seite angezeigt?
+  minWidth: 900,
+  globalPadding: 10, // Wie viel Platz wird beim Teilen der Bildschirmbreite für die horizontale und vertikale Darstellung gelassen?
+  initialIgnorePastSections: false,
+  initialIncludeLoadThreshold: 0.0,
+  initialCriticalLoadThreshold: 1.0,
+  initialCrowdedLoad_threshold: 0.8,
+  initialSkipFirst: 0,
+
+  testMultiplier: 0.3, // <--- @Pablo™, hier! Einfach auf 1 setzen. Zur Testweisen Anpassung der Höhe für die linke graue "Buchungs"-Seite
+  verticalInitialOffset: 20,
+  verticalMinHeight: 30,
+  verticalMinWidth: 5,
+  verticalBallPadding: 4,
+  verticalHeightMultiplier: 3,
+  verticalWidthMultiplier: 0.15,
 };
 
 const font_family = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;

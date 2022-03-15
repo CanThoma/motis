@@ -36,11 +36,11 @@ type Props = {
   peakSpottingCurrentPage: number;
   setPeakSpottingCurrentPage?: (page: number) => void;
   peakSpottingsortBy: {
-    displayText: string;
+    label: string;
     value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
   };
   setPeakSpottingSortBy?: (sortBy: {
-    displayText: string;
+    label: string;
     value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
   }) => void;
 };
@@ -60,7 +60,7 @@ const SankeyContext = createContext<Props>({
   peakSpottingSelectedTrip: undefined,
   peakSpottingCurrentPage: 1,
   peakSpottingsortBy: {
-    displayText: "der Kritikalität der Fahrten",
+    label: "der Kritikalität der Fahrten",
     value: "MostCritical",
   },
 });
@@ -109,10 +109,10 @@ export const SankeyContextProvider = ({
   >(undefined);
   const [peakSpottingCurrentPage, setPeakSpottingCurrentPage] = useState(1);
   const [peakSpottingsortBy, setPeakSpottingSortBy] = useState<{
-    displayText: string;
+    label: string;
     value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
   }>({
-    displayText: "der Kritikalität der Fahrten",
+    label: "der Kritikalität der Fahrten",
     value: "MostCritical",
   });
 

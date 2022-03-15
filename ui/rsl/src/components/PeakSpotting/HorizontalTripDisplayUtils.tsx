@@ -1,11 +1,7 @@
-import {
-  select as d3Select,
-  interpolateRainbow,
-  interpolateRgb,
-  scaleLinear,
-  interpolateHsl,
-} from "d3";
-import { peakSpottingConfig as config } from "../../config";
+import { interpolateRgb, scaleLinear } from "d3";
+import { colorSchema, peakSpottingConfig as config } from "../../config";
+import { tripEdge } from "./VerticalTripDisplayUtils";
+import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit
@@ -39,9 +35,17 @@ const calcTripWidth = (
   return x1 - x2;
 };
 
-const addXandWidth = (width, edge) => {
+const addXandWidth = (width: number, edge: tripEdge): tripEdge => {
+  if (
+    !edge.departureHours ||
+    !edge.departureMinutes ||
+    !edge.arrivalHours ||
+    !edge.arrivalMinutes
+  )
+    return edge;
+
   edge.x = calcXCoordinate(width, edge.departureHours, edge.departureMinutes);
-  edge.width = calcTripWidth(
+  edge.horizontalWidth = calcTripWidth(
     width,
     edge.departureHours,
     edge.departureMinutes,
@@ -51,20 +55,37 @@ const addXandWidth = (width, edge) => {
   return edge;
 };
 
-const paginate = (items, pageNumber, pageSize) => {
+const paginate = (
+  items: PaxMonFilteredTripInfo[] | undefined,
+  pageNumber: number,
+  pageSize: number
+): PaxMonFilteredTripInfo[] => {
+  if (!items) return [];
   const startIndex = (pageNumber - 1) * pageSize;
   return items.slice(startIndex, startIndex + pageSize);
 };
 
-const prepareEdges = ({ data, width, height, onOverflow }) => {
-  const finalEdges = [];
-  let overflow = false;
+type prepareEdgesProps = {
+  trip: PaxMonFilteredTripInfo;
+  width: number;
+  height: number;
+};
 
-  for (const edge of data.edges) {
-    const tmpEdge = {};
+const prepareEdges = ({
+  trip,
+  width,
+  height,
+}: prepareEdgesProps): tripEdge[] => {
+  const finalEdges = [];
+
+  for (const edge of trip.edges) {
+    const tmpEdge: tripEdge = { ...edge };
 
     const departureTime = new Date(edge.departure_current_time * 1000);
     const arrivalTime = new Date(edge.arrival_current_time * 1000);
+
+    const leftValue = edge.passenger_cdf[0].passengers * config.testMultiplier;
+    const rightValue = edge.expected_passengers;
 
     tmpEdge.departureTime = departureTime;
     tmpEdge.arrivalTime = arrivalTime;
@@ -74,38 +95,26 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
     tmpEdge.arrivalHours = arrivalTime.getHours();
     tmpEdge.arrivalMinutes = arrivalTime.getMinutes();
 
-    tmpEdge.maxPax = edge.max_pax;
-    tmpEdge.capacity = edge.capacity;
-    tmpEdge.expectedPassengers = edge.expected_passengers;
-    tmpEdge.from = edge.from;
-    tmpEdge.to = edge.to;
-
     // Muss ne Zahl zwischen 0 u 1 sein
-    tmpEdge.colour = colour(
-      Math.min(1, edge.expected_passengers / edge.capacity)
-    );
+    tmpEdge.color = color(Math.min(1, rightValue / edge.capacity));
 
     // Höhe berechnen
     tmpEdge.capHeight = edge.capacity / config.horizontalCapacityScale;
-    tmpEdge.height = edge.expected_passengers / config.horizontalCapacityScale;
+    tmpEdge.height = rightValue / config.horizontalCapacityScale;
 
-    tmpEdge.y =
-      height - tmpEdge.expectedPassengers / config.horizontalCapacityScale;
+    tmpEdge.y = height - rightValue / config.horizontalCapacityScale;
 
     let overflowTmpEdge = null;
 
     // Haben wir nen overflow?
-    if (tmpEdge.capacity < tmpEdge.expectedPassengers) {
-      overflow = true;
+    if (tmpEdge.capacity < rightValue) {
       overflowTmpEdge = { ...tmpEdge };
 
       tmpEdge.y = height - tmpEdge.capacity / config.horizontalCapacityScale;
       tmpEdge.height = tmpEdge.capacity / config.horizontalCapacityScale;
 
       overflowTmpEdge.height =
-        (tmpEdge.expectedPassengers - tmpEdge.capacity) /
-          config.horizontalCapacityScale -
-        1.5;
+        (rightValue - tmpEdge.capacity) / config.horizontalCapacityScale - 1.5;
       overflowTmpEdge.y =
         height - tmpEdge.height - overflowTmpEdge.height - 1.5;
     }
@@ -156,7 +165,7 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
       tmpEdge.departureMinutes
     );
 
-    tmpEdge.width = calcTripWidth(
+    tmpEdge.horizontalWidth = calcTripWidth(
       width,
       tmpEdge.departureHours,
       tmpEdge.departureMinutes,
@@ -164,38 +173,42 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
       tmpEdge.arrivalMinutes
     );
 
+    const tmpEdge2 = { ...tmpEdge };
+    tmpEdge2.height = leftValue / config.horizontalCapacityScale;
+
+    tmpEdge2.y = height - leftValue / config.horizontalCapacityScale;
+    tmpEdge2.color = colorSchema.black;
+    tmpEdge2.noCap = true;
+    tmpEdge2.opacity = 0.45;
+
     finalEdges.push(tmpEdge);
+    finalEdges.push(tmpEdge2);
   }
 
-  onOverflow(overflow);
   return finalEdges;
 };
 
-const colour = scaleLinear<string>()
+const color = scaleLinear<string>()
   .domain([0, 0.4, 0.8, 0.99, 1])
   .range(["#dfe3e7", "#c1d5d7", "#ffc700", "#f04b4a", "#dd4141"])
   .interpolate(interpolateRgb.gamma(2.2));
 
-const colour2 = scaleLinear<string>()
-  .domain([0, 0.5, 1])
-  .range(["grey", "yellow", "red"])
-  .interpolate(interpolateHsl);
-
 const formatTime = (time: Date): string => {
-  let hours = time.getHours();
-  let minutes = time.getMinutes();
+  const h = time.getHours();
+  const m = time.getMinutes();
 
-  hours = hours < 10 ? "0" + hours : hours;
-  minutes = minutes < 10 ? "0" + minutes : minutes;
+  const hh = h < 10 ? "0" + h : h;
+  const mm = m < 10 ? "0" + m : m;
 
-  return `${hours}:${minutes}Uhr`;
+  return `${hh}:${mm}Uhr`;
 };
 
-const formatEdgeInfo = (edge) => {
+const formatEdgeInfo = (edge: tripEdge): string => {
+  if (!edge.departureTime || !edge.arrivalTime) return "";
   return `${edge.from.name} \u279E ${edge.to.name}\n${formatTime(
     edge.departureTime
   )}  \u279E ${formatTime(edge.arrivalTime)}\n\n${
-    edge.expectedPassengers
+    edge.expected_passengers
   } erwartete Passagiere\n${edge.capacity} Kapazität`;
 };
 
