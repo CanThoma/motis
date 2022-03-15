@@ -137,6 +137,10 @@ const PeakSpotting = (): JSX.Element => {
       setPaginatedTrips(paginate(peakSpottingTrips, 1, pageSize));
   }, [pageSize, setPaginatedTrips, peakSpottingTrips]);
 
+  window.addEventListener("resize", () =>
+    setPageSize(Math.floor((window.innerHeight - 246.4) / 85))
+  );
+
   /**
    * Passt den MaxResults-parameter an und setzt ein paar Frontendflags zur Darstellung der Ladeanimation
    *
