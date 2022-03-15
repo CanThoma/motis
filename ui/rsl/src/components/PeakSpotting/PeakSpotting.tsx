@@ -35,6 +35,8 @@ const PeakSpotting = ({
 
   const [pageSize, setPageSize] = useState(10);
 
+  const [refetchFlag, setRefetchFlag] = useState(false);
+
   const {
     setPeakSpottingTrips,
     peakSpottingTrips,
@@ -69,22 +71,25 @@ const PeakSpotting = ({
   async function loadAndProcessTripInfo(
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
+    if (!refetchFlag) return;
+
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
+
+    if (!res.trips) return;
+
     setPaginatedTrips(paginate(res.trips, 1, pageSize));
-    if (!status) {
-      console.log("AAAAAAAAAAAAAAAAAAA");
-    }
+
     //if (!selectedTrip || refetchFlag)
     setSelectedTrip(res.trips[0]);
     //if (!peakSpottingTrips || refetchFlag)
     setPeakSpottingTrips(res.trips);
     setCurrentPage(1);
-    return res.trips;
+    setRefetchFlag(false);
   }
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    setPaginatedTrips(paginate(data, page, pageSize));
+    setPaginatedTrips(paginate(peakSpottingTrips, page, pageSize));
   };
 
   const { data, isLoading, refetch } = useQuery(
@@ -100,6 +105,7 @@ const PeakSpotting = ({
     }
   );
   const handleSelect = async ({ displayText, value }) => {
+    await setRefetchFlag(true);
     await setSortBy({ displayText, value });
     setShowDropDown(false);
     refetch();
