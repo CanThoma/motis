@@ -183,8 +183,6 @@ export const queryKeys = {
   trip: () => [...queryKeys.all, "trip"] as const,
   tripLoad: (universe: number, tripId: TripId) =>
     [...queryKeys.trip(), "load", universe, { tripId }] as const,
-  tripsLoad: (universe: number, tripIds: TripId[]) =>
-    [...queryKeys.trip(), "load", universe, tripIds] as const,
   tripGroups: (req: PaxMonGetGroupsInTripRequest) =>
     [...queryKeys.trip(), "groups", req] as const,
   interchanges: (req: PaxMonGetInterchangesRequest) =>
