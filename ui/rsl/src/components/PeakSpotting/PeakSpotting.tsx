@@ -183,8 +183,6 @@ const PeakSpotting = (): JSX.Element => {
             aria-labelledby="dropdownMenuButton"
           >
             <li>
-              {" "}
-              {/*TODO fix handleselect*/}
               <button
                 className="dropdown-item"
                 onClick={() =>

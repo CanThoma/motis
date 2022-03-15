@@ -85,7 +85,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
   const titleYOffset = 10;
   const titleXOffset = 10;
 
-  const svgPadding = 70;
+  const svgPadding = 30;
   const svgWidth = 580;
   //const infoPadding = 30;
 
@@ -415,7 +415,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
           </h2>
         </div>
         <div
-          className={`flex-initial overflow-y-scroll p-1 border-2 border-db-cool-gray-200 hide-scrollbar`}
+          className={`flex-initial overflow-y-scroll p-1 py-3 border-2 border-db-cool-gray-200 hide-scrollbar`}
           style={{
             maxHeight: containerRef.current
               ? containerRef.current.getBoundingClientRect().height - 55
