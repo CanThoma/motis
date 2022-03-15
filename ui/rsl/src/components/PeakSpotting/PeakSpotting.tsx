@@ -70,7 +70,7 @@ const PeakSpotting = (): JSX.Element => {
   ) {
     if (peakSpottingTrips && !refetchFlag) return;
     console.log(window.innerHeight);
-    setPageSize(Math.floor((window.innerHeight - 246.4) / 85));
+    //setPageSize(Math.floor((window.innerHeight - config.topOffset) / 85));
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -138,7 +138,7 @@ const PeakSpotting = (): JSX.Element => {
   }, [pageSize, setPaginatedTrips, peakSpottingTrips]);
 
   window.addEventListener("resize", () =>
-    setPageSize(Math.floor((window.innerHeight - 246.4) / 85))
+    setPageSize(Math.floor((window.innerHeight - config.topOffset) / 85))
   );
 
   /**

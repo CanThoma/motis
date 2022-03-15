@@ -49,6 +49,8 @@ const peakSpottingConfig = {
   initialCrowdedLoad_threshold: 0.8,
   initialSkipFirst: 0,
 
+  topOffset: 320,
+
   testMultiplier: 0.3, // <--- @Pablo™, hier! Einfach auf 1 setzen. Zur Testweisen Anpassung der Höhe für die linke graue "Buchungs"-Seite
   verticalInitialOffset: 20,
   verticalMinHeight: 30,
