@@ -6,13 +6,19 @@ import {
   peakSpottingConfig as config,
 } from "../../config";
 
+/**
+ * Gibt Titelleiste des Horizontalen Peak Spotting graphen zurück
+ * @param width breite des Horizontalen Peak Spottings
+ * @param title der titel der angezeigt werden soll
+ * @constructor
+ */
 const HorizontalTripDisplayTitle = ({
   width,
   title,
 }: {
   width: number;
   title: string;
-}) => {
+}): JSX.Element => {
   const svgTitleRef = useRef(null);
 
   const graphWidth =
@@ -28,7 +34,6 @@ const HorizontalTripDisplayTitle = ({
         titleView
           .append("text")
           .attr("x", graphWidth * (i / config.timeFrame))
-          //.attr("dx", 12)
           .attr("y", 8)
           .attr("dy", 8)
           .attr("fill", colorSchema.grey)
@@ -39,26 +44,17 @@ const HorizontalTripDisplayTitle = ({
           .text(i + ":00");
       }
     }
-  }, []);
+  }, [graphWidth]);
 
   return (
     <>
       <div
         style={{
           backgroundColor: colorSchema.lightGrey,
-          //borderBottom: "2px solid",
           color: colorSchema.darkBluishGrey,
           width: width,
           height: "50px",
           fontFamily: font_family,
-          /*
-        marginBottom: "5px",
-        //width: "100%",
-        display: "flex",
-        boxShadow: "1px 3px 5px rgba(0, 0, 0, 0.2)",
-        WebkitBoxShadow: "1px 3px 5px rgba(0, 0, 0, 0.2)",
-        MozBoxShadow: "1px 3px 5px rgba(0, 0, 0, 0.2)",
-        */
         }}
         className="grid grid-flow-col"
       >
@@ -98,7 +94,6 @@ const HorizontalTripDisplayTitle = ({
       <div
         style={{
           marginBottom: "5px",
-          //width: "100%",
           backgroundColor: colorSchema.darkBluishGrey,
           width: width,
           height: "2px",

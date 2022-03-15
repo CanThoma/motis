@@ -9,9 +9,7 @@ import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
  * und damit das Rechteck zu zeichnen.
  */
 const calcTimePercentage = (hours: number, minutes: number): number => {
-  const percentage =
-    hours / config.timeFrame + minutes / (60 * config.timeFrame);
-  return percentage;
+  return hours / config.timeFrame + minutes / (60 * config.timeFrame);
 };
 
 const calcXCoordinate = (
