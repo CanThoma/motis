@@ -28,7 +28,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
 
     for (let i = 0; i < data.length; i++) {
       const edge = data[i];
-      svgHeight += edge.height;
+      svgHeight += edge.height + 4;
 
       view
         .append("rect")
@@ -123,7 +123,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .append("text")
         .attr("x", 300 - Math.max(0, edge.leftWidth - edge.capWidth))
         .attr("y", edge.y + edge.height / 2)
-        .text(edge.max_pax)
+        .text(Math.round(edge.expected_passengers * 0.3))
         .attr("dx", -10)
         .attr("dy", -3)
         .attr("fill", colorSchema.grey)
@@ -135,7 +135,11 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
         .append("text")
         .attr("x", 300 - Math.max(0, edge.leftWidth - edge.capWidth))
         .attr("y", edge.y + edge.height / 2)
-        .text(`${Math.round((edge.max_pax / edge.capacity) * 100)}%`)
+        .text(
+          `${Math.round(
+            ((edge.expected_passengers * 0.3) / edge.capacity) * 100
+          )}%`
+        )
         .attr("dx", -10)
         .attr("dy", 12)
         .attr("fill", colorSchema.bluishGrey)
@@ -165,7 +169,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           300 + edge.capWidth + 2.5 + Math.max(edge.capWidth, edge.rightWidth)
         )
         .attr("y", edge.y + edge.height / 2)
-        .text(edge.max_pax)
+        .text(edge.expected_passengers)
         .attr("dx", 10)
         .attr("dy", -3)
         .attr("fill", colorSchema.grey)
@@ -180,7 +184,9 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           300 + edge.capWidth + 2.5 + Math.max(edge.capWidth, edge.rightWidth)
         )
         .attr("y", edge.y + edge.height / 2)
-        .text(`${Math.round((edge.max_pax / edge.capacity) * 100)}%`)
+        .text(
+          `${Math.round((edge.expected_passengers / edge.capacity) * 100)}%`
+        )
         .attr("dx", 10)
         .attr("dy", 12)
         .attr("fill", colorSchema.bluishGrey)
@@ -268,7 +274,9 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("y", data[data.length - 1].y + data[data.length - 1].height)
       .text(
         `${data[data.length - 1].arrivalHours}:${
-          data[data.length - 1].arrivalMinutes
+          data[data.length - 1].arrivalMinutes < 10
+            ? "0" + data[data.length - 1].arrivalMinutes
+            : data[data.length - 1].arrivalMinutes
         }`
       )
       .attr("dx", -10)
@@ -293,7 +301,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
       .attr("font-weight", "inherit")
       .attr("font-family", config.font_family);
 
-    setHeight(svgHeight + 130);
+    setHeight(svgHeight + 70);
   }, [trip]);
 
   return (

@@ -1,6 +1,5 @@
 // generated file - do not modify - run update-protocol to update
-
-import { TripServiceInfo, Station, TripId } from "../motis";
+import { Station, TripId, TripServiceInfo } from "../motis";
 
 // paxmon/PaxMonAddGroupsRequest.fbs
 export interface PaxMonAddGroupsRequest {
@@ -75,17 +74,43 @@ export interface PaxMonFilterGroupsResponse {
 }
 
 // paxmon/PaxMonFilterTripsRequest.fbs
+export type PaxMonFilterTripsSortOrder =
+  | "MostCritical"
+  | "FirstDeparture"
+  | "ExpectedPax";
+
+// paxmon/PaxMonFilterTripsRequest.fbs
 export interface PaxMonFilterTripsRequest {
   universe: number;
-  load_factor_possibly_ge: number;
   ignore_past_sections: boolean;
+  include_load_threshold: number;
+  critical_load_threshold: number; // default: 1
+  crowded_load_threshold: number; // default: 0.8
+  include_edges: boolean;
+  sort_by: PaxMonFilterTripsSortOrder;
+  max_results: number;
+  skip_first: number;
+}
+
+// paxmon/PaxMonFilterTripsResponse.fbs
+export interface PaxMonFilteredTripInfo {
+  tsi: TripServiceInfo;
+  section_count: number;
+  critical_sections: number;
+  crowded_sections: number;
+  max_excess_pax: number;
+  cumulative_excess_pax: number;
+  max_expected_pax: number;
+  edges: PaxMonEdgeLoadInfo[];
 }
 
 // paxmon/PaxMonFilterTripsResponse.fbs
 export interface PaxMonFilterTripsResponse {
+  total_matching_trips: number;
   filtered_trips: number;
-  critical_sections: number;
-  trips: TripServiceInfo[];
+  remaining_trips: number;
+  total_critical_sections: number;
+  trips: PaxMonFilteredTripInfo[];
 }
 
 // paxmon/PaxMonFindTripsRequest.fbs
@@ -113,11 +138,13 @@ export interface PaxMonFindTripsResponse {
 // paxmon/PaxMonForkUniverseRequest.fbs
 export interface PaxMonForkUniverseRequest {
   universe: number;
+  fork_schedule: boolean;
 }
 
 // paxmon/PaxMonForkUniverseResponse.fbs
 export interface PaxMonForkUniverseResponse {
   universe: number;
+  schedule: number;
 }
 
 // paxmon/PaxMonGetGroupsInTripRequest.fbs
@@ -129,7 +156,8 @@ export type PaxMonGroupByStation =
   | "First"
   | "Last"
   | "FirstLongDistance"
-  | "LastLongDistance";
+  | "LastLongDistance"
+  | "EntryAndLast";
 
 // paxmon/PaxMonGetGroupsInTripRequest.fbs
 export interface PaxMonGetGroupsInTripRequest {
@@ -145,6 +173,8 @@ export interface PaxMonGetGroupsInTripRequest {
 export interface GroupedPassengerGroups {
   grouped_by_station: Station[];
   grouped_by_trip: TripServiceInfo[];
+  entry_station: Station[];
+  entry_time: number;
   info: PaxMonCombinedGroups;
 }
 
@@ -286,14 +316,56 @@ export interface PaxMonRemoveGroupsRequest {
   ids: number[];
 }
 
+// paxmon/PaxMonStatusRequest.fbs
+export interface PaxMonStatusRequest {
+  universe: number;
+}
+
 // paxmon/PaxMonStatusResponse.fbs
 export interface PaxMonStatusResponse {
   system_time: number;
-  tracked_groups: number;
-  last_update_affected_groups: number;
-  last_update_affected_passengers: number;
-  last_update_broken_groups: number;
-  last_update_broken_passengers: number;
+  active_groups: number;
+  trip_count: number;
+}
+
+// paxmon/PaxMonTrackedUpdates.fbs
+export interface PaxMonReusedGroupBaseInfo {
+  id: number;
+  passenger_count: number;
+  probability: number;
+  previous_probability: number;
+}
+
+// paxmon/PaxMonTrackedUpdates.fbs
+export interface PaxMonCriticalTripInfo {
+  critical_sections: number;
+  max_excess_pax: number;
+  cumulative_excess_pax: number;
+}
+
+// paxmon/PaxMonTrackedUpdates.fbs
+export interface PaxMonUpdatedTrip {
+  tsi: TripServiceInfo;
+  removed_max_pax: number;
+  removed_mean_pax: number;
+  added_max_pax: number;
+  added_mean_pax: number;
+  critical_info_before: PaxMonCriticalTripInfo;
+  critical_info_after: PaxMonCriticalTripInfo;
+  removed_groups: PaxMonGroupBaseInfo[];
+  added_groups: PaxMonGroupBaseInfo[];
+  reused_groups: PaxMonReusedGroupBaseInfo[];
+  before_edges: PaxMonEdgeLoadInfo[];
+  after_edges: PaxMonEdgeLoadInfo[];
+}
+
+// paxmon/PaxMonTrackedUpdates.fbs
+export interface PaxMonTrackedUpdates {
+  added_group_count: number;
+  reused_group_count: number;
+  removed_group_count: number;
+  updated_trip_count: number;
+  updated_trips: PaxMonUpdatedTrip[];
 }
 
 // paxmon/PaxMonTripLoadInfo.fbs
@@ -336,6 +408,8 @@ export interface PaxMonUniverseDestroyed {
 export interface PaxMonUniverseForked {
   base_universe: number;
   new_universe: number;
+  new_schedule: number;
+  schedule_forked: boolean;
 }
 
 // paxmon/PaxMonUpdate.fbs
@@ -364,5 +438,6 @@ export interface PaxMonEvent {
 
 // paxmon/PaxMonUpdate.fbs
 export interface PaxMonUpdate {
+  universe: number;
   events: PaxMonEvent[];
 }

@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext } from "react";
 
 import config, { factor as scaleFactor } from "../../config";
 import { TripId } from "../../api/protocol/motis";
+import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
 
 type Props = {
   stationId: string;
@@ -22,6 +23,18 @@ type Props = {
   setStationName?: (stationName: string) => void;
   factor: number;
   setFactor?: (factor: number) => void;
+  peakSpottingTrips: undefined | PaxMonFilteredTripInfo[];
+  setPeakSpottingTrips?: (trip: PaxMonFilteredTripInfo[] | undefined) => void;
+  peakSpottingPaginatedTrips: undefined | PaxMonFilteredTripInfo[];
+  setPeakSpottingPaginatedTrips?: (
+    trip: PaxMonFilteredTripInfo[] | undefined
+  ) => void;
+  peakSpottingSelectedTrip: PaxMonFilteredTripInfo | undefined;
+  setPeakSpottingSelectedTrip?: (
+    trip: PaxMonFilteredTripInfo | undefined
+  ) => void;
+  peakSpottingCurrentPage: number;
+  setPeakSpottingCurrentPage?: (page: number) => void;
 };
 const SankeyContext = createContext<Props>({
   stationId: "",
@@ -33,6 +46,10 @@ const SankeyContext = createContext<Props>({
   selectedStation: "",
   stationName: "",
   factor: scaleFactor,
+  peakSpottingTrips: undefined,
+  peakSpottingPaginatedTrips: undefined,
+  peakSpottingSelectedTrip: undefined,
+  peakSpottingCurrentPage: 1,
 });
 SankeyContext.displayName = "SankeyContext";
 
@@ -63,6 +80,16 @@ export const SankeyContextProvider = ({
   const [selectedStation, setSelectedStation] = useState("");
   const [stationName, setStationName] = useState("");
   const [factor, setFactor] = useState(scaleFactor);
+  const [peakSpottingTrips, setPeakSpottingTrips] = useState<
+    PaxMonFilteredTripInfo[] | undefined
+  >(undefined);
+  const [peakSpottingPaginatedTrips, setPeakSpottingPaginatedTrips] = useState<
+    PaxMonFilteredTripInfo[] | undefined
+  >(undefined);
+  const [peakSpottingSelectedTrip, setPeakSpottingSelectedTrip] = useState<
+    PaxMonFilteredTripInfo | undefined
+  >(undefined);
+  const [peakSpottingCurrentPage, setPeakSpottingCurrentPage] = useState(1);
 
   return (
     <SankeyContext.Provider
@@ -85,6 +112,14 @@ export const SankeyContextProvider = ({
         setStationName,
         factor,
         setFactor,
+        peakSpottingTrips,
+        setPeakSpottingTrips,
+        peakSpottingPaginatedTrips,
+        setPeakSpottingPaginatedTrips,
+        peakSpottingSelectedTrip,
+        setPeakSpottingSelectedTrip,
+        peakSpottingCurrentPage,
+        setPeakSpottingCurrentPage,
       }}
     >
       {children}
