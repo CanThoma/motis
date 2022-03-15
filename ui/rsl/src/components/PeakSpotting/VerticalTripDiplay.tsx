@@ -13,11 +13,20 @@ type Props = {
 
 const renderTimeDisplay = (t) => {
   const dt = new Date(t * 1000);
-  const hr = dt.getHours();
+  let hr = dt.getHours();
   let m = dt.getMinutes();
+  hr = hr < 10 ? "0" + hr : hr;
   m = m < 10 ? "0" + m : m;
 
   return hr + ":" + m;
+};
+
+const findCapacities = (edges) => {
+  const uniqueCapacities = edges.map((e) => {
+    return e.capacity;
+  });
+
+  return uniqueCapacities.filter((v, i, a) => a.indexOf(v) === i).toString();
 };
 
 /**
@@ -316,8 +325,6 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
     setHeight(svgHeight + 70);
   }, [trip]);
 
-  console.log(trip);
-
   return (
     <div
       className="grid grid-flow-col"
@@ -407,6 +414,10 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
                   <th>Anbieter</th>
                   <td>{trip.tsi.service_infos[0].provider}</td>
                 </tr>
+                <tr>
+                  <th>Kapazität</th>
+                  <td>{findCapacities(trip.edges)}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -427,32 +438,42 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           <div className="tableContainer">
             <table className="table">
               <tbody>
-                <tr>
-                  <th>
-                    <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
-                  </th>
-                  <td>Der Zug ist überfüllt.</td>
-                </tr>
-                <tr>
-                  <th>
-                    <WarningSymbol
-                      color="#ff8200"
-                      symbol="critical"
-                      width={15}
-                    />
-                  </th>
-                  <td>Der Zug enthält kritische Abschnitte.</td>
-                </tr>
-                <tr>
-                  <th>
-                    <WarningSymbol
-                      color="#444444"
-                      symbol="crowded"
-                      width={15}
-                    />
-                  </th>
-                  <td>Der Zug enthält überfüllte Abschnitte.</td>
-                </tr>
+                {trip.max_excess_pax > 0 && (
+                  <tr>
+                    <th>
+                      <WarningSymbol
+                        color="#ef1d18"
+                        symbol="excess"
+                        width={15}
+                      />
+                    </th>
+                    <td>Der Zug ist überfüllt.</td>
+                  </tr>
+                )}
+                {trip.critical_sections > 0 && (
+                  <tr>
+                    <th>
+                      <WarningSymbol
+                        color="#ff8200"
+                        symbol="critical"
+                        width={15}
+                      />
+                    </th>
+                    <td>Der Zug enthält kritische Abschnitte.</td>
+                  </tr>
+                )}
+                {trip.crowded_sections > 0 && (
+                  <tr>
+                    <th>
+                      <WarningSymbol
+                        color="#444444"
+                        symbol="crowded"
+                        width={15}
+                      />
+                    </th>
+                    <td>Der Zug enthält überfüllte Abschnitte.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -461,5 +482,16 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
     </div>
   );
 };
+/**
+ * {overflow && (
+          <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
+        )}
+        {tripData.critical_sections > 0 && (
+          <WarningSymbol color="#ff8200" symbol="critical" width={15} />
+        )}
+        {tripData.crowded_sections > 0 && (
+          <WarningSymbol color="#444444" symbol="crowded" width={15} />
+        )}
+ */
 
 export default VerticalTripDisplay;
