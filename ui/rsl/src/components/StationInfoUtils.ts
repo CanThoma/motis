@@ -21,6 +21,7 @@ import {
 import { useQuery, useQueryClient } from "react-query";
 import { addEdgeStatistics } from "../util/statistics";
 import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
+import { formatDateTime } from "../util/dateFormat";
 
 export type StationInterchangeParameters = {
   stationId: string;
@@ -30,6 +31,7 @@ export type StationInterchangeParameters = {
   onStatusUpdate?: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
   tripDirection: "entering" | "exiting" | "both";
+  showOutOfTime: boolean;
 };
 type TripIdAtStation = TripId & {
   pax: number;
@@ -243,13 +245,15 @@ function InterchangePointInfoHandle(
   tripsInStationPoint: TripIdAtStation[],
   type: InterchangePoint,
   limitTime: number,
-  interchangePassengerCount: number
+  interchangePassengerCount: number,
+  showOutOfTime: boolean
 ): number {
   let pointStationIndex: number;
   /* Get arrival point */
   if (
-    (type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
-    (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime)
+    !showOutOfTime &&
+    ((type == InterchangePoint.ARRIVING && info.schedule_time < limitTime) ||
+      (type == InterchangePoint.DEPARTING && info.schedule_time > limitTime))
   ) {
     pointStationIndex = POINT_STATION_OUT_OF_TIME_SEARCH;
   } else {
@@ -380,19 +384,20 @@ export function ExtractStationData(
             departureInfo.trips[0].trip,
             params.onlyIncludeTripIds
           ) ||
-            filterTripDirection == "entering")
-        )
+            filterTripDirection == "exiting")
+        ) {
           continue;
-        // if there is only departure existing (boarding)
+        } // if there is only departure existing (boarding)
         else if (
           !departureInfo &&
           (!InterchangePassFilter(
             arrivalInfo.trips[0].trip,
             params.onlyIncludeTripIds
           ) ||
-            filterTripDirection == "exiting")
-        )
+            filterTripDirection == "entering")
+        ) {
           continue;
+        }
       }
       /* Push/modify trip point, for arrival, if exists; else -1 = "boarding" */
       if (arrivalInfo)
@@ -401,7 +406,8 @@ export function ExtractStationData(
           arrivingTripsInStation,
           InterchangePoint.ARRIVING,
           params.startTime,
-          interchange.groups.max_passenger_count
+          interchange.groups.max_passenger_count,
+          params.showOutOfTime
         );
 
       /* Push/modify trip point, for departure, if exists; else -1 = "exiting" */
@@ -411,9 +417,9 @@ export function ExtractStationData(
           departingTripsInStation,
           InterchangePoint.DEPARTING,
           params.endTime,
-          interchange.groups.max_passenger_count
+          interchange.groups.max_passenger_count,
+          params.showOutOfTime
         );
-
       setNodeConditionally(
         boardingNode,
         interchange.groups,
@@ -537,9 +543,12 @@ export function ExtractStationData(
         const arrivingStationId = arrivingTripIdStations.find((x) =>
           SameTripId(x.tripId, tsi.tsi.trip)
         )?.stationId;
-        const edge = tsi.edges.find((edge) => edge.to.id === arrivingStationId);
+        const edgeIndex = tsi.edges.findIndex(
+          (edge) => edge.to.id === arrivingStationId
+        );
         graph.fromNodes[i + 2].name = NameTrip(tsi.tsi);
-        if (edge) {
+        if (edgeIndex >= 0) {
+          const edge = tsi.edges[edgeIndex];
           graph.fromNodes[i + 2].cap = edge.capacity;
           graph.fromNodes[i + 2].pax = edge.max_pax;
         } else {
@@ -586,12 +595,13 @@ export function ExtractStationData(
         const departingStationId = departingTripIdStations.find((x) =>
           SameTripId(x.tripId, tsi.tsi.trip)
         )?.stationId;
-        const edge = tsi.edges.find(
+        const edgeIndex = tsi.edges.findIndex(
           (edge) => edge.from.id === departingStationId
         );
         graph.toNodes[i].name = NameTrip(tsi.tsi);
         // it will not find an edge, if the trip is Nahverkehr but station is Fernverkehr (?)
-        if (edge) {
+        if (edgeIndex >= 0) {
+          const edge = tsi.edges[edgeIndex];
           graph.toNodes[i].cap = edge.capacity;
           graph.toNodes[i].pax = edge.max_pax;
         } else {

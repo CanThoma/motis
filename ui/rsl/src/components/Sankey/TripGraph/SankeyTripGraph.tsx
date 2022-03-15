@@ -13,12 +13,17 @@ import {
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "../../TripInfoUtils";
 import Modal from "./Modal/Modal";
-import config from "../../../config";
+import { font_family, tripConfig } from "../../../config";
 
 type Props = {
   tripId: TripId;
-  onStationSelected: (sId: string, name: string, time: number) => void;
-  width?: number;
+  /**
+   * setzt die states selectedStation stationName startTime und endTime des Station Graphs
+   * @param stationId Id der ausgewählten Station
+   * @param name Name der ausgewählten Station
+   * @param time Zeit welche -5/ +25 min als Zeitfenster des Station Graphs benutzt wird.
+   */
+  onStationSelected: (stationId: string, name: string, time: number) => void;
   height?: number;
   nodeWidth?: number;
   nodePadding?: number;
@@ -38,7 +43,6 @@ type Props = {
 const SankeyTripGraph = ({
   tripId,
   onStationSelected,
-  width = 1000,
   nodeWidth = 25,
   nodePadding = 15,
 }: Props): JSX.Element => {
@@ -49,20 +53,8 @@ const SankeyTripGraph = ({
   const [clickedNode, setClickedNode] = useState<{
     node: Node;
     tripId: TripId;
-    currentArrivalTime: number;
-    currentDepartureTime: number;
+    time: number;
   }>();
-
-  const rowBackgroundColour = "#cacaca";
-
-  const linkOpacity = 0.3;
-  const linkOpacityFocus = 0.7;
-  const linkOpacityClear = 0.01;
-
-  const nodeOpacity = 0.9;
-  const backdropOpacity = 0.7;
-
-  const leftTimeOffset = 100;
 
   const graphData = ExtractGroupInfoForThisTrain(tripId);
 
@@ -77,10 +69,9 @@ const SankeyTripGraph = ({
       nodes: graphData.nodes,
       links: graphData.links,
       onSvgResize: handleSvgResize,
-      width,
       nodeWidth,
       nodePadding,
-      leftTimeOffset,
+      leftTimeOffset: tripConfig.leftTimeOffset,
     });
 
     const svg = d3Select(svgRef.current);
@@ -128,21 +119,9 @@ const SankeyTripGraph = ({
       .attr("height", (d) =>
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOpacity)
+      .attr("fill", tripConfig.rowBackgroundColor)
+      .attr("opacity", tripConfig.backdropOpacity)
       .attr("cursor", "pointer");
-
-    // Add the onClick Action for Backdrops
-    // TODO: welche Zeit ist hier die richtige?!?! + Anpassen der restlichen Zeiten. (bzw. weitere onStationSelected)
-    backdrops.on(
-      "click",
-      (_, i) =>
-        onStationSelected(
-          i.sId,
-          i.name,
-          Math.min(i.arrival_schedule_time, i.arrival_current_time)
-        ) //, i.arrival_current_time)
-    );
 
     // Define the nodes.
     const nodes = view
@@ -156,8 +135,8 @@ const SankeyTripGraph = ({
       .attr("y", (d) => d.y0 || 0)
       .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
       .attr("height", (d) => Math.max(0, (d.y1 || 0) - (d.y0 || 0)))
-      .attr("fill", (d) => d.color || rowBackgroundColour)
-      .attr("opacity", nodeOpacity);
+      .attr("fill", (d) => d.color || tripConfig.rowBackgroundColor)
+      .attr("opacity", tripConfig.nodeOpacity);
 
     // Add titles for node hover effects.
     nodes
@@ -167,14 +146,45 @@ const SankeyTripGraph = ({
       .append("title")
       .text((d) => formatTextNode(d.name, d.totalNodeValue || 0));
 
+    // Add the onClick Action for Backdrops
+    backdrops
+      .filter((d) => (d.x1 || 0) < tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.departure_schedule_time, i.departure_current_time)
+        )
+      );
+    backdrops
+      .filter((d) => (d.x1 || 0) > tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.arrival_schedule_time, i.arrival_current_time)
+        )
+      );
+
     // Add the onClick Action
-    nodes.on("click", (_, i) =>
-      onStationSelected(
-        i.sId,
-        i.name,
-        Math.min(i.arrival_schedule_time, i.arrival_current_time)
-      )
-    );
+    nodes
+      .filter((d) => (d.x1 || 0) < tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.departure_schedule_time, i.departure_current_time)
+        )
+      );
+    nodes
+      .filter((d) => (d.x1 || 0) > tripConfig.width / 2)
+      .on("click", (_, i) =>
+        onStationSelected(
+          i.sId,
+          i.name,
+          Math.min(i.arrival_schedule_time, i.arrival_current_time)
+        )
+      );
 
     // Define the links.
     const links = view
@@ -183,10 +193,16 @@ const SankeyTripGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0, leftTimeOffset)
+        createSankeyLink(
+          nodeWidth,
+          tripConfig.width,
+          d.y0 || 0,
+          d.y1 || 0,
+          tripConfig.leftTimeOffset
+        )
       )
-      .attr("stroke", (d) => d.color || rowBackgroundColour)
-      .attr("stroke-opacity", linkOpacity)
+      .attr("stroke", (d) => d.color || tripConfig.rowBackgroundColor)
+      .attr("stroke-opacity", tripConfig.linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -208,19 +224,18 @@ const SankeyTripGraph = ({
       .attr("fill", "black")
       .attr("text-anchor", "start")
       .attr("font-size", 10)
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .text((d) => d.name)
       .on("click", (_, d) => {
         setIsOpen(true);
         setClickedNode({
           node: d,
           tripId: tripId,
-          currentArrivalTime: d.arrival_current_time,
-          currentDepartureTime: d.departure_current_time,
+          time: d.departure_current_time,
         });
       })
       .attr("cursor", "pointer")
-      .filter((d) => (d.x1 || 0) > width / 2)
+      .filter((d) => (d.x1 || 0) > tripConfig.width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
       .attr("text-anchor", "end")
@@ -230,20 +245,20 @@ const SankeyTripGraph = ({
         setClickedNode({
           node: d,
           tripId: tripId,
-          currentArrivalTime: d.arrival_current_time,
-          currentDepartureTime: d.departure_current_time,
+          time: d.arrival_current_time,
         });
       });
 
+    // add time labels
     view
       .selectAll("text.nodeTime")
-      .data(graph.nodes.filter((d) => (d.x1 || 0) < width / 2))
+      .data(graph.nodes.filter((d) => (d.x1 || 0) < tripConfig.width / 2))
       .join((enter) => {
         const tmp: Selection<SVGTextElement, Node, SVGGElement, unknown> = enter
           .append("text")
           .classed("node", true)
           .attr("x", 0)
-          .attr("dx", leftTimeOffset - 5)
+          .attr("dx", tripConfig.leftTimeOffset - 5)
           .attr(
             "y",
             (d) =>
@@ -252,13 +267,13 @@ const SankeyTripGraph = ({
           )
           .attr("dy", 2.5)
           .attr("text-anchor", "end")
-          .attr("font-family", config.font_family)
+          .attr("font-family", font_family)
           .attr("font-size", 10)
           .attr("fill", "#a8a8a8")
           .attr("font-weight", "bold");
 
         // Die eigentliche Zeit
-        tmp.append("tspan").text((d) => renderTime(d.arrival_current_time));
+        tmp.append("tspan").text((d) => renderTime(d.departure_current_time));
 
         renderDelay(tmp, "arrival");
 
@@ -277,7 +292,7 @@ const SankeyTripGraph = ({
 
     view
       .selectAll("text.nodeTime")
-      .data(graph.nodes.filter((d) => (d.x1 || 0) > width / 2))
+      .data(graph.nodes.filter((d) => (d.x1 || 0) > tripConfig.width / 2))
       .join((enter) => {
         const tmp = enter
           .append("text")
@@ -292,7 +307,7 @@ const SankeyTripGraph = ({
           )
           .attr("dy", 2.5)
           .attr("text-anchor", "start")
-          .attr("font-family", config.font_family)
+          .attr("font-family", font_family)
           .attr("font-size", 10)
           .attr("fill", "#a8a8a8")
           .attr("font-weight", "bold");
@@ -306,9 +321,9 @@ const SankeyTripGraph = ({
           .text(
             (d) =>
               `Geplante Ankunftszeit: ${renderTime(
-                d.departure_schedule_time
+                d.arrival_schedule_time
               )} – Tatsächliche Ankunftszeit: ${renderTime(
-                d.departure_current_time
+                d.arrival_current_time
               )} `
           );
         return tmp;
@@ -316,12 +331,12 @@ const SankeyTripGraph = ({
 
     view
       .append("text")
-      .attr("x", leftTimeOffset)
+      .attr("x", tripConfig.leftTimeOffset)
       .attr("dx", -5) //
       .attr("y", 8)
       .attr("dy", 2.5)
       .attr("text-anchor", "end")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
@@ -335,11 +350,11 @@ const SankeyTripGraph = ({
 
     view
       .append("text")
-      .attr("x", width - leftTimeOffset)
+      .attr("x", tripConfig.width - tripConfig.leftTimeOffset)
       .attr("dx", 5) //
       .attr("y", tempHeight)
       .attr("text-anchor", "start")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ANKUNFT");
@@ -357,7 +372,9 @@ const SankeyTripGraph = ({
      * @param node node deren Links highlighted werden sollen
      */
     function branchShow(_: MouseEvent, node: Node) {
-      view.selectAll("path.link").attr("stroke-opacity", linkOpacityClear);
+      view
+        .selectAll("path.link")
+        .attr("stroke-opacity", tripConfig.linkOpacityClear);
 
       let links: Selection<BaseType, unknown, SVGElement, unknown>;
 
@@ -366,13 +383,13 @@ const SankeyTripGraph = ({
           return (node.sourceLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links.attr("stroke-opacity", linkOpacityFocus);
+        links.attr("stroke-opacity", tripConfig.linkOpacityFocus);
       } else if (node.sourceLinks && node.sourceLinks.length === 0) {
         links = view.selectAll("path.link").filter((link) => {
           return (node.targetLinks || []).indexOf(link as Link) !== -1;
         });
 
-        links.attr("stroke-opacity", linkOpacityFocus);
+        links.attr("stroke-opacity", tripConfig.linkOpacityFocus);
       }
     }
 
@@ -381,7 +398,9 @@ const SankeyTripGraph = ({
      */
     function branchClear() {
       links.attr("stroke-opacity", 0);
-      view.selectAll("path.link").attr("stroke-opacity", linkOpacity);
+      view
+        .selectAll("path.link")
+        .attr("stroke-opacity", tripConfig.linkOpacity);
     }
 
     // Das für ein einfaches Show/Don't Show
@@ -398,18 +417,18 @@ const SankeyTripGraph = ({
         return (l as Link).id === link.id;
       });
 
-      links.attr("stroke-opacity", linkOpacityFocus);
+      links.attr("stroke-opacity", tripConfig.linkOpacityFocus);
     }
 
     /**
      * setzt die Opacity aller Links auf den Ursprungswert zurück
      */
     function linkClear() {
-      links.attr("stroke-opacity", linkOpacity);
+      links.attr("stroke-opacity", tripConfig.linkOpacity);
     }
 
     links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-  }, [graphData, nodePadding, nodeWidth, width, onStationSelected, tripId]);
+  }, [graphData, nodePadding, nodeWidth, onStationSelected, tripId]);
 
   return (
     <>
@@ -418,10 +437,10 @@ const SankeyTripGraph = ({
       {graphData && (
         <svg
           ref={svgRef}
-          width={width}
+          width={tripConfig.width}
           height={svgHeight}
           className="m-auto"
-          style={{ marginBottom: "1.45rem" }} // TODO: das ist nur testweise wegen der besseren Lesbarkeit.
+          style={{ marginBottom: "1.45rem" }}
         />
       )}
     </>

@@ -24,6 +24,7 @@ import { addEdgeStatistics } from "../../util/statistics";
 import { universeAtom } from "../../data/simulation";
 
 import config, { colorSchema } from "../../config";
+import { colorSchema, peakSpottingConfig as config } from "../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";

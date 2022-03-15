@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 import "./legend.css";
 
-const Legend = () => {
+const Legend = (): JSX.Element => {
   const [showModal, setShowModal] = useState(false);
 
   const [showPage1, setShowPage1] = useState(false);
@@ -31,14 +31,14 @@ const Legend = () => {
                   strokeWidth: "5px",
                 }}
               >
-                <line x1="5" y="0" x2="5" y2="10"></line>
+                <line x1="5" y="0" x2="5" y2="10" />
                 <animate
                   attributeName="stroke"
                   dur="5s"
                   repeatCount="indefinite"
                   keyTimes="0;0.5;1"
                   values="#ECE81A;#f01414;#ECE81A;"
-                ></animate>
+                />
               </g>
             </pattern>
           </defs>
@@ -50,7 +50,7 @@ const Legend = () => {
             fill="rgb(255, 108, 0)"
             opacity="0.9"
             style={{ fill: "url('#diagonalHash')" }}
-          ></rect>
+          />
         </svg>
       ),
       short: [
@@ -114,15 +114,8 @@ const Legend = () => {
             fill="#ed6755"
             opacity="1"
             cursor="pointer"
-          ></rect>
-          <rect
-            x="0"
-            y="0"
-            width="50"
-            height="20"
-            fill="#d6d7d7"
-            opacity="1"
-          ></rect>
+          />
+          <rect x="0" y="0" width="50" height="20" fill="#d6d7d7" opacity="1" />
         </svg>
       ),
       short: [
@@ -183,7 +176,7 @@ const Legend = () => {
           <div
             className="legend-backdrop"
             onClick={() => setShowModal(false)}
-          ></div>
+          />
           <div className="legend-modal">
             <h1 className="legend_title">Legende</h1>
             <ol className="gradient-list">
@@ -235,13 +228,10 @@ const Legend = () => {
               )}
             </ol>
             <button className="legend_btn" onClick={() => setShowModal(false)}>
-              Danke 👍
+              Schließen
             </button>
-            <a href="#m1-c" className="link-2"></a>
-            <button
-              className="close"
-              onClick={() => setShowModal(false)}
-            ></button>
+            <a href="#m1-c" className="link-2" />
+            <button className="close" onClick={() => setShowModal(false)} />
           </div>
         </div>
       )}
@@ -259,7 +249,7 @@ const Legend = () => {
           role="img"
           className="svg-legend"
         >
-          <path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 128c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S224 177.7 224 160C224 142.3 238.3 128 256 128zM296 384h-80C202.8 384 192 373.3 192 360s10.75-24 24-24h16v-64H224c-13.25 0-24-10.75-24-24S210.8 224 224 224h32c13.25 0 24 10.75 24 24v88h16c13.25 0 24 10.75 24 24S309.3 384 296 384z"></path>
+          <path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 128c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S224 177.7 224 160C224 142.3 238.3 128 256 128zM296 384h-80C202.8 384 192 373.3 192 360s10.75-24 24-24h16v-64H224c-13.25 0-24-10.75-24-24S210.8 224 224 224h32c13.25 0 24 10.75 24 24v88h16c13.25 0 24 10.75 24 24S309.3 384 296 384z" />
         </svg>
       </div>
     </>

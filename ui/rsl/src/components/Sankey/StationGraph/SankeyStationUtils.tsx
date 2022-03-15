@@ -1,44 +1,12 @@
-import { interpolateRainbow } from "d3";
 import {
   Node,
   Link,
   SankeyInterface,
-  NodeMinimal,
   createGraphInterface,
 } from "./SankeyStationTypes";
 import { TripId } from "../../../api/protocol/motis";
-import { expandNode, sameId } from "../SankeyUtils";
-
-/**
- * Abstand zwischen Balken und der Zeit
- */
-const timeOffset = 70;
-
-/**
- * gibt die erste node mit gegebener Id zurück
- * @param nodes Node Array
- * @param id eine id, kann string sein wegen "previous" etc
- */
-const getNode = (nodes: NodeMinimal[], id: string | TripId): Node => {
-  for (const cNode of nodes) {
-    if (sameId(cNode.id, id)) return cNode;
-  }
-  return nodes[0];
-};
-
-/**
- * berechnet die Farbe der Node aus der Position der Node im array
- * alle colourIntervallLength wiederholen sich die Farben für bessere Lesbarkeit
- * @param a index der node
- * @param b Länge des Array
- */
-const color = (a: number, b: number): string => {
-  const colourIntervallLength = 15;
-  return interpolateRainbow(
-    ((Number(a) + 1) % colourIntervallLength) /
-      Math.min(b, colourIntervallLength)
-  );
-};
+import { minimalToNode, sameId, getNode, color } from "../SankeyUtils";
+import { stationConfig } from "../../../config";
 
 /**
  * Berechnet die relative Höhe eines Knotens basierend auf dem
@@ -52,7 +20,7 @@ const color = (a: number, b: number): string => {
 const calcNodeHeight = (
   nodeValue: number,
   minHeight: number,
-  factor = 4
+  factor = 15
 ): number => {
   if (nodeValue <= 0) return 0;
   const calcHeight = calcNodeHeightWithoutMinHeight(nodeValue, factor);
@@ -65,7 +33,7 @@ const calcNodeHeight = (
  * @param value Anzahl an Passagieren
  * @param factor Skalierungsfaktor
  */
-const calcNodeHeightWithoutMinHeight = (value: number, factor = 4): number => {
+const calcNodeHeightWithoutMinHeight = (value: number, factor = 15): number => {
   return value / factor;
 };
 
@@ -97,54 +65,6 @@ export const formatTextNode = (node: Node): string => {
 };
 
 /**
- * Erstellt den Text der den Titel beim hovern der Links füllt
- * @param fNodeName
- * @param tNodeName
- * @param link
- */
-export const formatTextLink = (
-  fNodeName: string,
-  tNodeName: string,
-  link: Link
-): string => {
-  return `${link.value} Personen \n ${
-    fNodeName.includes("\u2192")
-      ? fNodeName.substr(0, fNodeName.indexOf(" \u2192"))
-      : fNodeName
-  } \u2192 ${
-    tNodeName.includes("\u2192")
-      ? tNodeName.substr(0, tNodeName.indexOf(" \u2192"))
-      : tNodeName
-  }`;
-};
-
-/**
- * +++++++++ Kurz +++++++++
- * Beispielpfad: d="M20,461.58662092624354C300,461.58662092624354,300,337.6243567753003,580,337.6243567753003"
- * Das Muster ist folgendes:
- * M nodeWidth, y0 C Width/2, y0 , Width/2, y1, Width-nodeWidth, y1
- *
- * ++++++ Ausführlich +++++
- * M (x,y) = Move the current point to the coordinate x,y. Any subsequent coordinate pair(s) are interpreted as parameter(s) for implicit absolute LineTo (L) command(s) (see below).
- * C ((x1,y1, x2,y2, x,y)+= Draw a cubic Bézier curve from the current point to the end point specified by x,y. The start control point is specified by x1,y1 and the end control point is specified by x2,y2. Any subsequent triplet(s) of coordinate pairs are interpreted as parameter(s) for implicit absolute cubic Bézier curve (C) command(s).
- *
- * @param nodeWidth Basisbreite der Nodes
- * @param width Basisbreite des Graphen
- * @param y0 y Koordinate der linken Node
- * @param y1 y Koordinate der rechten Node
- */
-export const createSankeyLink = (
-  nodeWidth: number,
-  width: number,
-  y0: number,
-  y1: number
-): string => {
-  return `M${nodeWidth + timeOffset},${y0}C${width / 2},${y0},${
-    width / 2
-  },${y1},${width - nodeWidth - timeOffset},${y1}`;
-};
-
-/**
  * Berechnet die Koordinaten aller Nodes und der dazugehörigen Links
  * @param fNodes
  * @param tNodes
@@ -160,7 +80,6 @@ export const createGraph = ({
   tNodes,
   links,
   onSvgResize,
-  width = 600,
   nodeWidth = 20,
   nodePadding = 20,
   factor = 4,
@@ -172,9 +91,6 @@ export const createGraph = ({
   const boPaxColour = "#f27e93";
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
-
-  const minNodeHeight = 2;
-  const yPadding = 10;
 
   // #####################################################################################
   // Berechnung der Nodes
@@ -210,7 +126,7 @@ export const createGraph = ({
   for (const cNode of fNodes) {
     if (typeof cNode.id === "string") continue;
 
-    fNodesFinished.push(expandNode(cNode));
+    fNodesFinished.push(minimalToNode(cNode));
     tNodesFinished.push({
       ...cNode,
       pax: 0,
@@ -249,7 +165,7 @@ export const createGraph = ({
         pax: 0,
         full: false,
       });
-      tNodesFinished.push(expandNode(cNode));
+      tNodesFinished.push(minimalToNode(cNode));
     }
   }
 
@@ -348,9 +264,12 @@ export const createGraph = ({
 
     for (const cLink of currentFLinks) {
       linkPaxSum += cLink.value;
-      if (calcNodeHeightWithoutMinHeight(cLink.value, factor) < minNodeHeight) {
+      if (
+        calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+        stationConfig.minNodeHeight
+      ) {
         const heightDiff =
-          calcNodeHeight(cLink.value, minNodeHeight, factor) -
+          calcNodeHeight(cLink.value, stationConfig.minNodeHeight, factor) -
           calcNodeHeightWithoutMinHeight(cLink.value, factor);
         currentFNode.backdropHeight += heightDiff;
         currentFNode.nodeHeight += heightDiff;
@@ -364,9 +283,12 @@ export const createGraph = ({
 
     for (const cLink of currentTLinks) {
       linkPaxSum += cLink.value;
-      if (calcNodeHeightWithoutMinHeight(cLink.value, factor) < minNodeHeight) {
+      if (
+        calcNodeHeightWithoutMinHeight(cLink.value, factor) <
+        stationConfig.minNodeHeight
+      ) {
         const heightDiff =
-          calcNodeHeight(cLink.value, minNodeHeight, factor) -
+          calcNodeHeight(cLink.value, stationConfig.minNodeHeight, factor) -
           calcNodeHeightWithoutMinHeight(cLink.value, factor);
         currentTNode.backdropHeight += heightDiff;
         currentTNode.nodeHeight += heightDiff;
@@ -406,8 +328,9 @@ export const createGraph = ({
     // Beginn des neuen Nodes ist das Ende des vorangegangen oder 0
     const y1_start =
       Math.max(
-        tNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding,
-        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || yPadding
+        tNodesFinished[Math.max(0, i - 1)].y1_backdrop ||
+          stationConfig.yPadding,
+        fNodesFinished[Math.max(0, i - 1)].y1_backdrop || stationConfig.yPadding
       ) + fullPadding;
 
     // Start des neuen Backdrops ist das Ende des Vorgänger Knotens plus das Passing
@@ -438,11 +361,12 @@ export const createGraph = ({
       0
     ); //currentFNode.y0_backdrop
 
-    currentFNode.x0 = timeOffset;
-    currentFNode.x1 = nodeWidth + timeOffset;
+    currentFNode.x0 = stationConfig.timeOffset;
+    currentFNode.x1 = nodeWidth + stationConfig.timeOffset;
 
-    currentTNode.x0 = width - nodeWidth - timeOffset;
-    currentTNode.x1 = width - timeOffset;
+    currentTNode.x0 =
+      stationConfig.width - nodeWidth - stationConfig.timeOffset;
+    currentTNode.x1 = stationConfig.width - stationConfig.timeOffset;
 
     tNodesFinished[i] = currentTNode;
     fNodesFinished[i] = currentFNode;
@@ -450,7 +374,7 @@ export const createGraph = ({
     finalHeight = currentFNode.y0;
   }
 
-  onSvgResize(finalHeight + yPadding); // set height of svg to the bottom of the last node + 10
+  onSvgResize(finalHeight + stationConfig.yPadding); // set height of svg to the bottom of the last node + 10
 
   // #####################################################################################
   // Berechnung der Links für diesen Knoten, ggf später auslagern.
@@ -481,7 +405,11 @@ export const createGraph = ({
     let offset = 0;
     for (const i in currentLinks) {
       const cLink: Link = currentLinks[i];
-      const width = calcNodeHeight(cLink.value, minNodeHeight, factor);
+      const width = calcNodeHeight(
+        cLink.value,
+        stationConfig.minNodeHeight,
+        factor
+      );
       const l: Link = {
         ...cLink,
         width: width,

@@ -1,18 +1,21 @@
-import React, { MouseEvent, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import * as d3 from "d3";
-import { Node, Link } from "./SankeyStationTypes";
+import { createGraph, formatTextNode } from "./SankeyStationUtils";
 import {
-  createGraph,
-  formatTextNode,
-  createSankeyLink,
+  formatTextTime,
   formatTextLink,
-} from "./SankeyStationUtils";
-import { formatTextTime, sameId } from "../SankeyUtils";
+  createSankeyLink,
+  sameId,
+  nodeFocus,
+  linksClear,
+  linkFocus,
+} from "../SankeyUtils";
 import { TripId } from "../../../api/protocol/motis";
 import { ExtractStationData } from "../../StationInfoUtils";
 import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "../../common/Loading";
-import config from "../../../config";
+import { font_family } from "../../../config";
+import { stationConfig } from "../../../config";
 
 type Props = {
   stationId: string;
@@ -28,7 +31,7 @@ type Props = {
 };
 
 /**
- *
+ * download URL as filename
  * @param url
  * @param filename
  */
@@ -40,7 +43,7 @@ function downloadBlob(url: string, filename: string) {
 }
 
 /**
- *
+ * Get Blob of SVG Element
  * @param svgEl
  */
 function getSvgBlob(svgEl: SVGSVGElement) {
@@ -54,7 +57,7 @@ function getSvgBlob(svgEl: SVGSVGElement) {
 }
 
 /**
- *
+ * Save a SVG Element blob by creating url for it and downloading it
  * @param svgEl
  * @param baseFileName
  */
@@ -85,27 +88,16 @@ const SankeyStationGraph = ({
   endTime,
   onTripSelected,
   factor,
-  width = 1200,
   nodeWidth = 25,
   nodePadding = 15,
 }: Props): JSX.Element => {
   const svgRef = useRef(null);
 
   const [svgHeight, setSvgHeight] = useState(600);
-
-  const rowBackgroundColour = "#cacaca";
-
-  const linkOppacity = 0.4;
-  const linkOppacityFocus = 0.7;
-  const linkOppacityClear = 0.05;
-
-  const nodeOppacity = 0.9;
-  const backdropOppacity = 0.7;
-
-  const timeOffset = 70;
+  //const [loading, setLoading] = useState(false);
 
   // TODO
-  let loadingStatus = true;
+  const loadingStatus = useRef(true);
 
   const data = ExtractStationData({
     stationId: stationId,
@@ -113,24 +105,23 @@ const SankeyStationGraph = ({
     endTime: endTime,
     maxCount: 0,
     onStatusUpdate: (e) => {
-      loadingStatus = e !== "success";
+      loadingStatus.current = e !== "success";
     },
     tripDirection: "both",
+    showOutOfTime: false,
   });
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    loadingStatus = true;
+    loadingStatus.current = true;
+    //setLoading(true);
     const handleSvgResize = (newSize: number) => {
       setSvgHeight(newSize);
     };
-
     const graph = createGraph({
       fNodes: data.fromNodes,
       tNodes: data.toNodes,
       links: data.links,
       onSvgResize: handleSvgResize,
-      width,
       nodeWidth,
       nodePadding,
       factor,
@@ -190,8 +181,8 @@ const SankeyStationGraph = ({
       .attr("height", (d) =>
         Math.max(0, (d.y1_backdrop || 0) - (d.y0_backdrop || 0))
       )
-      .attr("fill", rowBackgroundColour)
-      .attr("opacity", backdropOppacity)
+      .attr("fill", stationConfig.rowBackgroundColor)
+      .attr("opacity", stationConfig.backdropOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -215,8 +206,8 @@ const SankeyStationGraph = ({
             : (d.y1 || 0) - (d.y0 || 0)
         )
       )
-      .attr("fill", (d) => d.color || rowBackgroundColour)
-      .attr("opacity", nodeOppacity);
+      .attr("fill", (d) => d.color || stationConfig.rowBackgroundColor)
+      .attr("opacity", stationConfig.nodeOpacity);
 
     nodes
       .filter((n) => typeof n.id !== "string")
@@ -239,9 +230,9 @@ const SankeyStationGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          stationConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOppacity);
+      .attr("opacity", stationConfig.nodeOpacity);
 
     //Define the Overflow
     const overflow = view
@@ -258,9 +249,9 @@ const SankeyStationGraph = ({
         "fill",
         (d) =>
           d3.interpolateRgb.gamma(0.8)("red", "orange")(d.cap / d.pax) ||
-          rowBackgroundColour
+          stationConfig.rowBackgroundColor
       )
-      .attr("opacity", nodeOppacity)
+      .attr("opacity", stationConfig.nodeOpacity)
       .attr("cursor", "pointer")
       .on("click", (_, i) => {
         if (typeof i.id !== "string") onTripSelected(i.id, i.name);
@@ -283,10 +274,16 @@ const SankeyStationGraph = ({
       .join("path")
       .classed("link", true)
       .attr("d", (d) =>
-        createSankeyLink(nodeWidth, width, d.y0 || 0, d.y1 || 0)
+        createSankeyLink(
+          nodeWidth,
+          stationConfig.width,
+          d.y0 || 0,
+          d.y1 || 0,
+          stationConfig.timeOffset
+        )
       )
-      .attr("stroke", (d) => d.color || rowBackgroundColour)
-      .attr("stroke-opacity", linkOppacity)
+      .attr("stroke", (d) => d.color || stationConfig.rowBackgroundColor)
+      .attr("stroke-opacity", stationConfig.linkOpacity)
       .attr("stroke-width", (d) => d.width || 1)
       .attr("fill", "none");
 
@@ -313,7 +310,7 @@ const SankeyStationGraph = ({
         return d.name;
       })
 
-      .filter((d) => (d.x1 || 0) > width / 2)
+      .filter((d) => (d.x1 || 0) > stationConfig.width / 2)
       .attr("x", (d) => d.x0 || 0)
       .attr("dx", -6)
       .attr("text-anchor", "end");
@@ -344,8 +341,8 @@ const SankeyStationGraph = ({
           return formatTextTime(d);
         }
       })
-      .filter((d) => (d.x1 || 0) > width / 2)
-      .attr("x", width - 20)
+      .filter((d) => (d.x1 || 0) > stationConfig.width / 2)
+      .attr("x", stationConfig.width - 20)
       .attr("dx", 0)
       .attr("text-anchor", "end");
 
@@ -372,12 +369,12 @@ const SankeyStationGraph = ({
 
     view
       .append("text")
-      .attr("x", timeOffset)
+      .attr("x", stationConfig.timeOffset)
       .attr("dx", -5) //
       .attr("y", tempFHeight)
       .attr("dy", 2.5)
       .attr("text-anchor", "end")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ANKUNFT");
@@ -392,75 +389,48 @@ const SankeyStationGraph = ({
 
     view
       .append("text")
-      .attr("x", width - timeOffset)
+      .attr("x", stationConfig.width - stationConfig.timeOffset)
       .attr("dx", 5) //
       .attr("y", tempTHeight)
       .attr("text-anchor", "start")
-      .attr("font-family", config.font_family)
+      .attr("font-family", font_family)
       .attr("font-size", 12)
       .attr("fill", "#a8a8a8")
       .text("ABFAHRT");
 
-    function branchAnimate(_: MouseEvent, node: Node) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          sameId((l as Link).tNId, node.id) || sameId((l as Link).fNId, node.id)
-        );
-      });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
+    backdrop.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    backdrop.on("mouseout", () => linksClear(links));
+    nodes.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    nodes.on("mouseout", () => linksClear(links));
+    overflow.on("mouseover", (_, n) => {
+      nodeFocus(_, n, view);
+    });
+    overflow.on("mouseout", () => linksClear(links));
 
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (
-          !sameId((l as Link).tNId, node.id) &&
-          !sameId((l as Link).fNId, node.id)
-        );
-      });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
-    }
-
-    function branchClear() {
-      links.attr("stroke-opacity", linkOppacity);
-    }
-
-    backdrop.on("mouseover", branchAnimate);
-    backdrop.on("mouseout", branchClear);
-    nodes.on("mouseover", branchAnimate);
-    nodes.on("mouseout", branchClear);
-    overflow.on("mouseover", branchAnimate);
-    overflow.on("mouseout", branchClear);
-
-    function linkAnimate(_: MouseEvent, link: Link) {
-      const focusLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id === link.id;
-      });
-      focusLinks.attr("stroke-opacity", linkOppacityFocus);
-
-      const clearLinks = view.selectAll("path.link").filter((l) => {
-        return (l as Link).id !== link.id;
-      });
-      clearLinks.attr("stroke-opacity", linkOppacityClear);
-    }
-
-    function linkClear() {
-      links.attr("stroke-opacity", linkOppacity);
-    }
-
-    links.on("mouseover", linkAnimate).on("mouseout", linkClear);
-
-    loadingStatus = false;
-  }, [data]);
+    //setLoading(false);
+    links
+      .on("mouseover", (_, l) => linkFocus(_, l, view))
+      .on("mouseout", () => linksClear(links));
+  }, [data, factor, nodeWidth, nodePadding, onTripSelected]);
+  loadingStatus.current = false;
 
   return (
     <>
-      {(!data || !data.links.length) && (
-        <div>Daten zum Zug nicht verfügbar</div>
+      {!data && <div>Station nicht vorhanden</div>}
+      {data && !data.links.length && !loadingStatus.current && (
+        <div>Keine Daten zu diesen Zeiten verfügbar</div>
       )}
-      {loadingStatus && data.links.length > 0 && <Loading />}
-      {!loadingStatus && (
+      {/* BUG: state is never reached */}
+      {loadingStatus.current && data.links.length > 0 && <Loading />}
+      {!loadingStatus.current && data.links.length > 0 && (
         <>
           <svg
             ref={svgRef}
-            width={width}
+            width={stationConfig.width}
             height={svgHeight}
             className="m-auto"
           />

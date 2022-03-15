@@ -29,7 +29,6 @@ const queryClient = new QueryClient({
 const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 
 const App = (): JSX.Element => {
-  const [width, setWidth] = useState(1000);
   const [selectedTrip, setSelectedTrip] = useState<TripId | null>(null);
   const [tripName, setTripName] = useState("");
   const [activePage, setActivePage] = useState(1);
@@ -106,7 +105,6 @@ const App = (): JSX.Element => {
           {activePage === 0 && (
             <TripPage
               tripName={tripName}
-              width={width}
               selectedTrip={selectedTrip}
               onTripPicked={(trip) => {
                 if (trip) {

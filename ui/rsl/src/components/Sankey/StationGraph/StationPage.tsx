@@ -9,7 +9,7 @@ import TimeInput from "../../measures/TimeInput";
 import SankeyStationGraph from "./SankeyStationGraph";
 import { TripId } from "../../../api/protocol/motis";
 
-import config from "../../../config";
+import { stationConfig as config } from "../../../config";
 import { useSankeyContext } from "../../context/SankeyContext";
 
 type StationPageProps = {
@@ -60,7 +60,7 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
     }
   };
 
-  const handleRefresh = (): void => {
+  const handleRefreshUp = (): void => {
     const time = new Date(
       startTime.getTime() - 1000 * 60 * config.station_timeInterval
     );
@@ -189,7 +189,7 @@ const StationPage = ({ onTripSelected }: StationPageProps): JSX.Element => {
 
         {selectedStation && (
           <ScrollToUpdate
-            onRefreshUP={handleRefresh}
+            onRefreshUP={handleRefreshUp}
             onRefreshDOWN={handleRefreshDown}
           >
             <div style={{ height: "100%" }}>

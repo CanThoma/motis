@@ -6,6 +6,8 @@ import {
   interpolateHsl,
 } from "d3";
 import config, { colorSchema } from "../../config";
+import { interpolateRgb, scaleLinear, interpolateHsl } from "d3";
+import { peakSpottingConfig as config } from "../../config";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit
