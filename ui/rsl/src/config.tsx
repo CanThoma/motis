@@ -36,7 +36,7 @@ const umsteigerConfig = {
 
 const peakSpottingConfig = {
   timeFrame: 25, //  wenn zum Beispiel ein Node über 0:00uhr fährt. Man müsste also nicht durch 24 Stunden teilen sondern durch 25?!
-  horizontalCapacityScale: 13, // Skalierung für die horizontale Tripdarstellung
+  horizontalCapacityScale: 21, // Skalierung für die horizontale Tripdarstellung
   horizontalLeftPadding: 150, // Breite für die Anzeige vom Zugnamen, etc.
   horizontalRightPadding: 50, //
 };

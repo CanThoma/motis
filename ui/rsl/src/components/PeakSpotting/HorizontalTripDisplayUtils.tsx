@@ -1,3 +1,11 @@
+import {
+  select as d3Select,
+  interpolateRainbow,
+  interpolateRgb,
+  scaleLinear,
+  interpolateHsl,
+} from "d3";
+import config, { colorSchema } from "../../config";
 import { interpolateRgb, scaleLinear, interpolateHsl } from "d3";
 import { peakSpottingConfig as config } from "../../config";
 
@@ -45,6 +53,11 @@ const addXandWidth = (width, edge) => {
   return edge;
 };
 
+const paginate = (items, pageNumber, pageSize) => {
+  const startIndex = (pageNumber - 1) * pageSize;
+  return items.slice(startIndex, startIndex + pageSize);
+};
+
 const prepareEdges = ({ data, width, height, onOverflow }) => {
   const finalEdges = [];
   let overflow = false;
@@ -70,18 +83,21 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
     tmpEdge.to = edge.to;
 
     // Muss ne Zahl zwischen 0 u 1 sein
-    tmpEdge.colour = colour(Math.min(1, edge.max_pax / edge.capacity));
+    tmpEdge.colour = colour(
+      Math.min(1, edge.expected_passengers / edge.capacity)
+    );
 
     // Höhe berechnen
     tmpEdge.capHeight = edge.capacity / config.horizontalCapacityScale;
-    tmpEdge.height = edge.max_pax / config.horizontalCapacityScale;
+    tmpEdge.height = edge.expected_passengers / config.horizontalCapacityScale;
 
-    tmpEdge.y = height - tmpEdge.maxPax / config.horizontalCapacityScale;
+    tmpEdge.y =
+      height - tmpEdge.expectedPassengers / config.horizontalCapacityScale;
 
     let overflowTmpEdge = null;
 
     // Haben wir nen overflow?
-    if (tmpEdge.capacity < tmpEdge.maxPax) {
+    if (tmpEdge.capacity < tmpEdge.expectedPassengers) {
       overflow = true;
       overflowTmpEdge = { ...tmpEdge };
 
@@ -89,7 +105,8 @@ const prepareEdges = ({ data, width, height, onOverflow }) => {
       tmpEdge.height = tmpEdge.capacity / config.horizontalCapacityScale;
 
       overflowTmpEdge.height =
-        (tmpEdge.maxPax - tmpEdge.capacity) / config.horizontalCapacityScale -
+        (tmpEdge.expectedPassengers - tmpEdge.capacity) /
+          config.horizontalCapacityScale -
         1.5;
       overflowTmpEdge.y =
         height - tmpEdge.height - overflowTmpEdge.height - 1.5;
@@ -177,12 +194,11 @@ const formatTime = (time: Date): string => {
 };
 
 const formatEdgeInfo = (edge) => {
-  console.log(edge);
   return `${edge.from.name} \u279E ${edge.to.name}\n${formatTime(
     edge.departureTime
   )}  \u279E ${formatTime(edge.arrivalTime)}\n\n${
-    edge.maxPax
-  } maxPax?-Leutchen\n${edge.capacity} Kapazität`;
+    edge.expectedPassengers
+  } erwartete Passagiere\n${edge.capacity} Kapazität`;
 };
 
-export { prepareEdges, calcTripWidth, formatEdgeInfo };
+export { prepareEdges, calcTripWidth, formatEdgeInfo, paginate };

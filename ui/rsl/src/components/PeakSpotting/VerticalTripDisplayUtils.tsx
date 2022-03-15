@@ -14,6 +14,7 @@ const prepareTimeEdges = (trip: any): any[] => {
 
   let offset = 20;
   const minHeight = 30;
+  const minWidth = 5;
   const ballPadding = 4;
   const heightMultiplier = 3;
   const widthMultiplier = 0.15;
@@ -43,10 +44,14 @@ const prepareTimeEdges = (trip: any): any[] => {
       tmpEdge.traveledMinutes * heightMultiplier
     );
 
-    tmpEdge.capWidth = Math.max(minHeight, tmpEdge.capacity * widthMultiplier);
-    tmpEdge.rightWidth = tmpEdge.max_pax * widthMultiplier;
-    tmpEdge.leftWidth = tmpEdge.max_pax * widthMultiplier;
-    tmpEdge.color = colour(Math.min(1, tmpEdge.max_pax / tmpEdge.capacity));
+    tmpEdge.capWidth = Math.max(minWidth, tmpEdge.capacity * widthMultiplier);
+    tmpEdge.rightWidth = tmpEdge.expected_passengers * widthMultiplier;
+
+    // TODO: Was soll links jetzt genau angezeigt werden?
+    tmpEdge.leftWidth = tmpEdge.expected_passengers * 0.3 * widthMultiplier;
+    tmpEdge.color = colour(
+      Math.min(1, tmpEdge.expected_passengers / tmpEdge.capacity)
+    );
 
     tmpEdge.y = offset + ballPadding;
 

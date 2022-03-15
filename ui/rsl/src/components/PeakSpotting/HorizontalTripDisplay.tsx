@@ -1,18 +1,61 @@
 import React, { useRef, useEffect, useState } from "react";
 import { select as d3Select } from "d3";
+import { useQuery, useQueryClient } from "react-query";
+import { DownloadIcon } from "@heroicons/react/solid";
+import { useAtom } from "jotai";
+
+import {
+  formatLongDateTime,
+  formatFileNameTime,
+  formatTime,
+} from "../../util/dateFormat";
+import {
+  PaxMonEdgeLoadInfoWithStats,
+  PaxMonTripLoadInfoWithStats,
+} from "../../data/loadInfo";
+import { TripId } from "../../api/protocol/motis";
+import {
+  queryKeys,
+  sendPaxMonTripLoadInfosRequest,
+  sendPaxMonFilterTripsRequest,
+  usePaxMonStatusQuery,
+} from "../../api/paxmon";
+import { addEdgeStatistics } from "../../util/statistics";
+import { universeAtom } from "../../data/simulation";
+
+import config, { colorSchema } from "../../config";
 import { colorSchema, peakSpottingConfig as config } from "../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
 
+async function loadAndProcessTripInfo(universe: number, trip: TripId[]) {
+  const res = await sendPaxMonFilterTripsRequest({
+    universe: 0,
+    ignore_past_sections: false,
+    include_load_threshold: 0.0,
+    critical_load_threshold: 1.0,
+    crowded_load_threshold: 0.8,
+    include_edges: true,
+    sort_by: "FirstDeparture",
+    max_results: 100,
+    skip_first: 0,
+  });
+  const tli = res.load_infos[0];
+  return addEdgeStatistics(tli);
+}
+
 const HorizontalTripDisplay = ({
   tripData,
   width,
   selectedTrip,
+  onClick,
   height = 80,
 }) => {
   const svgRef = useRef(null);
   const [overflow, setOverflow] = useState(false);
+
+  const train_infos = selectedTrip ? selectedTrip.tsi.service_infos : null;
 
   const onOverflow = (flag: boolean) => {
     setOverflow(flag);
@@ -70,20 +113,20 @@ const HorizontalTripDisplay = ({
       const tom = view
         .append("rect")
         .attr("x", edge.x)
-        .attr("y", edge.y) // height - edge.maxPax / config.horizontalCapacityScale)
+        .attr("y", edge.y) // height - edge.expectedPassengers / config.horizontalCapacityScale)
         .attr("height", edge.height)
         .attr("width", edge.width)
-        .attr("fill", edge.colour);
+        .attr("fill", edge.colour)
+        .attr("opacity", edge.opacity ? edge.opacity : 1);
 
       tom.append("title").text(formatEdgeInfo(edge));
       tim
         .append("title")
         .text(
-          `${edge.from.name} \u279E ${edge.to.name}\n${edge.maxPax} maxPax?-Leutchen`
+          `${edge.from.name} \u279E ${edge.to.name}\n${edge.expectedPassengers} erwartete Passagiere`
         );
     }
 
-    console.log(data);
     // Anhängen der ersten Station
     view
       .append("text")
@@ -107,14 +150,11 @@ const HorizontalTripDisplay = ({
       .attr("font-family", config.font_family)
       .attr("x", data[data.length - 1].x + data[data.length - 1].width)
       .attr("y", height - data[0].capHeight / 2);
-
-    console.log(selectedTrip);
-    console.log(tripData.tsi.trip.train_nr);
-    console.log(tripData.tsi);
-    console.log(selectedTrip === tripData.tsi.trip.station_id);
   }, []);
+
   return (
     <div
+      onClick={onClick}
       style={{
         backgroundColor: colorSchema.white,
         border: "2px solid",
@@ -126,10 +166,11 @@ const HorizontalTripDisplay = ({
         boxShadow: "0 0 13px rgba(255, 255, 255, 0.2) ",
         WebkitBoxShadow: "0 0 13px rgba(255, 255, 255, 0.2) ",
         MozBoxShadow: "0 0 13px rgba(255, 255, 255, 0.2) ",
+        cursor: "pointer",
       }}
       //className="tripRow grid grid-flow-col"
       className={
-        selectedTrip === tripData.tsi.trip.train_nr
+        train_infos === tripData.tsi.service_infos
           ? "horizontalTripSelected tripRow grid grid-flow-col"
           : "tripRow grid grid-flow-col"
       }
@@ -168,12 +209,14 @@ const HorizontalTripDisplay = ({
           </p>
         </div>
         {overflow && (
-          <WarningSymbol color="#ef1d18" symbol="circle" width={15} />
+          <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
         )}
-        {false && (
-          <WarningSymbol color="#ff8200" symbol="triangle" width={15} />
+        {tripData.critical_sections > 0 && (
+          <WarningSymbol color="#ff8200" symbol="critical" width={15} />
         )}
-        {false && <WarningSymbol color="#444444" symbol="bomb" width={15} />}
+        {tripData.crowded_sections > 0 && (
+          <WarningSymbol color="#444444" symbol="crowded" width={15} />
+        )}
       </div>
       <div>
         <svg
