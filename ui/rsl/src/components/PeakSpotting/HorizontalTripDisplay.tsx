@@ -10,12 +10,15 @@ import {
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
+import { TripId } from "../../api/protocol/motis";
+import { useSankeyContext } from "../context/SankeyContext";
 
 type Props = {
   width: number;
   trip: PaxMonFilteredTripInfo;
   selectedTrip: PaxMonFilteredTripInfo | undefined;
   onClick: () => void;
+  onTripSelected?: () => void;
   height?: number;
 };
 
@@ -24,6 +27,7 @@ const HorizontalTripDisplay = ({
   width,
   selectedTrip,
   onClick,
+  onTripSelected,
   height = 80,
 }: Props): JSX.Element => {
   const svgRef = useRef(null);
@@ -32,6 +36,9 @@ const HorizontalTripDisplay = ({
 
   const graphWidth =
     width - (config.horizontalLeftPadding + config.horizontalRightPadding);
+
+  const { setSelectedTrip, setTripName, setStartTime, setEndTime } =
+    useSankeyContext();
 
   useEffect(() => {
     const data = prepareEdges({
@@ -172,8 +179,22 @@ const HorizontalTripDisplay = ({
               fontSize: "24px",
               lineHeight: 0.9,
             }}
-            data-tooltip="Die Zugnummer"
+            data-tooltip="Zum Tripgraphen"
             data-tooltip-location="top"
+            onClick={() => {
+              if (setTripName)
+                setTripName(
+                  `${trip.tsi.primary_station.name} \u2192 ${trip.tsi.secondary_station.name}`
+                );
+              if (setSelectedTrip) setSelectedTrip(trip.tsi.trip as TripId);
+              if (onTripSelected) onTripSelected();
+
+              const startTime = (trip.tsi.trip.time - 5 * 60) * 1000;
+              const endTime = (trip.tsi.trip.time + 25 * 60) * 1000;
+
+              if (setStartTime) setStartTime(new Date(startTime));
+              if (setEndTime) setEndTime(new Date(endTime));
+            }}
           >
             {trip.tsi.service_infos[0].train_nr}
           </h3>

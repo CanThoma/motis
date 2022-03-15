@@ -18,6 +18,7 @@ import {
   SankeyContextProvider,
   useSankeyContext,
 } from "./components/context/SankeyContext";
+
 import { TripId } from "./api/protocol/motis";
 
 const queryClient = new QueryClient({
@@ -29,7 +30,7 @@ const queryClient = new QueryClient({
 const allowForwarding = getQueryParameters()["allowForwarding"] === "yes";
 
 const App = (): JSX.Element => {
-  const [selectedTrip, setSelectedTrip] = useState<TripId | null>(null);
+  //const [selectedTrip, setSelectedTrip] = useState<TripId | null>(null);
   const [tripName, setTripName] = useState("");
   const [activePage, setActivePage] = useState(1);
   const [simActive, setSimActive] = useState(false);
@@ -37,8 +38,14 @@ const App = (): JSX.Element => {
 
   const pages = ["Trip Graph", "Station Graph", "Peak Spotting"];
 
-  const { selectedStation, setSelectedStation, stationName, setStationName } =
-    useSankeyContext();
+  const {
+    selectedStation,
+    selectedTrip,
+    setSelectedTrip,
+    setSelectedStation,
+    stationName,
+    setStationName,
+  } = useSankeyContext();
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyboardNavigation);
@@ -46,7 +53,7 @@ const App = (): JSX.Element => {
     return () => {
       window.removeEventListener("keydown", handleKeyboardNavigation);
     };
-  }, [activePage]);
+  }, []);
 
   const handleKeyboardNavigation = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft") {
@@ -112,7 +119,7 @@ const App = (): JSX.Element => {
                   selectedTrip={selectedTrip}
                   onTripPicked={(trip) => {
                     if (trip) {
-                      setSelectedTrip(trip);
+                      if (setSelectedTrip) setSelectedTrip(trip);
                       setTripName(String(trip.train_nr));
                     } else
                       console.warn(
@@ -126,9 +133,10 @@ const App = (): JSX.Element => {
                 <StationPage onTripSelected={handleTripSelect} />
               )}
               {activePage === 2 && (
-                <>
-                  <PeakSpotting />
-                </>
+                <PeakSpotting
+                  onTripSelected={handleTripSelect}
+                  onStationSelected={handleStationSelect}
+                />
               )}
             </div>
           </div>
