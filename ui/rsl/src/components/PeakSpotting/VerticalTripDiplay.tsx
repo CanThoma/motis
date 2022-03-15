@@ -4,6 +4,7 @@ import { colorSchema, font_family } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 
 import "./VerticalTripDisplay.css";
+import WarningSymbol from "./HorizontalTripDisplaySymbols";
 
 type Props = {
   width: number;
@@ -427,12 +428,30 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
             <table className="table">
               <tbody>
                 <tr>
-                  <th>Koks</th>
-                  <td>Nutten</td>
+                  <th>
+                    <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
+                  </th>
+                  <td>Der Zug ist überfüllt.</td>
                 </tr>
                 <tr>
-                  <th>Koks</th>
-                  <td>Nutten</td>
+                  <th>
+                    <WarningSymbol
+                      color="#ff8200"
+                      symbol="critical"
+                      width={15}
+                    />
+                  </th>
+                  <td>Der Zug enthält kritische Abschnitte.</td>
+                </tr>
+                <tr>
+                  <th>
+                    <WarningSymbol
+                      color="#444444"
+                      symbol="crowded"
+                      width={15}
+                    />
+                  </th>
+                  <td>Der Zug enthält überfüllte Abschnitte.</td>
                 </tr>
               </tbody>
             </table>
