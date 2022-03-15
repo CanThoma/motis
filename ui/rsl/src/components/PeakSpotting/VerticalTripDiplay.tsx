@@ -513,7 +513,12 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
               {trip.max_excess_pax > 0 && (
                 <tr>
                   <th>
-                    <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
+                    <WarningSymbol
+                      color="#ef1d18"
+                      disableTooltip
+                      symbol="excess"
+                      width={15}
+                    />
                   </th>
                   <td>Der Zug ist überfüllt.</td>
                 </tr>
@@ -525,6 +530,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
                       color="#ff8200"
                       symbol="critical"
                       width={15}
+                      disableTooltip
                     />
                   </th>
                   <td>Der Zug enthält kritische Abschnitte.</td>
@@ -537,6 +543,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
                       color="#444444"
                       symbol="crowded"
                       width={15}
+                      disableTooltip
                     />
                   </th>
                   <td>Der Zug enthält überfüllte Abschnitte.</td>
