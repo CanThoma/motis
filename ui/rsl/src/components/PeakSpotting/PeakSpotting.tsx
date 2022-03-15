@@ -36,6 +36,7 @@ const PeakSpotting = ({
   const [pageSize, setPageSize] = useState(10);
 
   const [refetchFlag, setRefetchFlag] = useState(true);
+  const [maxResults, setMaxResults] = useState(50);
 
   const [componentIsRendered, setComponentIsRendered] = useState(false);
 
@@ -66,14 +67,16 @@ const PeakSpotting = ({
     crowded_load_threshold: 0.8,
     include_edges: true,
     sort_by: sortBy.value,
-    max_results: 50,
+    max_results: maxResults,
     skip_first: 0,
   };
 
   async function loadAndProcessTripInfo(
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
+    console.log("CALLED");
     if (!refetchFlag) return;
+    console.log("ACHTUNG");
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -118,6 +121,12 @@ const PeakSpotting = ({
     setShowDropDown(false);
     refetch();
   };
+  const handleMaxResultChange = async (num) => {
+    await setComponentIsRendered(false);
+    await setRefetchFlag(true);
+    await setMaxResults(num);
+    refetch();
+  };
   // ENDE
 
   useEffect(() => {
@@ -134,73 +143,103 @@ const PeakSpotting = ({
           paddingTop: "1.5rem",
         }}
       >
-        <h3
-          style={{
-            color: "rgb(52, 58, 64)",
-            fontSize: "15px",
-            marginRight: "0.4rem",
-          }}
-        >
-          Sortieren nach:{" "}
-        </h3>
-        <div className="dropdown">
-          <button
-            className="btn btn-primary dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton"
-            data-mdb-toggle="dropdown"
-            aria-expanded="false"
-            style={{ position: "relative" }}
-            onClick={() => {
-              setShowDropDown(!showDropDown);
+        <div>
+          <h3
+            style={{
+              color: "rgb(52, 58, 64)",
+              fontSize: "15px",
+              marginRight: "0.4rem",
             }}
           >
-            {sortBy.displayText}
-          </button>
-          <ul
-            className={showDropDown ? "dropdown-menu show" : "dropdown-menu"}
-            aria-labelledby="dropdownMenuButton"
+            Sortieren nach:{" "}
+          </h3>
+          <div className="dropdown">
+            <button
+              className="btn btn-primary dropdown-toggle"
+              type="button"
+              id="dropdownMenuButton"
+              data-mdb-toggle="dropdown"
+              aria-expanded="false"
+              style={{ position: "relative" }}
+              onClick={() => {
+                setShowDropDown(!showDropDown);
+              }}
+            >
+              {sortBy.displayText}
+            </button>
+            <ul
+              className={showDropDown ? "dropdown-menu show" : "dropdown-menu"}
+              aria-labelledby="dropdownMenuButton"
+            >
+              <li>
+                <button
+                  className="dropdown-item"
+                  onClick={() =>
+                    handleSelect({
+                      displayText: "Erwarteten Passagieren",
+                      value: "ExpectedPax",
+                    })
+                  }
+                >
+                  der Erwarteten Passagieren
+                </button>
+              </li>
+              <li>
+                <button
+                  className="dropdown-item"
+                  onClick={() =>
+                    handleSelect({
+                      displayText: "der Kritikalität der Fahrten",
+                      value: "MostCritical",
+                    })
+                  }
+                >
+                  der Kritikalität der Fahrten
+                </button>
+              </li>
+              <li>
+                <button
+                  className="dropdown-item"
+                  onClick={() =>
+                    handleSelect({
+                      displayText: "der Abfahrtszeit",
+                      value: "FirstDeparture",
+                    })
+                  }
+                >
+                  der Abfahrtszeit
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ marginLeft: "20px" }}>
+          <h3
+            style={{
+              color: "rgb(52, 58, 64)",
+              fontSize: "15px",
+              marginRight: "0.4rem",
+            }}
           >
-            <li>
-              <button
-                className="dropdown-item"
-                onClick={() =>
-                  handleSelect({
-                    displayText: "Erwarteten Passagieren",
-                    value: "ExpectedPax",
-                  })
-                }
-              >
-                der Erwarteten Passagieren
-              </button>
-            </li>
-            <li>
-              <button
-                className="dropdown-item"
-                onClick={() =>
-                  handleSelect({
-                    displayText: "der Kritikalität der Fahrten",
-                    value: "MostCritical",
-                  })
-                }
-              >
-                der Kritikalität der Fahrten
-              </button>
-            </li>
-            <li>
-              <button
-                className="dropdown-item"
-                onClick={() =>
-                  handleSelect({
-                    displayText: "der Abfahrtszeit",
-                    value: "FirstDeparture",
-                  })
-                }
-              >
-                der Abfahrtszeit
-              </button>
-            </li>
-          </ul>
+            Bitches
+          </h3>
+          <input
+            className="form-control form-control-sm"
+            type="text"
+            placeholder="50"
+            onBlur={(v) => {
+              const tim = parseInt(v.target.value);
+              if (isNaN(tim)) return;
+
+              handleMaxResultChange(tim);
+            }}
+            onKeyDown={(v) => {
+              if (v.key !== "Enter") return;
+              const tim = parseInt(v.target.value);
+              if (isNaN(tim)) return;
+              v.target.blur();
+            }}
+          />
         </div>
       </div>
       <div className="grid grid-flow-col pb-5">
@@ -215,7 +254,7 @@ const PeakSpotting = ({
                 peakSpottingTrips ? peakSpottingTrips.length : 0
               })`}
             />
-            {isLoading || (!componentIsRendered && <Loading />)}
+            {(isLoading || !componentIsRendered) && <Loading />}
             {loadingStatus === "success" &&
               paginatedTrips &&
               peakSpottingTrips && (
@@ -227,7 +266,7 @@ const PeakSpotting = ({
                   {/** Der eigentliche Teil */}
                   {paginatedTrips.map((d) => (
                     <HorizontalTripDisplay
-                      key={d.tsi.service_infos[0].train_nr}
+                      key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}
                       tripData={d}
                       width={width}
                       selectedTrip={selectedTrip}
