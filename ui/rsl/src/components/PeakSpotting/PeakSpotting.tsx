@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import HorizontalTripDisplay from "./HorizontalTripDisplay";
 
 import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
@@ -36,6 +36,8 @@ const PeakSpotting = ({
   const [pageSize, setPageSize] = useState(10);
 
   const [refetchFlag, setRefetchFlag] = useState(true);
+
+  const [componentIsRendered, setComponentIsRendered] = useState(false);
 
   const {
     setPeakSpottingTrips,
@@ -111,11 +113,16 @@ const PeakSpotting = ({
   );
   const handleSelect = async ({ displayText, value }) => {
     await setRefetchFlag(true);
+    await setComponentIsRendered(false);
     await setSortBy({ displayText, value });
     setShowDropDown(false);
     refetch();
   };
   // ENDE
+
+  useEffect(() => {
+    setComponentIsRendered(true);
+  }, [peakSpottingTrips]);
 
   return (
     <div style={{ backgroundColor: colorSchema.lightGrey }}>
@@ -208,11 +215,15 @@ const PeakSpotting = ({
                 peakSpottingTrips ? peakSpottingTrips.length : 0
               })`}
             />
-            {isLoading && <Loading />}
+            {isLoading || (!componentIsRendered && <Loading />)}
             {loadingStatus === "success" &&
               paginatedTrips &&
               peakSpottingTrips && (
-                <>
+                <div
+                  style={{
+                    opacity: componentIsRendered ? 1 : 0.5,
+                  }}
+                >
                   {/** Der eigentliche Teil */}
                   {paginatedTrips.map((d) => (
                     <HorizontalTripDisplay
@@ -229,14 +240,22 @@ const PeakSpotting = ({
                     onPageChange={handlePageChange}
                     currentPage={currentPage}
                   />
-                </>
+                </div>
               )}
           </div>
         </>
 
         {/** Prognose und so */}
         {selectedTrip && (
-          <div style={{ marginLeft: "0px", marginRight: "5px", width: width }}>
+          <div
+            style={{
+              marginLeft: "0px",
+              marginRight: "5px",
+              width: width,
+              opacity: componentIsRendered ? 1 : 0.5,
+              cursor: componentIsRendered ? "default" : "not-allowed",
+            }}
+          >
             <VerticalTripDisplay trip={selectedTrip} width={width} />
           </div>
         )}
