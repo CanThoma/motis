@@ -17,10 +17,19 @@ import { colorSchema, peakSpottingConfig as config } from "../../config";
 import HorizontalTripDisplay from "./HorizontalTripDisplay";
 import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
 import VerticalTripDisplay from "./VerticalTripDiplay";
+import { TripId } from "../../api/protocol/motis";
 
 import "./HorizontalTripDisplay.css";
 
-const PeakSpotting = (): JSX.Element => {
+type Props = {
+  onTripSelected?: () => void;
+  onStationSelected?: () => void | undefined;
+};
+
+const PeakSpotting = ({
+  onTripSelected,
+  onStationSelected,
+}: Props): JSX.Element => {
   const width =
     Math.max(config.minWidth, window.screen.availWidth / 2) -
     config.globalPadding;
@@ -279,6 +288,7 @@ const PeakSpotting = (): JSX.Element => {
                         trip={d}
                         width={width}
                         selectedTrip={selectedTrip}
+                        onTripSelected={onTripSelected}
                         onClick={() => {
                           if (setSelectedTrip) setSelectedTrip(d);
                         }}
@@ -310,7 +320,11 @@ const PeakSpotting = (): JSX.Element => {
                 cursor: componentIsRendered ? "default" : "not-allowed",
               }}
             >
-              <VerticalTripDisplay trip={selectedTrip} width={width} />
+              <VerticalTripDisplay
+                trip={selectedTrip}
+                width={width}
+                onStationSelected={onStationSelected}
+              />
             </div>
           )}
         </div>

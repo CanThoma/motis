@@ -10,6 +10,7 @@ import {
   PaxMonEdgeLoadInfo,
   PaxMonFilteredTripInfo,
 } from "../../api/protocol/motis/paxmon";
+import { useSankeyContext } from "../context/SankeyContext";
 
 import "./VerticalTripDisplay.css";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
@@ -17,6 +18,7 @@ import WarningSymbol from "./HorizontalTripDisplaySymbols";
 type Props = {
   width: number;
   trip: PaxMonFilteredTripInfo;
+  onStationSelected?: () => void | undefined;
 };
 
 /**
@@ -53,7 +55,10 @@ const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
  * @param trip Der darzustellende Trip.
  * @constructor
  */
-const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
+const VerticalTripDisplay = ({
+  trip,
+  onStationSelected,
+}: Props): JSX.Element => {
   const svgRef = useRef(null);
   const [height, setHeight] = useState(500);
 
@@ -90,6 +95,29 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const { setSelectedStation, setStationName, setEndTime, setStartTime } =
+    useSankeyContext();
+
+  const handleStationSelect = (
+    onStationSelected: (() => void) | undefined,
+    edge: PaxMonEdgeLoadInfo
+  ): void => {
+    if (setSelectedStation) setSelectedStation(edge.from.id);
+
+    const startTime = (edge.departure_current_time - 5 * 60) * 1000;
+    const endTime = (edge.departure_current_time + 25 * 60) * 1000;
+
+    if (setStartTime) setStartTime(new Date(startTime));
+    if (setEndTime) setEndTime(new Date(endTime));
+
+    if (setStationName)
+      setStationName(
+        `${edge.from.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
+      );
+
+    if (onStationSelected) onStationSelected();
+  };
+
   useEffect(() => {
     let svgHeight = 0;
     const svg = d3Select(svgRef.current);
@@ -124,7 +152,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
 
       if (i > 0) {
         // STATIONSNAMEN
-        view
+        const station = view
           .append("text")
           .attr("x", xTimelineOffset)
           .attr("y", edge.y || 0)
@@ -135,8 +163,10 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
           .attr("text-anchor", "start")
           .attr("font-size", fontSizeM)
           .attr("font-weight", "bold")
-          .attr("font-family", font_family);
-
+          .attr("font-family", font_family)
+          .attr("cursor", "pointer")
+          .on("click", () => handleStationSelect(onStationSelected, edge));
+        station.append("title").text("Zur Station");
         // ANKUNFTSZEITEN
         view
           .append("text")
@@ -328,7 +358,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("font-family", font_family);
 
     // ANFANGSSTATION Name
-    view
+    const from = view
       .append("text")
       .attr("x", xTimelineOffset)
       .attr("y", data[0].y || 0)
@@ -339,7 +369,11 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
       .attr("font-weight", "bold")
-      .attr("font-family", font_family);
+      .attr("font-family", font_family)
+      .attr("cursor", "pointer")
+      .on("click", () => handleStationSelect(onStationSelected, data[0]));
+
+    from.append("title").text("Zur Station");
 
     // ENDSTATION
     view
@@ -357,7 +391,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("fill", colorSchema.bluishGrey);
 
     // ENDSTATION ANKUNFTSZEIT
-    view
+    const to = view
       .append("text")
       .attr("x", xTimelineOffset)
       .attr(
@@ -372,6 +406,8 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("font-size", fontSizeM)
       .attr("font-weight", "inherit")
       .attr("font-family", font_family);
+
+    to.append("title").text("Zur Station");
 
     // ENDSTATION Name
     view
@@ -388,7 +424,11 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
       .attr("font-weight", "bold")
-      .attr("font-family", font_family);
+      .attr("font-family", font_family)
+      .attr("cursor", "pointer")
+      .on("click", () =>
+        handleStationSelect(onStationSelected, data[data.length - 1])
+      );
 
     setHeight(svgHeight + svgPadding);
   }, [
@@ -396,6 +436,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
     graphLargeNumberYOffset,
     timelineArrivalYOffset,
     timelineStationStrokeWidth,
+    handleStationSelect,
   ]);
 
   return (
