@@ -35,7 +35,7 @@ const PeakSpotting = ({
 
   const [pageSize, setPageSize] = useState(7);
 
-  const [refetchFlag, setRefetchFlag] = useState(true);
+  const [refetchFlag, setRefetchFlag] = useState(false);
   const [maxResults, setMaxResults] = useState(50);
 
   const [componentIsRendered, setComponentIsRendered] = useState(false);
@@ -49,14 +49,12 @@ const PeakSpotting = ({
     setPeakSpottingSelectedTrip: setSelectedTrip,
     peakSpottingCurrentPage: currentPage,
     setPeakSpottingCurrentPage: setCurrentPage,
+    peakSpottingsortBy: sortBy,
+    setPeakSpottingSortBy: setSortBy,
   } = useSankeyContext();
 
   const queryClient = useQueryClient();
 
-  const [sortBy, setSortBy] = useState({
-    displayText: "der Kritikalität der Fahrten",
-    value: "MostCritical",
-  });
   const [showDropDown, setShowDropDown] = useState(false);
 
   const filterTripRequest: PaxMonFilterTripsRequest = {
@@ -74,9 +72,7 @@ const PeakSpotting = ({
   async function loadAndProcessTripInfo(
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
-    console.log("CALLED");
-    if (!refetchFlag) return;
-    console.log("ACHTUNG");
+    if (peakSpottingTrips && !refetchFlag) return;
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -221,7 +217,7 @@ const PeakSpotting = ({
               marginRight: "0.4rem",
             }}
           >
-            Anzahl Züge
+            Anzahl Züge (bin nur ein Provisorium)
           </h3>
           <input
             className="form-control form-control-sm"

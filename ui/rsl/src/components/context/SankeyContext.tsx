@@ -35,6 +35,14 @@ type Props = {
   ) => void;
   peakSpottingCurrentPage: number;
   setPeakSpottingCurrentPage?: (page: number) => void;
+  peakSpottingsortBy: {
+    displayText: string;
+    value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
+  };
+  setPeakSpottingSortBy?: (sortBy: {
+    displayText: string;
+    value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
+  }) => void;
 };
 
 const SankeyContext = createContext<Props>({
@@ -51,6 +59,10 @@ const SankeyContext = createContext<Props>({
   peakSpottingPaginatedTrips: undefined,
   peakSpottingSelectedTrip: undefined,
   peakSpottingCurrentPage: 1,
+  peakSpottingsortBy: {
+    displayText: "der Kritikalität der Fahrten",
+    value: "MostCritical",
+  },
 });
 SankeyContext.displayName = "SankeyContext";
 
@@ -96,6 +108,13 @@ export const SankeyContextProvider = ({
     PaxMonFilteredTripInfo | undefined
   >(undefined);
   const [peakSpottingCurrentPage, setPeakSpottingCurrentPage] = useState(1);
+  const [peakSpottingsortBy, setPeakSpottingSortBy] = useState<{
+    displayText: string;
+    value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
+  }>({
+    displayText: "der Kritikalität der Fahrten",
+    value: "MostCritical",
+  });
 
   return (
     <SankeyContext.Provider
@@ -126,6 +145,8 @@ export const SankeyContextProvider = ({
         setPeakSpottingSelectedTrip,
         peakSpottingCurrentPage,
         setPeakSpottingCurrentPage,
+        peakSpottingsortBy,
+        setPeakSpottingSortBy,
       }}
     >
       {children}
