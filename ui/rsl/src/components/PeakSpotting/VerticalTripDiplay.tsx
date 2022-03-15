@@ -92,7 +92,6 @@ const VerticalTripDisplay = ({
 
   const svgPadding = 30;
   const svgWidth = 580;
-  //const infoPadding = 30;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -369,7 +368,7 @@ const VerticalTripDisplay = ({
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
-      .attr("font-weight", "inherit")
+      .attr("font-weight", "bold")
       .attr("font-family", font_family)
       .attr("cursor", "pointer")
       .on("click", () => handleStationSelect(onStationSelected, data[0]));
@@ -424,7 +423,7 @@ const VerticalTripDisplay = ({
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
-      .attr("font-weight", "inherit")
+      .attr("font-weight", "bold")
       .attr("font-family", font_family)
       .attr("cursor", "pointer")
       .on("click", () =>
@@ -437,6 +436,7 @@ const VerticalTripDisplay = ({
     graphLargeNumberYOffset,
     timelineArrivalYOffset,
     timelineStationStrokeWidth,
+    handleStationSelect,
   ]);
 
   return (
