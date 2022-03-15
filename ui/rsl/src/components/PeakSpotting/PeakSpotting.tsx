@@ -20,14 +20,10 @@ import VerticalTripDisplay from "./VerticalTripDiplay";
 
 import "./HorizontalTripDisplay.css";
 
-type PeakSpottingProps = {
-  width: number;
-};
-
-const PeakSpotting = ({
-  width = Math.max(config.minWidth, window.screen.availWidth / 2) -
-    config.globalPadding,
-}: PeakSpottingProps): JSX.Element => {
+const PeakSpotting = (): JSX.Element => {
+  const width =
+    Math.max(config.minWidth, window.screen.availWidth / 2) -
+    config.globalPadding;
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery(universe);
 
@@ -124,32 +120,32 @@ const PeakSpotting = ({
    * @param param0 Ein Objekt zur Sortierung der Trips.
    * Label ist der Anzeigetext und value der eigentliche Sortierparameter
    */
-  const handleSelect = async ({
+  const handleSelect = ({
     label,
     value,
   }: {
     label: string;
     value: "MostCritical" | "ExpectedPax" | "FirstDeparture";
   }) => {
-    await setRefetchFlag(true);
-    await setComponentIsRendered(false);
-    if (setSortBy) await setSortBy({ label, value });
-    await setShowDropDown(false);
-
-    refetch();
+    setShowDropDown(false);
+    setComponentIsRendered(false);
+    setRefetchFlag(true);
+    if (setSortBy) setSortBy({ label, value });
   };
+
+  useEffect(() => {
+    refetch();
+  }, [refetchFlag, refetch]);
 
   /**
    * Passt den MaxResults-parameter an und setzt ein paar Frontendflags zur Darstellung der Ladeanimation
    *
    * @param num Wie viele Züge sollen maximal angezeigt werden können?
    */
-  const handleMaxResultChange = async (num: number) => {
-    await setComponentIsRendered(false);
-    await setRefetchFlag(true);
-    await setMaxResults(num);
-
-    refetch();
+  const handleMaxResultChange = (num: number) => {
+    setComponentIsRendered(false);
+    setMaxResults(num);
+    setRefetchFlag(true);
   };
 
   useEffect(() => {
@@ -164,7 +160,7 @@ const PeakSpotting = ({
 
   useEffect(() => {
     setComponentIsRendered(true);
-  }, [peakSpottingTrips, pageSize]);
+  }, [peakSpottingTrips]);
 
   return (
     <div className="flex flex-col h-full">
