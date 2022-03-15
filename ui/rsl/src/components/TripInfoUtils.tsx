@@ -14,7 +14,6 @@ import {
 import { addEdgeStatistics } from "../util/statistics";
 import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
 import { GroupsInTripSection } from "../api/protocol/motis/paxmon";
-import { formatDateTime } from "../util/dateFormat";
 
 interface EdgeInfo {
   enterStationID: string;

@@ -35,7 +35,7 @@ const PeakSpotting = ({
 
   const [pageSize, setPageSize] = useState(10);
 
-  const [refetchFlag, setRefetchFlag] = useState(false);
+  const [refetchFlag, setRefetchFlag] = useState(true);
 
   const {
     setPeakSpottingTrips,
@@ -92,7 +92,12 @@ const PeakSpotting = ({
     setPaginatedTrips(paginate(peakSpottingTrips, page, pageSize));
   };
 
-  const { data, isLoading, refetch } = useQuery(
+  const {
+    data,
+    status: loadingStatus,
+    isLoading,
+    refetch,
+  } = useQuery(
     queryKeys.filterTrips(filterTripRequest),
     async () => loadAndProcessTripInfo(filterTripRequest),
     {
@@ -203,27 +208,29 @@ const PeakSpotting = ({
                 peakSpottingTrips ? peakSpottingTrips.length : 0
               })`}
             />
-            {(!paginatedTrips || isLoading) && <Loading />}
-            {paginatedTrips && peakSpottingTrips && (
-              <>
-                {/** Der eigentliche Teil */}
-                {paginatedTrips.map((d) => (
-                  <HorizontalTripDisplay
-                    key={d.tsi.service_infos[0].train_nr}
-                    tripData={d}
-                    width={width}
-                    selectedTrip={selectedTrip}
-                    onClick={() => setSelectedTrip(d)}
+            {isLoading && <Loading />}
+            {loadingStatus === "success" &&
+              paginatedTrips &&
+              peakSpottingTrips && (
+                <>
+                  {/** Der eigentliche Teil */}
+                  {paginatedTrips.map((d) => (
+                    <HorizontalTripDisplay
+                      key={d.tsi.service_infos[0].train_nr}
+                      tripData={d}
+                      width={width}
+                      selectedTrip={selectedTrip}
+                      onClick={() => setSelectedTrip(d)}
+                    />
+                  ))}
+                  <Pagination
+                    itemsCount={peakSpottingTrips.length}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    currentPage={currentPage}
                   />
-                ))}
-                <Pagination
-                  itemsCount={peakSpottingTrips.length}
-                  pageSize={pageSize}
-                  onPageChange={handlePageChange}
-                  currentPage={currentPage}
-                />
-              </>
-            )}
+                </>
+              )}
           </div>
         </>
 

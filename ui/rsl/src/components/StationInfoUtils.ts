@@ -21,14 +21,12 @@ import {
 import { useQuery, useQueryClient } from "react-query";
 import { addEdgeStatistics } from "../util/statistics";
 import { PaxMonTripLoadInfoWithStats } from "../data/loadInfo";
-import { formatDateTime } from "../util/dateFormat";
 
 export type StationInterchangeParameters = {
   stationId: string;
   startTime: number;
   endTime: number;
   maxCount: number;
-  onStatusUpdate?: (status: "idle" | "error" | "loading" | "success") => void;
   onlyIncludeTripIds?: TripId[];
   tripDirection: "entering" | "exiting" | "both";
   showOutOfTime: boolean;
@@ -296,9 +294,7 @@ function InterchangePassFilter(tripId: TripId, tripIdList: TripId[]) {
  */
 export function ExtractStationData(
   params: StationInterchangeParameters
-): SankeyInterfaceMinimal {
-  if (params.onStatusUpdate) params.onStatusUpdate("loading");
-
+): [SankeyInterfaceMinimal, "idle" | "error" | "success" | "loading"] {
   const graph: SankeyInterfaceMinimal = {
     fromNodes: [],
     toNodes: [],
@@ -316,7 +312,8 @@ export function ExtractStationData(
     max_count: params.maxCount,
     universe: universe,
   };
-  const { data } = usePaxMonGetInterchangesQuery(interchangeRequest);
+  const { data, status: lodingStatus } =
+    usePaxMonGetInterchangesQuery(interchangeRequest);
 
   const arrivingTripsInStation: TripIdAtStation[] = [];
   const departingTripsInStation: TripIdAtStation[] = [];
@@ -519,9 +516,9 @@ export function ExtractStationData(
     });
 
   const previousData = data;
-  const { data: status } = usePaxMonStatusQuery();
+  const { data: status } = usePaxMonStatusQuery(universe);
   {
-    const { data, status: statusArrivingTripQuery } = useQuery(
+    const { data /*, status: statusArrivingTripQuery*/ } = useQuery(
       queryKeys.tripsLoad(universe, arrivingTripIds),
       async () => loadAndProcessTripInfos(universe, arrivingTripIds),
       {
@@ -533,8 +530,6 @@ export function ExtractStationData(
         },
       }
     );
-
-    if (params.onStatusUpdate) params.onStatusUpdate(statusArrivingTripQuery);
 
     if (data) {
       console.assert(data.length + 2 == graph.fromNodes.length);
@@ -638,5 +633,5 @@ export function ExtractStationData(
   };
   graph.fromNodes.sort(TimeSort);
   graph.toNodes.sort(TimeSort);
-  return graph;
+  return [graph, lodingStatus];
 }

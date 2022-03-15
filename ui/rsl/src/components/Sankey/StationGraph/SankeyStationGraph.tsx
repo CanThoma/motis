@@ -16,6 +16,9 @@ import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "../../common/Loading";
 import { font_family } from "../../../config";
 import { stationConfig } from "../../../config";
+import { usePaxMonStatusQuery } from "../../../api/paxmon";
+import { universeAtom } from "../../../data/simulation";
+import { useAtom } from "jotai";
 
 type Props = {
   stationId: string;
@@ -99,14 +102,11 @@ const SankeyStationGraph = ({
   // TODO
   const loadingStatus = useRef(true);
 
-  const data = ExtractStationData({
+  const [data, status] = ExtractStationData({
     stationId: stationId,
     startTime: startTime,
     endTime: endTime,
     maxCount: 0,
-    onStatusUpdate: (e) => {
-      loadingStatus.current = e !== "success";
-    },
     tripDirection: "both",
     showOutOfTime: false,
   });
@@ -424,9 +424,9 @@ const SankeyStationGraph = ({
       {data && !data.links.length && !loadingStatus.current && (
         <div>Keine Daten zu diesen Zeiten verfügbar</div>
       )}
-      {/* BUG: state is never reached */}
-      {loadingStatus.current && data.links.length > 0 && <Loading />}
-      {!loadingStatus.current && data.links.length > 0 && (
+      {status === "loading" && <Loading />}
+      {status === "error" && <p>Fehler bei der Datenbeschaffung</p>}
+      {status === "success" && data.links.length > 0 && (
         <>
           <svg
             ref={svgRef}

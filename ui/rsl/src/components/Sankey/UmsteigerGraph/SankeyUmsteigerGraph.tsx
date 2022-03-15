@@ -40,7 +40,7 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const data = ExtractStationData({
+  const [data] = ExtractStationData({
     stationId: stationId,
     startTime: time - 5 * 60, // 2 Stunden vor Ankunft
     endTime: time + 5 * 60, // 2 Stunden nach Abfahrt
@@ -306,6 +306,7 @@ const SankeyUmsteigerGraph = ({
     duration,
     svgHeightUmsteiger,
     tripDir,
+    onlyIncludeTripId,
   ]);
 
   return (
