@@ -77,7 +77,7 @@ const PeakSpotting = ({
       Math.floor(
         (containerRef.current
           ? containerRef.current.getBoundingClientRect().height - 36
-          : 500) / 85
+          : 500) / 90
       )
     );
 
@@ -157,7 +157,7 @@ const PeakSpotting = ({
       Math.floor(
         (containerRef.current
           ? containerRef.current.getBoundingClientRect().height - 36
-          : 500) / 85
+          : 500) / 90
       )
     );
   }, []);
