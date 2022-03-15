@@ -5,8 +5,6 @@ import {
   scaleLinear,
   interpolateHsl,
 } from "d3";
-import config, { colorSchema } from "../../config";
-import { interpolateRgb, scaleLinear, interpolateHsl } from "d3";
 import { peakSpottingConfig as config } from "../../config";
 
 /**
