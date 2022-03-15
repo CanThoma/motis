@@ -3,9 +3,20 @@ import { select as d3Select } from "d3";
 import { colorSchema, font_family } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 
+import "./VerticalTripDisplay.css";
+
 type Props = {
   width: number;
   trip: any;
+};
+
+const renderTimeDisplay = (t) => {
+  const dt = new Date(t * 1000);
+  const hr = dt.getHours();
+  let m = dt.getMinutes();
+  m = m < 10 ? "0" + m : m;
+
+  return hr + ":" + m;
 };
 
 /**
@@ -304,21 +315,25 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
     setHeight(svgHeight + 70);
   }, [trip]);
 
+  console.log(trip);
+
   return (
-    <div style={{ width, backgroundColor: colorSchema.lightGrey }}>
-      <div style={{ display: "flex", height: "50px" }}>
-        <h2
-          style={{
-            margin: "auto auto auto 7px",
-            color: "rgb(48, 55, 60)",
-            fontSize: "20px",
-            overflow: "hidden",
-          }}
-        >
-          Prognose
-        </h2>
-      </div>
-      <div className="grid grid-flow-col">
+    <div
+      className="grid grid-flow-col"
+      style={{ width, backgroundColor: colorSchema.lightGrey }}
+    >
+      <div>
+        <div style={{ display: "flex", height: "50px" }}>
+          <h2
+            style={{
+              margin: "auto auto auto 7px",
+              color: "rgb(52, 58, 64)",
+              fontSize: " 20px",
+            }}
+          >
+            Prognose
+          </h2>
+        </div>
         <div>
           <svg
             ref={svgRef}
@@ -333,7 +348,96 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
             className="m-auto"
           />
         </div>
-        <div>INFOS</div>
+      </div>
+      <div
+        style={{
+          width: `${width - 580 - 30}px` /** TODO: Magische Nummern un so*/,
+        }}
+      >
+        {/** Infosanzeige */}
+        <div>
+          <div style={{ display: "flex", height: "50px" }}>
+            <h2
+              style={{
+                margin: "auto auto auto 7px",
+                color: "rgb(52, 58, 64)",
+                fontSize: " 20px",
+              }}
+            >
+              Infos
+            </h2>
+          </div>
+          <div className="tableContainer">
+            <table className="table">
+              <tbody>
+                <tr>
+                  <th>ZugNr</th>
+                  <td>{trip.tsi.trip.train_nr}</td>
+                </tr>
+                <tr>
+                  <th>Von</th>
+                  <td>{`${renderTimeDisplay(trip.tsi.trip.time)} ${
+                    trip.tsi.primary_station.name
+                  }`}</td>
+                </tr>
+                <tr>
+                  <th>Bis</th>
+                  <td>{`${renderTimeDisplay(trip.tsi.trip.target_time)} ${
+                    trip.tsi.secondary_station.name
+                  }`}</td>
+                </tr>
+                <tr>
+                  <th>Name</th>
+                  <td>{trip.tsi.service_infos[0].name}</td>
+                </tr>
+                <tr>
+                  <th>Kategorie</th>
+                  <td>{trip.tsi.service_infos[0].category}</td>
+                </tr>
+                <tr>
+                  <th>Zuchnummer</th>
+                  <td>{trip.tsi.service_infos[0].train_nr}</td>
+                </tr>
+                <tr>
+                  <th>Linie</th>
+                  <td>{trip.tsi.service_infos[0].line}</td>
+                </tr>
+                <tr>
+                  <th>Anbieter</th>
+                  <td>{trip.tsi.service_infos[0].provider}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/** Signlaeanzeige */}
+        <div>
+          <div style={{ display: "flex", height: "50px" }}>
+            <h2
+              style={{
+                margin: "auto auto auto 7px",
+                color: "rgb(52, 58, 64)",
+                fontSize: " 20px",
+              }}
+            >
+              Signale
+            </h2>
+          </div>
+          <div className="tableContainer">
+            <table className="table">
+              <tbody>
+                <tr>
+                  <th>Koks</th>
+                  <td>Nutten</td>
+                </tr>
+                <tr>
+                  <th>Koks</th>
+                  <td>Nutten</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

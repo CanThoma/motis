@@ -1,0 +1,21 @@
+.table > :not(caption) > * > * {
+  padding: 0.15rem 0.5rem;
+}
+
+.tableContainer {
+  background-color: #fff;
+  border: 2px solid #cfd4d9;
+  padding: 15px;
+  width: 90%;
+}
+.table > tbody > tr > th {
+  font-weight: bolder;
+  color: var(--darkBluishGrey);
+  text-align: right;
+}
+
+.table > tbody > tr > td {
+  font-weight: bolder;
+  color: var(--black);
+  font-size: 13px;
+}

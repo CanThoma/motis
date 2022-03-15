@@ -33,7 +33,7 @@ const PeakSpotting = ({
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery(universe);
 
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(7);
 
   const [refetchFlag, setRefetchFlag] = useState(true);
   const [maxResults, setMaxResults] = useState(50);
@@ -176,12 +176,12 @@ const PeakSpotting = ({
                   className="dropdown-item"
                   onClick={() =>
                     handleSelect({
-                      displayText: "Erwarteten Passagieren",
+                      displayText: "den Erwarteten Passagieren",
                       value: "ExpectedPax",
                     })
                   }
                 >
-                  der Erwarteten Passagieren
+                  den Erwarteten Passagieren
                 </button>
               </li>
               <li>
@@ -221,7 +221,7 @@ const PeakSpotting = ({
               marginRight: "0.4rem",
             }}
           >
-            Bitches
+            Anzahl Züge
           </h3>
           <input
             className="form-control form-control-sm"
@@ -286,17 +286,19 @@ const PeakSpotting = ({
 
         {/** Prognose und so */}
         {selectedTrip && (
-          <div
-            style={{
-              marginLeft: "0px",
-              marginRight: "5px",
-              width: width,
-              opacity: componentIsRendered ? 1 : 0.5,
-              cursor: componentIsRendered ? "default" : "not-allowed",
-            }}
-          >
-            <VerticalTripDisplay trip={selectedTrip} width={width} />
-          </div>
+          <>
+            <div
+              style={{
+                marginLeft: "0px",
+                marginRight: "5px",
+                width: width,
+                opacity: componentIsRendered ? 1 : 0.5,
+                cursor: componentIsRendered ? "default" : "not-allowed",
+              }}
+            >
+              <VerticalTripDisplay trip={selectedTrip} width={width} />
+            </div>
+          </>
         )}
       </div>
     </div>
