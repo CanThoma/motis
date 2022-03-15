@@ -69,13 +69,8 @@ const PeakSpotting = (): JSX.Element => {
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
     if (peakSpottingTrips && !refetchFlag) return;
-    setPageSize(
-      Math.floor(
-        (containerRef.current
-          ? containerRef.current.getBoundingClientRect().height - 36
-          : 500) / 90
-      )
-    );
+    console.log(window.innerHeight);
+    setPageSize(Math.floor((window.innerHeight - 246.4) / 85));
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -137,6 +132,11 @@ const PeakSpotting = (): JSX.Element => {
     refetch();
   }, [refetchFlag, refetch]);
 
+  useEffect(() => {
+    if (setPaginatedTrips)
+      setPaginatedTrips(paginate(peakSpottingTrips, 1, pageSize));
+  }, [pageSize, setPaginatedTrips, peakSpottingTrips]);
+
   /**
    * Passt den MaxResults-parameter an und setzt ein paar Frontendflags zur Darstellung der Ladeanimation
    *
@@ -149,13 +149,7 @@ const PeakSpotting = (): JSX.Element => {
   };
 
   useEffect(() => {
-    setPageSize(
-      Math.floor(
-        (containerRef.current
-          ? containerRef.current.getBoundingClientRect().height - 36
-          : 500) / 90
-      )
-    );
+    setPageSize(Math.floor((window.innerHeight - 352.4) / 85));
   }, []);
 
   useEffect(() => {
