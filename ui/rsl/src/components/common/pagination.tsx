@@ -2,10 +2,21 @@ import React from "react";
 
 import "./pagination.css";
 
-const Pagination = ({ itemsCount, pageSize, currentPage, onPageChange }) => {
+const Pagination = ({
+  itemsCount,
+  pageSize,
+  currentPage,
+  onPageChange,
+}: {
+  itemsCount: number;
+  pageSize: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}): JSX.Element | null => {
   const pageCount = Math.ceil(itemsCount / pageSize);
 
-  const range = (x, y) => (x > y ? [] : [x, ...range(x + 1, y)]);
+  const range = (x: number, y: number): number[] =>
+    x > y ? [] : [x, ...range(x + 1, y)];
 
   if (pageCount === 1) return null;
   const pages = range(1, pageCount);

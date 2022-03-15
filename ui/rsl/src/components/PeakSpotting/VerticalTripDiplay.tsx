@@ -53,7 +53,7 @@ const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
  * @param trip Der darzustellende Trip.
  * @constructor
  */
-const VerticalTripDisplay = ({ /*width,*/ trip }: Props): JSX.Element => {
+const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
   const svgRef = useRef(null);
   const [height, setHeight] = useState(500);
 

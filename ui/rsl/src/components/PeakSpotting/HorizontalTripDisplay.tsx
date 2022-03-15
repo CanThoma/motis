@@ -172,14 +172,14 @@ const HorizontalTripDisplay = ({
               fontSize: "24px",
               lineHeight: 0.9,
             }}
-            data-tooltip="Die Zuchnummer"
+            data-tooltip="Die Zugnummer"
             data-tooltip-location="top"
           >
             {trip.tsi.service_infos[0].train_nr}
           </h3>
           <p
             style={{ color: colorSchema.darkBluishGrey, fontWeight: "bold" }}
-            data-tooltip="Der Zuchname"
+            data-tooltip="Der Zugname"
             data-tooltip-location="top"
           >
             {trip.tsi.service_infos[0].name}

@@ -1,8 +1,18 @@
 import React, { useRef, useEffect } from "react";
 import { select as d3Select } from "d3";
-import { colorSchema, peakSpottingConfig as config } from "../../config";
+import {
+  colorSchema,
+  font_family,
+  peakSpottingConfig as config,
+} from "../../config";
 
-const HorizontalTripDisplayTitle = ({ width, title }) => {
+const HorizontalTripDisplayTitle = ({
+  width,
+  title,
+}: {
+  width: number;
+  title: string;
+}) => {
   const svgTitleRef = useRef(null);
 
   const graphWidth =
@@ -25,7 +35,7 @@ const HorizontalTripDisplayTitle = ({ width, title }) => {
           .attr("text-anchor", "middle")
           .attr("font-size", 15)
           .attr("font-weight", "bold")
-          .attr("font-family", config.font_family)
+          .attr("font-family", font_family)
           .text(i + ":00");
       }
     }
@@ -40,7 +50,7 @@ const HorizontalTripDisplayTitle = ({ width, title }) => {
           color: colorSchema.darkBluishGrey,
           width: width,
           height: "50px",
-          fontFamily: config.font_family,
+          fontFamily: font_family,
           /*
         marginBottom: "5px",
         //width: "100%",
