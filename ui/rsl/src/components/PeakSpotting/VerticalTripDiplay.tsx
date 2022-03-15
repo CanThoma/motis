@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { select as d3Select } from "d3";
-import { colorSchema, font_family, peakSpottingConfig } from "../../config";
+import {
+  colorSchema,
+  font_family,
+  peakSpottingConfig as config,
+} from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 import {
   PaxMonEdgeLoadInfo,
@@ -49,7 +53,7 @@ const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
  * @param trip Der darzustellende Trip.
  * @constructor
  */
-const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
+const VerticalTripDisplay = ({ /*width,*/ trip }: Props): JSX.Element => {
   const svgRef = useRef(null);
   const [height, setHeight] = useState(500);
 
@@ -83,7 +87,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
 
   const svgPadding = 70;
   const svgWidth = 580;
-  const infoPadding = 30;
+  //const infoPadding = 30;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -411,7 +415,7 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
           </h2>
         </div>
         <div
-          className={`flex-initial overflow-y-scroll p-1 border-2 border-db-cool-gray-200`}
+          className={`flex-initial overflow-y-scroll p-1 border-2 border-db-cool-gray-200 hide-scrollbar`}
           style={{
             maxHeight: containerRef.current
               ? containerRef.current.getBoundingClientRect().height - 55

@@ -34,11 +34,6 @@ const PeakSpotting = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(5);
 
-  const horizontalGraphHeight = 89;
-
-  const [refetchFlag, setRefetchFlag] = useState(true);
-  const [maxResults, setMaxResults] = useState(50);
-
   const [refetchFlag, setRefetchFlag] = useState(false);
   const [maxResults, setMaxResults] = useState(config.initialSearchResults);
   const [showDropDown, setShowDropDown] = useState(false);
@@ -183,7 +178,7 @@ const PeakSpotting = ({
               setShowDropDown(!showDropDown);
             }}
           >
-            {sortBy.displayText}
+            {sortBy.label}
           </button>
           <ul
             className={`${
@@ -198,7 +193,7 @@ const PeakSpotting = ({
                 className="dropdown-item"
                 onClick={() =>
                   handleSelect({
-                    displayText: "Erwartete Passagiere",
+                    label: "Erwartete Passagiere",
                     value: "ExpectedPax",
                   })
                 }
@@ -211,7 +206,7 @@ const PeakSpotting = ({
                 className="dropdown-item"
                 onClick={() =>
                   handleSelect({
-                    displayText: "Kritikalität der Fahrten",
+                    label: "Kritikalität der Fahrten",
                     value: "MostCritical",
                   })
                 }
@@ -224,7 +219,7 @@ const PeakSpotting = ({
                 className="dropdown-item"
                 onClick={() =>
                   handleSelect({
-                    displayText: "Abfahrtszeiten",
+                    label: "Abfahrtszeiten",
                     value: "FirstDeparture",
                   })
                 }
@@ -239,17 +234,17 @@ const PeakSpotting = ({
           className="form-control form-control-sm mr-10"
           type="text"
           placeholder="50"
-          onBlur={(v) => {
-            const tim = parseInt(v.target.value);
-            if (isNaN(tim)) return;
+          onBlur={(input) => {
+            const maxPax = parseInt(input.target.value);
+            if (isNaN(maxPax)) return;
 
-            handleMaxResultChange(tim);
+            handleMaxResultChange(maxPax);
           }}
-          onKeyDown={(v) => {
-            if (v.key !== "Enter") return;
-            const tim = parseInt(v.target.value);
-            if (isNaN(tim)) return;
-            v.target.blur();
+          onKeyDown={(input) => {
+            if (input.key !== "Enter") return;
+            const target = input.target as HTMLInputElement;
+
+            target.blur();
           }}
         />
       </div>
@@ -286,10 +281,12 @@ const PeakSpotting = ({
                     {paginatedTrips.map((d) => (
                       <HorizontalTripDisplay
                         key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}
-                        tripData={d}
+                        trip={d}
                         width={width}
                         selectedTrip={selectedTrip}
-                        onClick={() => setSelectedTrip(d)}
+                        onClick={() => {
+                          if (setSelectedTrip) setSelectedTrip(d);
+                        }}
                       />
                     ))}
                   </div>
