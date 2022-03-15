@@ -32,7 +32,7 @@ const PeakSpotting = ({
   const { data: status } = usePaxMonStatusQuery(universe);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(1);
 
   const [refetchFlag, setRefetchFlag] = useState(false);
   const [maxResults, setMaxResults] = useState(config.initialSearchResults);
@@ -73,6 +73,13 @@ const PeakSpotting = ({
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
     if (peakSpottingTrips && !refetchFlag) return;
+    setPageSize(
+      Math.floor(
+        (containerRef.current
+          ? containerRef.current.getBoundingClientRect().height - 36
+          : 500) / 90
+      )
+    );
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -127,7 +134,7 @@ const PeakSpotting = ({
     await setRefetchFlag(true);
     await setComponentIsRendered(false);
     if (setSortBy) await setSortBy({ label, value });
-    setShowDropDown(false);
+    await setShowDropDown(false);
 
     refetch();
   };
@@ -150,14 +157,14 @@ const PeakSpotting = ({
       Math.floor(
         (containerRef.current
           ? containerRef.current.getBoundingClientRect().height - 36
-          : 500) / 85
+          : 500) / 90
       )
     );
   }, []);
 
   useEffect(() => {
     setComponentIsRendered(true);
-  }, [peakSpottingTrips]);
+  }, [peakSpottingTrips, pageSize]);
 
   return (
     <div className="flex flex-col h-full">
@@ -171,12 +178,7 @@ const PeakSpotting = ({
             id="dropdownMenuButton"
             data-mdb-toggle="dropdown"
             aria-expanded="false"
-            onClick={() => {
-              setShowDropDown(!showDropDown);
-            }}
-            onBlur={() => {
-              setShowDropDown(!showDropDown);
-            }}
+            onClick={() => setShowDropDown(!showDropDown)}
           >
             {sortBy.label}
           </button>
@@ -249,11 +251,12 @@ const PeakSpotting = ({
         />
       </div>
       {/*Körper*/}
-      <div className="flex-auto flex flex-row justify items-top overflow-x-scroll ">
+      <div className="flex-auto flex flex-row justify items-top overflow-x-scroll hide-scrollbar mb-5">
         {/*horizontal*/}
         <div
           className="mx-1 px-2 border-2 border-db-cool-gray-200 flex flex-col"
           style={{ backgroundColor: colorSchema.lightGrey }}
+          ref={containerRef}
         >
           {/* Der Titel Teil */}
           <div className="flex-initial">
@@ -277,7 +280,7 @@ const PeakSpotting = ({
                   }}
                 >
                   {/** Der eigentliche Teil */}
-                  <div className="flex-auto" ref={containerRef}>
+                  <div className="flex-auto">
                     {paginatedTrips.map((d) => (
                       <HorizontalTripDisplay
                         key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}

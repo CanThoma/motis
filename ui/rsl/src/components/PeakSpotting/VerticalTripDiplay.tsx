@@ -440,7 +440,7 @@ const VerticalTripDisplay = ({ /*width,*/ trip }: Props): JSX.Element => {
           </h2>
         </div>
         <div
-          className="tableContainer flex-initial overflow-y-scroll overflow-x-hidden"
+          className="tableContainer flex-initial overflow-y-scroll overflow-x-hidden hide-scrollbar"
           style={{
             maxHeight: containerRef.current
               ? (containerRef.current.getBoundingClientRect().height - 110) *
@@ -500,7 +500,7 @@ const VerticalTripDisplay = ({ /*width,*/ trip }: Props): JSX.Element => {
           </h2>
         </div>
         <div
-          className="tableContainer flex-initial overflow-y-scroll"
+          className="tableContainer flex-initial overflow-y-scroll hide-scrollbar"
           style={{
             maxHeight: containerRef.current
               ? (containerRef.current.getBoundingClientRect().height - 110) *
