@@ -73,7 +73,7 @@ const Modal = ({ setIsOpen, param }: Props): JSX.Element => {
                   ":"}
             </p>
             <div className="flex justify-center">
-              <div className="flex place-content-center mx-auto mt-5">
+              <div className="5">
                 <Navbar
                   pages={pages}
                   onChange={(i) => setFilter(i)}
