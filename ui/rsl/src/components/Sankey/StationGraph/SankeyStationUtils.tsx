@@ -91,6 +91,7 @@ export const createGraph = ({
   const boPaxColour = "#f27e93";
   const exPaxColour = "#f27e93";
   const fuPaxColour = "#f20544";
+  const CHAR_ARROW_RIGHT = "\u2192";
 
   // #####################################################################################
   // Berechnung der Nodes
@@ -153,7 +154,9 @@ export const createGraph = ({
         full: cNode.cap < cNode.pax,
         name:
           cNode.name.substr(0, cNode.name.indexOf(" (")) +
-          " \u2192 " +
+          " " +
+          CHAR_ARROW_RIGHT +
+          " " +
           cNode.name.substr(
             cNode.name.indexOf(" - ") + 2,
             cNode.name.length - cNode.name.indexOf(" - ") - 3
