@@ -34,16 +34,18 @@ type WarningSymbolProps = {
   symbol: "critical" | "excess" | "bomb" | "crowded";
   color?: string;
   width?: number;
+  disableTooltip?: boolean;
 };
 
 const WarningSymbol = ({
   symbol,
   color = "#444444",
   width = 15,
+  disableTooltip = false,
 }: WarningSymbolProps): JSX.Element => {
   return (
     <div
-      data-tooltip={symbolTooltips[symbol]}
+      data-tooltip={disableTooltip ? null : symbolTooltips[symbol]}
       data-tooltip-location="top"
       style={{
         margin: "auto",
