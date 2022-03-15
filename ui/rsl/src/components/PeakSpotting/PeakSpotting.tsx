@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "react-query";
 import { useAtom } from "jotai";
 import { PaxMonFilterTripsRequest } from "../../api/protocol/motis/paxmon";
@@ -31,7 +31,14 @@ const PeakSpotting = ({
   const [universe] = useAtom(universeAtom);
   const { data: status } = usePaxMonStatusQuery(universe);
 
-  const [pageSize] = useState(config.pageSize);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pageSize, setPageSize] = useState(5);
+
+  const horizontalGraphHeight = 89;
+
+  const [refetchFlag, setRefetchFlag] = useState(true);
+  const [maxResults, setMaxResults] = useState(50);
+
   const [refetchFlag, setRefetchFlag] = useState(false);
   const [maxResults, setMaxResults] = useState(config.initialSearchResults);
   const [showDropDown, setShowDropDown] = useState(false);
@@ -144,179 +151,177 @@ const PeakSpotting = ({
   };
 
   useEffect(() => {
+    setPageSize(
+      Math.floor(
+        (containerRef.current
+          ? containerRef.current.getBoundingClientRect().height - 36
+          : 500) / 85
+      )
+    );
+  }, []);
+
+  useEffect(() => {
     setComponentIsRendered(true);
   }, [peakSpottingTrips]);
 
   return (
-    <div style={{ backgroundColor: colorSchema.lightGrey }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: "1.5rem",
-        }}
-      >
-        <div>
-          <h3
-            style={{
-              color: "rgb(52, 58, 64)",
-              fontSize: "15px",
-              marginRight: "0.4rem",
+    <div className="flex flex-col h-full">
+      {/*menus leiste*/}
+      <div className="flex-initial py-[1.5rem] flex justify-center items-center">
+        <h3 className="text-base px-2 text-db-cool-gray-800">Sortierung: </h3>
+        <div className="dropdown">
+          <button
+            className="btn btn-primary dropdown-toggle relative w-60"
+            type="button"
+            id="dropdownMenuButton"
+            data-mdb-toggle="dropdown"
+            aria-expanded="false"
+            onClick={() => {
+              setShowDropDown(!showDropDown);
+            }}
+            onBlur={() => {
+              setShowDropDown(!showDropDown);
             }}
           >
-            Sortieren nach:{" "}
-          </h3>
-          <div className="dropdown">
-            <button
-              className="btn btn-primary dropdown-toggle"
-              type="button"
-              id="dropdownMenuButton"
-              data-mdb-toggle="dropdown"
-              aria-expanded="false"
-              style={{ position: "relative" }}
-              onClick={() => {
-                setShowDropDown(!showDropDown);
-              }}
-            >
-              {sortBy.label}
-            </button>
-            <ul
-              className={showDropDown ? "dropdown-menu show" : "dropdown-menu"}
-              aria-labelledby="dropdownMenuButton"
-            >
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() =>
-                    handleSelect({
-                      label: "den Erwarteten Passagieren",
-                      value: "ExpectedPax",
-                    })
-                  }
-                >
-                  den Erwarteten Passagieren
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() =>
-                    handleSelect({
-                      label: "der Kritikalität der Fahrten",
-                      value: "MostCritical",
-                    })
-                  }
-                >
-                  der Kritikalität der Fahrten
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() =>
-                    handleSelect({
-                      label: "der Abfahrtszeit",
-                      value: "FirstDeparture",
-                    })
-                  }
-                >
-                  der Abfahrtszeit
-                </button>
-              </li>
-            </ul>
-          </div>
+            {sortBy.displayText}
+          </button>
+          <ul
+            className={`${
+              showDropDown ? "dropdown-menu show" : "dropdown-menu"
+            } w-60`}
+            aria-labelledby="dropdownMenuButton"
+          >
+            <li>
+              {" "}
+              {/*TODO fix handleselect*/}
+              <button
+                className="dropdown-item"
+                onClick={() =>
+                  handleSelect({
+                    displayText: "Erwartete Passagiere",
+                    value: "ExpectedPax",
+                  })
+                }
+              >
+                Erwartete Passagiere
+              </button>
+            </li>
+            <li>
+              <button
+                className="dropdown-item"
+                onClick={() =>
+                  handleSelect({
+                    displayText: "Kritikalität der Fahrten",
+                    value: "MostCritical",
+                  })
+                }
+              >
+                Kritikalität der Fahrten
+              </button>
+            </li>
+            <li>
+              <button
+                className="dropdown-item"
+                onClick={() =>
+                  handleSelect({
+                    displayText: "Abfahrtszeiten",
+                    value: "FirstDeparture",
+                  })
+                }
+              >
+                Abfahrtszeiten
+              </button>
+            </li>
+          </ul>
         </div>
-        <div style={{ marginLeft: "20px" }}>
-          <h3
-            style={{
-              color: "rgb(52, 58, 64)",
-              fontSize: "15px",
-              marginRight: "0.4rem",
-            }}
-          >
-            Anzahl Züge (bin nur ein Provisorium)
-          </h3>
-          <input
-            className="form-control form-control-sm"
-            type="text"
-            placeholder="50"
-            onBlur={(v) => {
-              const tim = parseInt(v.target.value);
-              if (isNaN(tim)) return;
+        <h3 className="text-base px-2 text-db-cool-gray-800">Anzahl Züge:</h3>
+        <input
+          className="form-control form-control-sm mr-10"
+          type="text"
+          placeholder="50"
+          onBlur={(v) => {
+            const tim = parseInt(v.target.value);
+            if (isNaN(tim)) return;
 
-              handleMaxResultChange(tim);
-            }}
-            onKeyDown={(v) => {
-              if (v.key !== "Enter") return;
-              const target = v.target as HTMLTextAreaElement;
-              const tim = parseInt(target.value);
-              if (isNaN(tim)) return;
-              target.blur();
-            }}
-          />
-        </div>
+            handleMaxResultChange(tim);
+          }}
+          onKeyDown={(v) => {
+            if (v.key !== "Enter") return;
+            const tim = parseInt(v.target.value);
+            if (isNaN(tim)) return;
+            v.target.blur();
+          }}
+        />
       </div>
-      <div className="grid grid-flow-col pb-5">
-        <>
-          <div
-            style={{ marginLeft: "10px", marginRight: "10px", width: width }}
-          >
-            {/** Der Titel Teil */}
+      {/*Körper*/}
+      <div className="flex-auto flex flex-row justify items-top overflow-x-scroll ">
+        {/*horizontal*/}
+        <div
+          className="mx-1 px-2 border-2 border-db-cool-gray-200 flex flex-col"
+          style={{ backgroundColor: colorSchema.lightGrey }}
+        >
+          {/* Der Titel Teil */}
+          <div className="flex-initial">
             <HorizontalTripDisplayTitle
               width={width}
               title={`Alle Züge (${
                 peakSpottingTrips ? peakSpottingTrips.length : 0
               })`}
             />
+          </div>
+          {/* der Graph */}
+          <div className="flex-auto">
             {(isLoading || !componentIsRendered) && <Loading />}
             {loadingStatus === "success" &&
               paginatedTrips &&
               peakSpottingTrips && (
                 <div
+                  className="flex flex-col h-full"
                   style={{
                     opacity: componentIsRendered ? 1 : 0.5,
                   }}
                 >
                   {/** Der eigentliche Teil */}
-                  {paginatedTrips.map((d) => (
-                    <HorizontalTripDisplay
-                      key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}
-                      trip={d}
-                      width={width}
-                      selectedTrip={selectedTrip}
-                      onClick={() => {
-                        if (setSelectedTrip) setSelectedTrip(d);
-                      }}
+                  <div className="flex-auto" ref={containerRef}>
+                    {paginatedTrips.map((d) => (
+                      <HorizontalTripDisplay
+                        key={`${d.tsi.service_infos[0].train_nr}-${d.tsi.trip.time}`}
+                        tripData={d}
+                        width={width}
+                        selectedTrip={selectedTrip}
+                        onClick={() => setSelectedTrip(d)}
+                      />
+                    ))}
+                  </div>
+                  <div className="">
+                    <Pagination
+                      itemsCount={peakSpottingTrips.length}
+                      pageSize={pageSize}
+                      onPageChange={handlePageChange}
+                      currentPage={currentPage}
                     />
-                  ))}
-                  <Pagination
-                    itemsCount={peakSpottingTrips.length}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    currentPage={currentPage}
-                  />
+                  </div>
                 </div>
               )}
           </div>
-        </>
-
-        {/** Prognose und so */}
-        {selectedTrip && (
-          <>
+        </div>
+        {/* vertical/  Prognose und so */}
+        <div
+          className="mx-1 border-2 border-db-cool-gray-200 h-full"
+          style={{ backgroundColor: colorSchema.lightGrey }}
+        >
+          {selectedTrip && (
             <div
+              className="mx-1 h-full"
               style={{
-                marginLeft: "0px",
-                marginRight: "5px",
-                width: width,
                 opacity: componentIsRendered ? 1 : 0.5,
                 cursor: componentIsRendered ? "default" : "not-allowed",
               }}
             >
               <VerticalTripDisplay trip={selectedTrip} width={width} />
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

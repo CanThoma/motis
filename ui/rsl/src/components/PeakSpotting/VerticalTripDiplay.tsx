@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { select as d3Select } from "d3";
-import {
-  colorSchema,
-  font_family,
-  peakSpottingConfig as config,
-} from "../../config";
+import { colorSchema, font_family, peakSpottingConfig } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 import {
   PaxMonEdgeLoadInfo,
@@ -88,6 +84,8 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
   const svgPadding = 70;
   const svgWidth = 580;
   const infoPadding = 30;
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let svgHeight = 0;
@@ -398,157 +396,150 @@ const VerticalTripDisplay = ({ width, trip }: Props): JSX.Element => {
   ]);
 
   return (
+    /*body*/
     <div
-      className="grid grid-flow-col"
-      style={{ width, backgroundColor: colorSchema.lightGrey }}
+      className="flex flex-row overflow-hidden p-1 h-full "
+      style={{
+        backgroundColor: colorSchema.lightGrey,
+      }}
     >
-      <div>
-        <div style={{ display: "flex", height: "50px" }}>
-          <h2
-            style={{
-              margin: "auto auto auto 7px",
-              color: "rgb(52, 58, 64)",
-              fontSize: " 20px",
-            }}
-          >
+      {/* Prognose */}
+      <div className="flex-auto flex flex-col mx-1 h-full" ref={containerRef}>
+        <div className="h-[50px] flex-initial align-middle">
+          <h2 className="m-auto mt-2 ml-2 text-xl text-db-cool-gray-600">
             Prognose
           </h2>
         </div>
-        <div>
+        <div
+          className={`flex-initial overflow-y-scroll p-1 border-2 border-db-cool-gray-200`}
+          style={{
+            maxHeight: containerRef.current
+              ? containerRef.current.getBoundingClientRect().height - 55
+              : 500,
+            backgroundColor: colorSchema.white,
+          }}
+        >
           <svg
             ref={svgRef}
             width={svgWidth}
             height={height}
-            style={{
-              backgroundColor: colorSchema.white,
-              border: "2px solid #cfd4d9",
-              padding: "15px",
-              marginLeft: "5px",
-            }}
             className="m-auto"
           />
         </div>
       </div>
-      <div
-        style={{
-          width: `${width - svgWidth - infoPadding}px`,
-        }}
-      >
-        {/** Infosanzeige */}
-        <div>
-          <div style={{ display: "flex", height: "50px" }}>
-            <h2
-              style={{
-                margin: "auto auto auto 7px",
-                color: "rgb(52, 58, 64)",
-                fontSize: " 20px",
-              }}
-            >
-              Infos
-            </h2>
-          </div>
-          <div className="tableContainer">
-            <table className="table">
-              <tbody>
-                <tr>
-                  <th>ZugNr</th>
-                  <td>{trip.tsi.trip.train_nr}</td>
-                </tr>
-                <tr>
-                  <th>Von</th>
-                  <td>{`${renderTimeDisplay(trip.tsi.trip.time)} ${
-                    trip.tsi.primary_station.name
-                  }`}</td>
-                </tr>
-                <tr>
-                  <th>Bis</th>
-                  <td>{`${renderTimeDisplay(trip.tsi.trip.target_time)} ${
-                    trip.tsi.secondary_station.name
-                  }`}</td>
-                </tr>
-                <tr>
-                  <th>Name</th>
-                  <td>{trip.tsi.service_infos[0].name}</td>
-                </tr>
-                <tr>
-                  <th>Kategorie</th>
-                  <td>{trip.tsi.service_infos[0].category}</td>
-                </tr>
-                <tr>
-                  <th>Zuchnummer</th>
-                  <td>{trip.tsi.service_infos[0].train_nr}</td>
-                </tr>
-                <tr>
-                  <th>Linie</th>
-                  <td>{trip.tsi.service_infos[0].line}</td>
-                </tr>
-                <tr>
-                  <th>Anbieter</th>
-                  <td>{trip.tsi.service_infos[0].provider}</td>
-                </tr>
-                <tr>
-                  <th>Kapazität</th>
-                  <td>{findCapacities(trip.edges)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      {/* Info etc*/}
+      <div className="flex-initial flex flex-col mx-1 h-full">
+        {/* Info */}
+        <div className="h-[50px] flex-initial">
+          <h2 className="m-auto mt-2 ml-2 text-xl text-db-cool-gray-600">
+            Infos
+          </h2>
         </div>
-        {/** Signlaeanzeige */}
-        <div>
-          <div style={{ display: "flex", height: "50px" }}>
-            <h2
-              style={{
-                margin: "auto auto auto 7px",
-                color: "rgb(52, 58, 64)",
-                fontSize: " 20px",
-              }}
-            >
-              Signale
-            </h2>
-          </div>
-          <div className="tableContainer">
-            <table className="table">
-              <tbody>
-                {trip.max_excess_pax > 0 && (
-                  <tr>
-                    <th>
-                      <WarningSymbol
-                        color="#ef1d18"
-                        symbol="excess"
-                        width={15}
-                      />
-                    </th>
-                    <td>Der Zug ist überfüllt.</td>
-                  </tr>
-                )}
-                {trip.critical_sections > 0 && (
-                  <tr>
-                    <th>
-                      <WarningSymbol
-                        color="#ff8200"
-                        symbol="critical"
-                        width={15}
-                      />
-                    </th>
-                    <td>Der Zug enthält kritische Abschnitte.</td>
-                  </tr>
-                )}
-                {trip.crowded_sections > 0 && (
-                  <tr>
-                    <th>
-                      <WarningSymbol
-                        color="#444444"
-                        symbol="crowded"
-                        width={15}
-                      />
-                    </th>
-                    <td>Der Zug enthält überfüllte Abschnitte.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div
+          className="tableContainer flex-initial overflow-y-scroll overflow-x-hidden"
+          style={{
+            maxHeight: containerRef.current
+              ? (containerRef.current.getBoundingClientRect().height - 110) *
+                (2 / 3)
+              : 500,
+          }}
+        >
+          <table className="table">
+            <tbody>
+              <tr>
+                <th>ZugNr</th>
+                <td>{trip.tsi.trip.train_nr}</td>
+              </tr>
+              <tr>
+                <th>Von</th>
+                <td>{`${renderTimeDisplay(trip.tsi.trip.time)} ${
+                  trip.tsi.primary_station.name
+                }`}</td>
+              </tr>
+              <tr>
+                <th>Bis</th>
+                <td>{`${renderTimeDisplay(trip.tsi.trip.target_time)} ${
+                  trip.tsi.secondary_station.name
+                }`}</td>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <td>{trip.tsi.service_infos[0].name}</td>
+              </tr>
+              <tr>
+                <th>Kategorie</th>
+                <td>{trip.tsi.service_infos[0].category}</td>
+              </tr>
+              <tr>
+                <th>Zuchnummer</th>
+                <td>{trip.tsi.service_infos[0].train_nr}</td>
+              </tr>
+              <tr>
+                <th>Linie</th>
+                <td>{trip.tsi.service_infos[0].line}</td>
+              </tr>
+              <tr>
+                <th>Anbieter</th>
+                <td>{trip.tsi.service_infos[0].provider}</td>
+              </tr>
+              <tr>
+                <th>Kapazität</th>
+                <td>{findCapacities(trip.edges)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {/* Signlaeanzeige */}
+        <div className="h-[50px] flex-initial">
+          <h2 className="m-auto mt-2 ml-2 text-xl text-db-cool-gray-600">
+            Signale
+          </h2>
+        </div>
+        <div
+          className="tableContainer flex-initial overflow-y-scroll"
+          style={{
+            maxHeight: containerRef.current
+              ? (containerRef.current.getBoundingClientRect().height - 110) *
+                (1 / 3)
+              : 500,
+          }}
+        >
+          <table className="table">
+            <tbody>
+              {trip.max_excess_pax > 0 && (
+                <tr>
+                  <th>
+                    <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
+                  </th>
+                  <td>Der Zug ist überfüllt.</td>
+                </tr>
+              )}
+              {trip.critical_sections > 0 && (
+                <tr>
+                  <th>
+                    <WarningSymbol
+                      color="#ff8200"
+                      symbol="critical"
+                      width={15}
+                    />
+                  </th>
+                  <td>Der Zug enthält kritische Abschnitte.</td>
+                </tr>
+              )}
+              {trip.crowded_sections > 0 && (
+                <tr>
+                  <th>
+                    <WarningSymbol
+                      color="#444444"
+                      symbol="crowded"
+                      width={15}
+                    />
+                  </th>
+                  <td>Der Zug enthält überfüllte Abschnitte.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

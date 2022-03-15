@@ -67,7 +67,7 @@ const App = (): JSX.Element => {
   return (
     <QueryClientProvider client={queryClient}>
       <SankeyContextProvider>
-        <div>
+        <div className="h-screen overflow-x-hidden overflow-y-scroll">
           <div
             className="fixed top-0 w-full z-20 flex justify-center items-baseline space-x-4 p-2
               bg-db-cool-gray-200 text-black divide-x-2 divide-db-cool-gray-400"
@@ -84,46 +84,54 @@ const App = (): JSX.Element => {
               </button>
             </div>
           </div>
-          <div className="flex place-content-center mx-auto mt-20">
-            <Navbar
-              pages={pages}
-              onChange={(page) => setActivePage(page)}
-              activePage={activePage}
-            />
-          </div>
-          <Legend />
-          {loading && (
-            <div className="flex justify-center max-w-sm mx-auto mt-20">
-              <div className="lds-ring">
-                <div />
-                <div />
-                <div />
-                <div />
+          <div className="flex flex-col h-screen">
+            <div className="flex-initial">
+              <div className="flex place-content-center mx-auto mt-20">
+                <Navbar
+                  pages={pages}
+                  onChange={(page) => setActivePage(page)}
+                  activePage={activePage}
+                />
               </div>
+              <Legend />
             </div>
-          )}
-          {activePage === 0 && (
-            <TripPage
-              tripName={tripName}
-              selectedTrip={selectedTrip}
-              onTripPicked={(trip) => {
-                if (trip) {
-                  setSelectedTrip(trip);
-                  setTripName(String(trip.train_nr));
-                } else
-                  console.warn("Internal Server Error: TripId not defined!");
-              }}
-              onStationSelected={handleStationSelect}
-            />
-          )}
-          {activePage === 1 && (
-            <StationPage onTripSelected={handleTripSelect} />
-          )}
-          {activePage === 2 && (
-            <>
-              <PeakSpotting />
-            </>
-          )}
+            <div className="flex-auto">
+              {loading && (
+                <div className="flex justify-center max-w-sm mx-auto mt-20">
+                  <div className="lds-ring">
+                    <div />
+                    <div />
+                    <div />
+                    <div />
+                  </div>
+                </div>
+              )}
+              {activePage === 0 && (
+                <TripPage
+                  tripName={tripName}
+                  selectedTrip={selectedTrip}
+                  onTripPicked={(trip) => {
+                    if (trip) {
+                      setSelectedTrip(trip);
+                      setTripName(String(trip.train_nr));
+                    } else
+                      console.warn(
+                        "Internal Server Error: TripId not defined!"
+                      );
+                  }}
+                  onStationSelected={handleStationSelect}
+                />
+              )}
+              {activePage === 1 && (
+                <StationPage onTripSelected={handleTripSelect} />
+              )}
+              {activePage === 2 && (
+                <>
+                  <PeakSpotting />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </SankeyContextProvider>
     </QueryClientProvider>
