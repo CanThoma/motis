@@ -87,7 +87,6 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
 
   const svgPadding = 30;
   const svgWidth = 580;
-  //const infoPadding = 30;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -339,7 +338,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
-      .attr("font-weight", "inherit")
+      .attr("font-weight", "bold")
       .attr("font-family", font_family);
 
     // ENDSTATION
@@ -388,7 +387,7 @@ const VerticalTripDisplay = ({ trip }: Props): JSX.Element => {
       .attr("fill", colorSchema.black)
       .attr("text-anchor", "start")
       .attr("font-size", fontSizeM)
-      .attr("font-weight", "inherit")
+      .attr("font-weight", "bold")
       .attr("font-family", font_family);
 
     setHeight(svgHeight + svgPadding);
