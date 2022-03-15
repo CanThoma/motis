@@ -64,6 +64,8 @@ const font_family = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hel
 
 const factor = 15; // default scale factor 1/factor für Stationsgraphen
 
+const paginatorShowedButtonCount = 10;
+
 const colorSchema = {
   lightGrey: "#e9ecef",
   lighterGrey: "#ebeef0",
@@ -83,4 +85,5 @@ export {
   umsteigerConfig,
   peakSpottingConfig,
   font_family,
+  paginatorShowedButtonCount,
 };
