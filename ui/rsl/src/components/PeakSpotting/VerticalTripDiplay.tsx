@@ -439,7 +439,9 @@ const VerticalTripDisplay = ({
       .attr("cursor", "pointer")
       .on("click", () =>
         handleStationSelect(onStationSelected, data[data.length - 1], true)
-      );
+      )
+      .append("title")
+      .text("Zur Station");
 
     setHeight(svgHeight + svgPadding);
   }, [
