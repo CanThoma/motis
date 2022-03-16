@@ -53,6 +53,12 @@ const addXandWidth = (width: number, edge: TripEdge): TripEdge => {
   return edge;
 };
 
+/**
+ * Übergebene tripinfos werden als Gesamtkatalog interpretiert und gibt daraus eine Subsektion aus pageNumber und pageSize an
+ * @param items
+ * @param pageNumber
+ * @param pageSize
+ */
 const paginate = (
   items: PaxMonFilteredTripInfo[] | undefined,
   pageNumber: number,
@@ -129,12 +135,12 @@ const prepareEdges = ({
       timeWrapTmpEdge.departureHours = 0;
       timeWrapTmpEdge.departureMinutes = 0;
 
-      timeWrapTmpEdge = addXandWidth(width, { ...timeWrapTmpEdge });
+      timeWrapTmpEdge = addXAndWidth(width, { ...timeWrapTmpEdge });
 
       if (timeWrapOverflowTmpEdge) {
         timeWrapOverflowTmpEdge.departureMinutes = 0;
         timeWrapOverflowTmpEdge.departureHours = 0;
-        timeWrapOverflowTmpEdge = addXandWidth(width, {
+        timeWrapOverflowTmpEdge = addXAndWidth(width, {
           ...timeWrapOverflowTmpEdge,
         });
         finalEdges.push(timeWrapOverflowTmpEdge);
@@ -143,7 +149,7 @@ const prepareEdges = ({
     }
 
     if (overflowTmpEdge) {
-      overflowTmpEdge = addXandWidth(width, { ...overflowTmpEdge });
+      overflowTmpEdge = addXAndWidth(width, { ...overflowTmpEdge });
       finalEdges.push(overflowTmpEdge);
       overflowTmpEdge = null;
     }
