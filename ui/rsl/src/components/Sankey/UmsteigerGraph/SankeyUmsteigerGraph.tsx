@@ -13,6 +13,7 @@ import { ExtractStationData } from "../../StationInfoUtils";
 import * as d3 from "d3";
 import { formatTextTime } from "../SankeyUtils";
 import { umsteigerConfig } from "../../../config";
+import Loading from "../../common/Loading";
 
 type Props = {
   stationId: string;
@@ -40,7 +41,7 @@ const SankeyUmsteigerGraph = ({
   const svgRef = useRef(null);
   const [svgHeightUmsteiger, setSvgHeight] = useState(600);
 
-  const [data] = ExtractStationData({
+  const [data, loading] = ExtractStationData({
     stationId: stationId,
     startTime: time - 5 * 60, // 2 Stunden vor Ankunft
     endTime: time + 5 * 60, // 2 Stunden nach Abfahrt
@@ -318,7 +319,8 @@ const SankeyUmsteigerGraph = ({
       {!data.links.length && tripDir !== "both" && (
         <div>Keine Umsteiger in ausgewählter Richtung gefunden</div>
       )}
-      {data && (
+      {loading === "loading" && <Loading />}
+      {loading === "success" && data && (
         <svg
           ref={svgRef}
           width={width}

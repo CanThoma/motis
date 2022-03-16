@@ -62,41 +62,13 @@ const Legend = (): JSX.Element => {
         `Ist der schraffierte Balken beispielsweise halb so groß
       wie der einfarbige bedeutet das eine Auslastung von 150%`,
       ],
-      imageURL: "https://img.pr0gramm.com/2022/01/12/9797c4000ae66f39.png",
+      imageURL: "../../public/images/station_overflow.jpg",
       long: [
-        `Die Kartoffeln in Spalten schneiden und in einer
-          Schüssel mit Parmesan und Olivenöl vermischen. Die
-          Gewürze in einer separaten Schüssel vermengen und dann
-          zu den Kartoffeln geben. Noch einmal kräftig
-          durchmischen, die Kartoffelecken dann auf einem mit
-          Backpapier ausgelegten Backblech verteilen und bei 200
-          °C Ober-/Unterhitze für ca. 40 Minuten backen. Hinweis:
-          Heißhunger auf eine deftige Beilage oder einfach nur
-          Appetit auf einen leckeren Snack? Diese Kartoffelecken
-          sind genau das richtige für alle, die es gerne deftig
-          mögen und etwas Neues ausprobieren wollen. Dazu schmeckt
-          Sour Cream mit ein paar frischen Kräutern wirklich
-          köstlich, alternativ könnt ihr die Wedges natürlich auch
-          als Beilage zu einem leckeren Steak oder gebratenem
-          Fisch servieren. Eurer Kreativität sind keine Grenzen
-          gesetzt.`,
+        `Im tatsächlichen Gebrauch sieht das beispielsweise so aus. `,
+        `Wir sehen eine 140%-ige Auslastung der Strecke 1530.`,
         <br key={3} />,
-        ` Die Kartoffeln in Spalten schneiden und
-          in einer Schüssel mit Parmesan und Olivenöl vermischen.
-          Die Gewürze in einer separaten Schüssel vermengen und
-          dann zu den Kartoffeln geben. Noch einmal kräftig
-          durchmischen, die Kartoffelecken dann auf einem mit
-          Backpapier ausgelegten Backblech verteilen und bei 200
-          °C Ober-/Unterhitze für ca. 40 Minuten backen. Hinweis:
-          Heißhunger auf eine deftige Beilage oder einfach nur
-          Appetit auf einen leckeren Snack? Diese Kartoffelecken
-          sind genau das richtige für alle, die es gerne deftig
-          mögen und etwas Neues ausprobieren wollen. Dazu schmeckt
-          Sour Cream mit ein paar frischen Kräutern wirklich
-          köstlich, alternativ könnt ihr die Wedges natürlich auch
-          als Beilage zu einem leckeren Steak oder gebratenem
-          Fisch servieren. Eurer Kreativität sind keine Grenzen
-          gesetzt.`,
+        <br key={4} />,
+        `In der PeakSpotting Ansicht haben wir uns dazu entschieden das Blinken zu entfernen und eine Überlastung farblich und durch einen weißen Strick im Balken darzustellen.`,
       ],
     },
     {
@@ -205,7 +177,7 @@ const Legend = (): JSX.Element => {
                         </div>
                       )}
                       {show && (
-                        <div>
+                        <div style={{ overflow: "auto" }}>
                           <div>
                             <img
                               src={imageURL}
