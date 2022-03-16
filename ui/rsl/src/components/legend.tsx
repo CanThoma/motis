@@ -147,6 +147,56 @@ const Legend = (): JSX.Element => {
   `,
       ],
     },
+    {
+      key: 4,
+      title: "Klick auf einen Namen im TripGraph",
+      pattern: (
+        <img src={"../../public/images/umsteigerClicked.jpg"} alt="Test" />
+      ),
+      short: [
+        `Klickt man auf einen Stationsnamen im TripGraph, wird man zum Umsteigergraphen geführt. 
+  `,
+      ],
+    },
+    {
+      key: 5,
+      title: "Klick auf einen Balken im TripGraph",
+      pattern: (
+        <img src={"../../public/images/stationClicked.jpg"} alt="Test" />
+      ),
+      short: [
+        `Klickt man auf einen Balken im Tripgraphen, wird man zum entsprechenden Stationsgraphen geführt. 
+  `,
+      ],
+    },
+    {
+      key: 6,
+      title: "Klick auf einen Tripnamen",
+      pattern: (
+        <img
+          src={"../../public/images/peakSpottingTripClicked.jpg"}
+          alt="Test"
+        />
+      ),
+      short: [
+        `Klickt man auf eine Zugnummer in der PeakSpottingdarstellung, wird man zum entsprechenden Tripgraphen geführt. 
+  `,
+      ],
+    },
+    {
+      key: 7,
+      title: "Klick auf einen Stationsnamen",
+      pattern: (
+        <img
+          src={"../../public/images/peakSpottingStationClicked.jpg"}
+          alt="Test"
+        />
+      ),
+      short: [
+        `Klickt man in der PeakSpottingdarstellung auf einen Stationsnamen des Zeitstrahls, wird man zum entsprechenden Stationsgraphen geführt. 
+  `,
+      ],
+    },
   ];
 
   return (
