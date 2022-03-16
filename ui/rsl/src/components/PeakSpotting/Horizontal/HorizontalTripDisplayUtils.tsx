@@ -55,13 +55,14 @@ const calcTripWidth = (
  * @param edge
  */
 const addXAndWidth = (width: number, edge: TripEdge): TripEdge => {
-  if (
+  /* if (
     !edge.departureHours ||
     !edge.departureMinutes ||
     !edge.arrivalHours ||
     !edge.arrivalMinutes
   )
     return edge;
+    */
 
   edge.x = calcXCoordinate(width, edge.departureHours, edge.departureMinutes);
   edge.horizontalWidth = calcTripWidth(
