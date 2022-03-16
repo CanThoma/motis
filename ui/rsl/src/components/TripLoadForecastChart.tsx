@@ -207,7 +207,7 @@ function TripLoadForecastChart({
   onSectionClick,
 }: TripLoadForecastChartProps): JSX.Element | null {
   const [universe] = useAtom(universeAtom);
-  const { data: status } = usePaxMonStatusQuery();
+  const { data: status } = usePaxMonStatusQuery(universe);
 
   const queryClient = useQueryClient();
   const { data /*, isLoading, error*/ } = useQuery(
@@ -588,7 +588,7 @@ function TripLoadForecastChartVertical({
   onSectionClick,
 }: TripLoadForecastChartProps): JSX.Element | null {
   const [universe] = useAtom(universeAtom); // get parallel universe
-  const { data: status } = usePaxMonStatusQuery();
+  const { data: status } = usePaxMonStatusQuery(universe);
 
   const queryClient = useQueryClient();
   const { data /*, isLoading, error*/ } = useQuery(
@@ -603,7 +603,6 @@ function TripLoadForecastChartVertical({
       },
     }
   );
-  console.log(data);
 
   const svgEl = useRef<SVGSVGElement>(null);
 

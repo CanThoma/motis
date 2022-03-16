@@ -43,8 +43,8 @@ const SankeyUmsteigerGraph = ({
 
   const [data, loading] = ExtractStationData({
     stationId: stationId,
-    startTime: time - 5 * 60, // 2 Stunden vor Ankunft
-    endTime: time + 5 * 60, // 2 Stunden nach Abfahrt
+    startTime: time - 5 * 60, // 5 Minuten vor Ankunft, nur um sicherzugehen.
+    endTime: time + 5 * 60, // 5 Minuten nach Abfahrt, nur um sicherzugehen
     maxCount: 0,
     onlyIncludeTripIds: [...onlyIncludeTripId],
     tripDirection: tripDir,
