@@ -222,7 +222,10 @@ const Legend = (): JSX.Element => {
                     {long && (
                       <div
                         className="cursor-pointer"
-                        onClick={() => set(!show)}
+                        onClick={() => {
+                          if (set) set(!show);
+                          else return;
+                        }}
                       >
                         {show ? (
                           <div
