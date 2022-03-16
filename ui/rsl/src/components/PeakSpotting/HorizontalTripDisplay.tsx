@@ -25,7 +25,7 @@ type Props = {
 };
 
 /**
- * gene
+ * Generiert
  * @param trip
  * @param width
  * @param selectedTrip
