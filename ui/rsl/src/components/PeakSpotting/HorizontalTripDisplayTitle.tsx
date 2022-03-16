@@ -5,19 +5,36 @@ import {
   font_family,
   peakSpottingConfig as config,
 } from "../../config";
+import {
+  PaxMonEdgeLoadInfo,
+  PaxMonFilteredTripInfo,
+} from "../../api/protocol/motis/paxmon";
+
+const formatDate = (time: number) => {
+  const date = new Date(time * 1000);
+  const d = date.getDay();
+  const m = date.getMonth();
+  const dd = d < 10 ? "0" + d : d;
+  const mm = m < 10 ? "0" + m : m;
+
+  return `${dd}.${mm}.${date.getFullYear()}`;
+};
 
 /**
  * Gibt Titelleiste des Horizontalen Peak Spotting graphen zurück
  * @param width breite des Horizontalen Peak Spottings
  * @param title der titel der angezeigt werden soll
+ * @param date Abfahrtszeit in unixtime
  * @constructor
  */
 const HorizontalTripDisplayTitle = ({
   width,
   title,
+  selectedTrip,
 }: {
   width: number;
   title: string;
+  selectedTrip: PaxMonFilteredTripInfo | undefined;
 }): JSX.Element => {
   const svgTitleRef = useRef(null);
 
@@ -62,6 +79,7 @@ const HorizontalTripDisplayTitle = ({
           style={{
             width: `${config.horizontalLeftPadding}px`,
             display: "flex",
+            position: "relative",
           }}
         >
           <h2
@@ -75,6 +93,30 @@ const HorizontalTripDisplayTitle = ({
           >
             {title}
           </h2>
+          <div
+            style={{
+              position: "absolute",
+              alignContent: "center",
+              display: "flex",
+              height: "50px",
+              paddingLeft: `${config.horizontalLeftPadding + 20}px`,
+            }}
+          >
+            {selectedTrip?.tsi.trip.time && (
+              <h2
+                style={{
+                  margin: "auto",
+                  marginLeft: "7px",
+                  color: colorSchema.grey,
+                  fontSize: "15px",
+                }}
+                data-tooltip={`Das Datum des Zuges ${selectedTrip.tsi.trip.train_nr} - ${selectedTrip.tsi.service_infos[0].name}`}
+                data-tooltip-location="right"
+              >
+                {formatDate(selectedTrip?.tsi.trip.time)}
+              </h2>
+            )}
+          </div>
         </div>
         <div
           style={{
