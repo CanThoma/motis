@@ -13,11 +13,14 @@ import Pagination from "../common/pagination";
 import { paginate } from "./HorizontalTripDisplayUtils";
 import { useSankeyContext } from "../context/SankeyContext";
 import Loading from "../common/Loading";
-import { colorSchema, peakSpottingConfig as config } from "../../config";
+import {
+  colorSchema,
+  peakSpottingConfig,
+  peakSpottingConfig as config,
+} from "../../config";
 import HorizontalTripDisplay from "./HorizontalTripDisplay";
 import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
 import VerticalTripDisplay from "./VerticalTripDiplay";
-import { TripId } from "../../api/protocol/motis";
 
 import "./HorizontalTripDisplay.css";
 
@@ -146,7 +149,13 @@ const PeakSpotting = ({
 
   window.addEventListener("resize", () =>
     setPageSize(
-      Math.max(Math.floor((window.innerHeight - config.topOffset) / 85), 1)
+      Math.max(
+        Math.floor(
+          (window.innerHeight - config.topOffset) /
+            peakSpottingConfig.pageHeightDividor
+        ),
+        1
+      )
     )
   );
 
@@ -162,7 +171,15 @@ const PeakSpotting = ({
   };
 
   useEffect(() => {
-    setPageSize(Math.max(Math.floor((window.innerHeight - 350) / 85), 1));
+    setPageSize(
+      Math.max(
+        Math.floor(
+          (window.innerHeight - config.topOffsetEffect) /
+            peakSpottingConfig.pageHeightDividor
+        ),
+        1
+      )
+    );
   }, []);
 
   useEffect(() => {

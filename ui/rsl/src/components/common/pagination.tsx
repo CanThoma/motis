@@ -2,8 +2,6 @@ import React from "react";
 import { paginatorShowedButtonCount } from "../../config";
 
 import "./pagination.css";
-import { list } from "postcss";
-import { active } from "d3";
 
 const Pagination = ({
   itemsCount,

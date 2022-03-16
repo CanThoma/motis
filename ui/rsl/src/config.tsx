@@ -23,6 +23,8 @@ const stationConfig = {
   yPadding: 10,
   station_startDate: "Mon, 25 Oct 2021 09:15:00 GMT+2",
   station_timeInterval: 30, // In Minuten
+  minutesBeforeTimeSearch: 5,
+  minutesAfterTimeSearch: 25,
 };
 
 const umsteigerConfig = {
@@ -51,13 +53,18 @@ const peakSpottingConfig = {
 
   topOffset: 320,
 
-  testMultiplier: 0.3, // <--- @Pablo™, hier! Einfach auf 1 setzen. Zur testweisen Anpassung der Höhe für die linke graue "Buchungs"-Seite
+  defaultHorizontalDisplayHeight: 80,
+
+  temporaryLeftSideScalarBecauseNoProbabilityData: 0.3, // <--- @Pablo, hier! Einfach auf 1 setzen. Zur testweisen Anpassung der Höhe für die linke graue "Buchungs"-Seite
   verticalInitialOffset: 20,
   verticalMinHeight: 30,
   verticalMinWidth: 5,
   verticalBallPadding: 4,
   verticalHeightMultiplier: 3,
   verticalWidthMultiplier: 0.15,
+  topOffsetEffect: 350,
+  pageHeightDividor: 85,
+  warningSymbolSize: 15,
 };
 
 const font_family = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;

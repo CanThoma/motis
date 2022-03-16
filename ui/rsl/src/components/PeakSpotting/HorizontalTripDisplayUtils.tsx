@@ -1,7 +1,7 @@
 import { interpolateRgb, scaleLinear } from "d3";
 import { colorSchema, peakSpottingConfig as config } from "../../config";
-import { tripEdge } from "./VerticalTripDisplayUtils";
 import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
+import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit
@@ -33,7 +33,7 @@ const calcTripWidth = (
   return x1 - x2;
 };
 
-const addXandWidth = (width: number, edge: tripEdge): tripEdge => {
+const addXandWidth = (width: number, edge: TripEdge): TripEdge => {
   if (
     !edge.departureHours ||
     !edge.departureMinutes ||
@@ -73,25 +73,12 @@ const prepareEdges = ({
   trip,
   width,
   height,
-}: prepareEdgesProps): tripEdge[] => {
+}: prepareEdgesProps): TripEdge[] => {
   const finalEdges = [];
 
   for (const edge of trip.edges) {
-    const tmpEdge: tripEdge = { ...edge };
-
-    const departureTime = new Date(edge.departure_current_time * 1000);
-    const arrivalTime = new Date(edge.arrival_current_time * 1000);
-
-    const leftValue = edge.passenger_cdf[0].passengers * config.testMultiplier;
-    const rightValue = edge.expected_passengers;
-
-    tmpEdge.departureTime = departureTime;
-    tmpEdge.arrivalTime = arrivalTime;
-
-    tmpEdge.departureHours = departureTime.getHours();
-    tmpEdge.departureMinutes = departureTime.getMinutes();
-    tmpEdge.arrivalHours = arrivalTime.getHours();
-    tmpEdge.arrivalMinutes = arrivalTime.getMinutes();
+    let [tmpEdge, leftValue, rightValue] = initCommonEdgeInfo(edge);
+    leftValue *= config.temporaryLeftSideScalarBecauseNoProbabilityData;
 
     // Muss ne Zahl zwischen 0 u 1 sein
     tmpEdge.color = color(Math.min(1, rightValue / edge.capacity));
@@ -205,7 +192,7 @@ const formatTime = (time: Date): string => {
   return `${hh}:${mm}Uhr`;
 };
 
-const formatEdgeInfo = (edge: tripEdge): string => {
+const formatEdgeInfo = (edge: TripEdge): string => {
   if (!edge.departureTime || !edge.arrivalTime) return "";
   return `${edge.from.name} \u279E ${edge.to.name}\n${formatTime(
     edge.departureTime

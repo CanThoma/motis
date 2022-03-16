@@ -3,21 +3,10 @@ import {
   PaxMonFilteredTripInfo,
   PaxMonEdgeLoadInfo,
 } from "../../api/protocol/motis/paxmon";
-import { renderTimeDisplay } from "../Sankey/SankeyUtils";
 import { formatDateTime } from "../../util/dateFormat";
 
 type Props = {
   trip: PaxMonFilteredTripInfo;
-};
-
-const renderDateDisplay = (time: number) => {
-  const date = new Date(time * 1000);
-  const d = date.getDay();
-  const m = date.getMonth();
-  const dd = d < 10 ? "0" + d : d;
-  const mm = m < 10 ? "0" + m : m;
-
-  return `${dd}.${mm}.${date.getFullYear()}`;
 };
 
 /**

@@ -1,4 +1,5 @@
 import React from "react";
+import { peakSpottingConfig } from "../../config";
 
 const symbols = {
   critical: (
@@ -25,8 +26,8 @@ const symbols = {
 
 const symbolTooltips = {
   critical: 'Dieser Trip enthält "critical Sections."',
-  excess: "Dieser Zug ist voll voll :( ",
-  bomb: "Die Überfüllung könnte an nem Füßeballspiel liegen.",
+  excess: "Dieser Zug ist voll.",
+  bomb: "Dummy Text",
   crowded: 'Dieser Trip enthält "crowded Sections."',
 };
 
@@ -37,10 +38,18 @@ type WarningSymbolProps = {
   disableTooltip?: boolean;
 };
 
+/**
+ * Generiere das HTML Element für ein Warning symbol
+ * @param symbol welches Icon für das Symbol benutzt werden soll
+ * @param color welche Farbe das Icon haben soll
+ * @param width wie breit das symbol sein soll
+ * @param disableTooltip
+ * @constructor
+ */
 const WarningSymbol = ({
   symbol,
   color = "#444444",
-  width = 15,
+  width = peakSpottingConfig.warningSymbolSize,
   disableTooltip = false,
 }: WarningSymbolProps): JSX.Element => {
   return (

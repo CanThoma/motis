@@ -6,10 +6,12 @@ import {
   font_family,
   colorSchema,
   peakSpottingConfig as config,
+  peakSpottingConfig,
+  stationConfig,
 } from "../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
-import WarningSymbol from "./HorizontalTripDisplaySymbols";
+import WarningSymbol from "./TripDisplaySymbols";
 import { TripId } from "../../api/protocol/motis";
 import { useSankeyContext } from "../context/SankeyContext";
 
@@ -28,7 +30,7 @@ const HorizontalTripDisplay = ({
   selectedTrip,
   onClick,
   onTripSelected,
-  height = 80,
+  height = peakSpottingConfig.defaultHorizontalDisplayHeight,
 }: Props): JSX.Element => {
   const svgRef = useRef(null);
 
@@ -122,7 +124,7 @@ const HorizontalTripDisplay = ({
     // Anhängen der letzten Station
     view
       .append("text")
-      .text(data[data.length - 1].to.name)
+      .text(data[data.length - 1].to.name) // we are in loop iterating data => data.length >= 1
       .attr("dx", "0.35em")
       .attr("fill", colorSchema.darkBluishGrey)
       .attr("text-anchor", "start")
@@ -189,8 +191,14 @@ const HorizontalTripDisplay = ({
               if (setSelectedTrip) setSelectedTrip(trip.tsi.trip as TripId);
               if (onTripSelected) onTripSelected();
 
-              const startTime = (trip.tsi.trip.time - 5 * 60) * 1000;
-              const endTime = (trip.tsi.trip.time + 25 * 60) * 1000;
+              const startTime =
+                (trip.tsi.trip.time -
+                  stationConfig.minutesBeforeTimeSearch * 60) *
+                1000;
+              const endTime =
+                (trip.tsi.trip.time +
+                  stationConfig.minutesAfterTimeSearch * 60) *
+                1000;
 
               if (setStartTime) setStartTime(new Date(startTime));
               if (setEndTime) setEndTime(new Date(endTime));
@@ -207,13 +215,25 @@ const HorizontalTripDisplay = ({
           </p>
         </div>
         {trip.max_excess_pax > 0 && (
-          <WarningSymbol color="#ef1d18" symbol="excess" width={15} />
+          <WarningSymbol
+            color="#ef1d18"
+            symbol="excess"
+            width={peakSpottingConfig.warningSymbolSize}
+          />
         )}
         {trip.critical_sections > 0 && (
-          <WarningSymbol color="#ff8200" symbol="critical" width={15} />
+          <WarningSymbol
+            color="#ff8200"
+            symbol="critical"
+            width={peakSpottingConfig.warningSymbolSize}
+          />
         )}
         {trip.crowded_sections > 0 && (
-          <WarningSymbol color="#444444" symbol="crowded" width={15} />
+          <WarningSymbol
+            color="#444444"
+            symbol="crowded"
+            width={peakSpottingConfig.warningSymbolSize}
+          />
         )}
       </div>
       <div>

@@ -3,7 +3,9 @@ import { select as d3Select } from "d3";
 import {
   colorSchema,
   font_family,
+  peakSpottingConfig,
   peakSpottingConfig as config,
+  stationConfig,
 } from "../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 import {
@@ -13,7 +15,7 @@ import {
 import { useSankeyContext } from "../context/SankeyContext";
 
 import "./VerticalTripDisplay.css";
-import WarningSymbol from "./HorizontalTripDisplaySymbols";
+import WarningSymbol from "./TripDisplaySymbols";
 import { renderTimeDisplay } from "../Sankey/SankeyUtils";
 import TrainTable from "./TrainTable";
 
@@ -44,7 +46,7 @@ const VerticalTripDisplay = ({
   // Die weiße Umrandung um die einzelnen Stationen.
   const timelineStationStrokeWidth = timelineWidth;
 
-  // Wie weit der Text von den einzelnen Stationen der Timeline entfernt?
+  // Wie weit der Text von den einzelnen Stationen der Timeline entfernt ist
   const timelineTextXOffset = 10;
   // Höhenverschiebung der Zeitangaben an den Stationen der Timeline
   const timelineStationNameOffset = 2;
@@ -94,15 +96,27 @@ const VerticalTripDisplay = ({
     let endTime;
     console.log(edge);
     if (!lastStationFlag) {
-      startTime = (edge.departure_current_time - 5 * 60) * 1000;
-      endTime = (edge.departure_current_time + 25 * 60) * 1000;
+      startTime =
+        (edge.departure_current_time -
+          stationConfig.minutesBeforeTimeSearch * 60) *
+        1000;
+      endTime =
+        (edge.departure_current_time +
+          stationConfig.minutesAfterTimeSearch * 60) *
+        1000;
       if (setStationName)
         setStationName(
           `${edge.from.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
         );
     } else {
-      startTime = (edge.arrival_current_time - 5 * 60) * 1000;
-      endTime = (edge.arrival_current_time + 25 * 60) * 1000;
+      startTime =
+        (edge.arrival_current_time -
+          stationConfig.minutesBeforeTimeSearch * 60) *
+        1000;
+      endTime =
+        (edge.arrival_current_time +
+          stationConfig.minutesAfterTimeSearch * 60) *
+        1000;
       if (setStationName)
         setStationName(
           `${edge.to.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
@@ -218,7 +232,11 @@ const VerticalTripDisplay = ({
             Math.max(0, (edge.leftWidth || 0) - (edge.capWidth || 0))
         )
         .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
-        .text(Math.round(leftValue * config.testMultiplier))
+        .text(
+          Math.round(
+            leftValue * config.temporaryLeftSideScalarBecauseNoProbabilityData
+          )
+        )
         .attr("dx", -graphNumberXOffset)
         .attr("dy", graphLargeNumberYOffset)
         .attr("fill", colorSchema.grey)
@@ -238,7 +256,10 @@ const VerticalTripDisplay = ({
         .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
         .text(
           `${Math.round(
-            ((leftValue * config.testMultiplier) / edge.capacity) * 100
+            ((leftValue *
+              config.temporaryLeftSideScalarBecauseNoProbabilityData) /
+              edge.capacity) *
+              100
           )}%`
         )
         .attr("dx", -graphNumberXOffset)
@@ -271,45 +292,38 @@ const VerticalTripDisplay = ({
         .attr("width", edge.rightWidth || 0)
         .attr("fill", edge.color || 0);
 
+      const appendPrognoseNumberText = (
+        type: "absolute" | "percent",
+        fontSize: number
+      ) => {
+        view
+          .append("text")
+          .attr(
+            "x",
+            xGraphOffet +
+              (edge.capWidth || 0) +
+              spaceBetweenLeftAndRight +
+              Math.max(edge.capWidth || 0, edge.rightWidth || 0)
+          )
+          .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
+          .text(
+            type === "absolute"
+              ? rightValue
+              : `${Math.round((rightValue / edge.capacity) * 100)}%`
+          )
+          .attr("dx", graphNumberXOffset)
+          .attr("dy", graphLargeNumberYOffset)
+          .attr("fill", colorSchema.grey)
+          .attr("text-anchor", "start")
+          .attr("font-size", fontSize)
+          .attr("font-weight", "inherit")
+          .attr("font-family", font_family);
+      };
       // "Prognosen" absolute Zahl
-      view
-        .append("text")
-        .attr(
-          "x",
-          xGraphOffet +
-            (edge.capWidth || 0) +
-            spaceBetweenLeftAndRight +
-            Math.max(edge.capWidth || 0, edge.rightWidth || 0)
-        )
-        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
-        .text(rightValue)
-        .attr("dx", graphNumberXOffset)
-        .attr("dy", graphLargeNumberYOffset)
-        .attr("fill", colorSchema.grey)
-        .attr("text-anchor", "start")
-        .attr("font-size", fontSizeM)
-        .attr("font-weight", "inherit")
-        .attr("font-family", font_family);
+      appendPrognoseNumberText("absolute", fontSizeM);
 
       // "Prognose" Prozent
-      view
-        .append("text")
-        .attr(
-          "x",
-          xGraphOffet +
-            (edge.capWidth || 0) +
-            spaceBetweenLeftAndRight +
-            Math.max(edge.capWidth || 0, edge.rightWidth || 0)
-        )
-        .attr("y", (edge.y || 0) + (edge.height || 0) / 2)
-        .text(`${Math.round((rightValue / edge.capacity) * 100)}%`)
-        .attr("dx", graphNumberXOffset)
-        .attr("dy", graphPercentageYOffset)
-        .attr("fill", colorSchema.bluishGrey)
-        .attr("text-anchor", "start")
-        .attr("font-size", fontSizeS)
-        .attr("font-weight", "inherit")
-        .attr("font-family", font_family);
+      appendPrognoseNumberText("percent", fontSizeS);
     }
 
     //"BUCHUNGEN" TITEL
@@ -515,7 +529,7 @@ const VerticalTripDisplay = ({
                           color="#ef1d18"
                           disableTooltip
                           symbol="excess"
-                          width={15}
+                          width={peakSpottingConfig.warningSymbolSize}
                         />
                       </th>
                       <td>Der Zug ist überfüllt.</td>
@@ -527,7 +541,7 @@ const VerticalTripDisplay = ({
                         <WarningSymbol
                           color="#ff8200"
                           symbol="critical"
-                          width={15}
+                          width={peakSpottingConfig.warningSymbolSize}
                           disableTooltip
                         />
                       </th>
@@ -540,7 +554,7 @@ const VerticalTripDisplay = ({
                         <WarningSymbol
                           color="#444444"
                           symbol="crowded"
-                          width={15}
+                          width={peakSpottingConfig.warningSymbolSize}
                           disableTooltip
                         />
                       </th>

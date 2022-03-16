@@ -10,7 +10,6 @@ interface ScrollToUpdateProps {
   children: JSX.Element;
 }
 
-// TODO Pfeilrichtung
 /**
  *
  * @param onRefreshUP

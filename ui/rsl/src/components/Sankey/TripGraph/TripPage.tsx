@@ -5,6 +5,7 @@ import TripPicker from "../../TripPicker";
 
 import { TripId } from "../../../api/protocol/motis";
 import { useSankeyContext } from "../../context/SankeyContext";
+import { stationConfig } from "../../../config";
 
 type TripPageProps = {
   tripName: string;
@@ -70,13 +71,23 @@ const TripPage = ({ onStationSelected }: TripPageProps): JSX.Element => {
                   "Internal Server Error: setStationName not defined!"
                 );
               // set startTime to arrival time of selected train - 5 minutes ( - 60 sec * 5) and add ms ( * 1000 )
-              if (setStartTime) setStartTime(new Date((time - 60 * 5) * 1000));
+              if (setStartTime)
+                setStartTime(
+                  new Date(
+                    (time - 60 * stationConfig.minutesBeforeTimeSearch) * 1000
+                  )
+                );
               else
                 console.warn(
                   "Internal Server Error: setStartTime not defined!"
                 );
               // set endTime to arrival time of selected train +25 minutes ( + 60 sec * 25) and add ms ( * 1000 )
-              if (setEndTime) setEndTime(new Date((time + 60 * 25) * 1000));
+              if (setEndTime)
+                setEndTime(
+                  new Date(
+                    (time + 60 * stationConfig.minutesAfterTimeSearch) * 1000
+                  )
+                );
               else
                 console.warn(
                   "Internal Server Error: setStartTime not defined!"
