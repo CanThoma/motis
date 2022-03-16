@@ -45,6 +45,21 @@ export function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
 }
 
 /**
+ * Konvertiert eine Zeitzahl in Epoch/Unix-Time in die Form hh:mm
+ * @param t Zeit in epoch-time
+ * @returns Die Zeit im Textformat
+ */
+export const renderTimeDisplay = (t: number): string => {
+  const dt = new Date(t * 1000);
+  const h = dt.getHours();
+  const m = dt.getMinutes();
+  const hh = h < 10 ? "0" + h : h;
+  const mm = m < 10 ? "0" + m : m;
+
+  return hh + ":" + mm;
+};
+
+/**
  * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
  * @param n Node
  */

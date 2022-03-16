@@ -14,39 +14,13 @@ import { useSankeyContext } from "../context/SankeyContext";
 
 import "./VerticalTripDisplay.css";
 import WarningSymbol from "./HorizontalTripDisplaySymbols";
+import { renderTimeDisplay } from "../Sankey/SankeyUtils";
+import TrainTable from "./TrainTable";
 
 type Props = {
   width: number;
   trip: PaxMonFilteredTripInfo;
   onStationSelected?: () => void | undefined;
-};
-
-/**
- * Konvertiert eine Zeitzahl in Epoch/Unix-Time in die Form hh:mm
- * @param t Zeit in epoch-time
- * @returns Die Zeit im Textformat
- */
-const renderTimeDisplay = (t: number): string => {
-  const dt = new Date(t * 1000);
-  const h = dt.getHours();
-  const m = dt.getMinutes();
-  const hh = h < 10 ? "0" + h : h;
-  const mm = m < 10 ? "0" + m : m;
-
-  return hh + ":" + mm;
-};
-
-/**
- * Reduziert ein Array aus Edges auf die darin vorkommenden Kapazitäten
- * @param edges Ein Array aus Edges
- * @returns Einen String aller einzigartigen Kapazitäten im Edges-Array
- */
-const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
-  const uniqueCapacities = edges.map((e) => {
-    return e.capacity;
-  });
-
-  return uniqueCapacities.filter((v, i, a) => a.indexOf(v) === i).toString();
 };
 
 /**
@@ -511,48 +485,7 @@ const VerticalTripDisplay = ({
               : 500,
           }}
         >
-          <table className="table">
-            <tbody>
-              <tr>
-                <th>Name</th>
-                <td>{trip.tsi.service_infos[0].name}</td>
-              </tr>
-              <tr>
-                <th>Von</th>
-                <td>{`${renderTimeDisplay(trip.tsi.trip.time)} ${
-                  trip.tsi.primary_station.name
-                }`}</td>
-              </tr>
-              <tr>
-                <th>Bis</th>
-                <td>{`${renderTimeDisplay(trip.tsi.trip.target_time)} ${
-                  trip.tsi.secondary_station.name
-                }`}</td>
-              </tr>
-              <tr>
-                <th>ZugNr</th>
-                <td>{trip.tsi.trip.train_nr}</td>
-              </tr>
-              <tr>
-                <th>Kategorie</th>
-                <td>{trip.tsi.service_infos[0].category}</td>
-              </tr>
-              {trip.tsi.service_infos[0].line && (
-                <tr>
-                  <th>Linie</th>
-                  <td>{trip.tsi.service_infos[0].line}</td>
-                </tr>
-              )}
-              <tr>
-                <th>Anbieter</th>
-                <td>{trip.tsi.service_infos[0].provider}</td>
-              </tr>
-              <tr>
-                <th>Kapazität</th>
-                <td>{findCapacities(trip.edges)}</td>
-              </tr>
-            </tbody>
-          </table>
+          <TrainTable trip={trip} />
         </div>
         {/* Signlaeanzeige */}
         {showSignals() && (
