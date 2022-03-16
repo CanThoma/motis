@@ -78,8 +78,6 @@ const PeakSpotting = ({
     filterTripRequest: PaxMonFilterTripsRequest
   ) {
     if (peakSpottingTrips && !refetchFlag) return;
-    console.log(window.innerHeight);
-    //setPageSize(Math.floor((window.innerHeight - config.topOffset) / 85));
 
     const res = await sendPaxMonFilterTripsRequest(filterTripRequest);
 
@@ -147,7 +145,9 @@ const PeakSpotting = ({
   }, [pageSize, setPaginatedTrips, peakSpottingTrips]);
 
   window.addEventListener("resize", () =>
-    setPageSize(Math.floor((window.innerHeight - config.topOffset) / 85))
+    setPageSize(
+      Math.max(Math.floor((window.innerHeight - config.topOffset) / 85), 1)
+    )
   );
 
   /**
@@ -162,7 +162,7 @@ const PeakSpotting = ({
   };
 
   useEffect(() => {
-    setPageSize(Math.floor((window.innerHeight - 352.4) / 85));
+    setPageSize(Math.max(Math.floor((window.innerHeight - 350) / 85), 1));
   }, []);
 
   useEffect(() => {
@@ -239,7 +239,7 @@ const PeakSpotting = ({
           placeholder="50"
           onBlur={(input) => {
             const maxPax = parseInt(input.target.value);
-            if (isNaN(maxPax)) return;
+            if (isNaN(maxPax) || maxPax <= 0) return;
 
             handleMaxResultChange(maxPax);
           }}

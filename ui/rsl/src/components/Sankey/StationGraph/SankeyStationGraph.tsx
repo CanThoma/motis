@@ -57,7 +57,6 @@ const SankeyStationGraph = ({
   const [svgHeight, setSvgHeight] = useState(600);
   //const [loading, setLoading] = useState(false);
 
-  // TODO
   const loadingStatus = useRef(true);
 
   const [data, status] = ExtractStationData({
