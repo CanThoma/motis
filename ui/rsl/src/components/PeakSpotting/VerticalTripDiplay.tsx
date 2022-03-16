@@ -98,22 +98,45 @@ const VerticalTripDisplay = ({
   const { setSelectedStation, setStationName, setEndTime, setStartTime } =
     useSankeyContext();
 
+  /**
+   * @returns Wahrheitswert, ob die Signalanzeige gerendert werden soll oder nicht.
+   */
+  const showSignals = (): boolean => {
+    return (
+      trip.max_excess_pax > 0 ||
+      trip.critical_sections > 0 ||
+      trip.crowded_sections > 0
+    );
+  };
+
   const handleStationSelect = (
     onStationSelected: (() => void) | undefined,
-    edge: PaxMonEdgeLoadInfo
+    edge: PaxMonEdgeLoadInfo,
+    lastStationFlag = false
   ): void => {
     if (setSelectedStation) setSelectedStation(edge.from.id);
 
-    const startTime = (edge.departure_current_time - 5 * 60) * 1000;
-    const endTime = (edge.departure_current_time + 25 * 60) * 1000;
+    let startTime;
+    let endTime;
+    console.log(edge);
+    if (!lastStationFlag) {
+      startTime = (edge.departure_current_time - 5 * 60) * 1000;
+      endTime = (edge.departure_current_time + 25 * 60) * 1000;
+      if (setStationName)
+        setStationName(
+          `${edge.from.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
+        );
+    } else {
+      startTime = (edge.arrival_current_time - 5 * 60) * 1000;
+      endTime = (edge.arrival_current_time + 25 * 60) * 1000;
+      if (setStationName)
+        setStationName(
+          `${edge.to.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
+        );
+    }
 
     if (setStartTime) setStartTime(new Date(startTime));
     if (setEndTime) setEndTime(new Date(endTime));
-
-    if (setStationName)
-      setStationName(
-        `${edge.from.name} - ${renderTimeDisplay(startTime / 1000)} Uhr`
-      );
 
     if (onStationSelected) onStationSelected();
   };
@@ -427,7 +450,7 @@ const VerticalTripDisplay = ({
       .attr("font-family", font_family)
       .attr("cursor", "pointer")
       .on("click", () =>
-        handleStationSelect(onStationSelected, data[data.length - 1])
+        handleStationSelect(onStationSelected, data[data.length - 1], true)
       );
 
     setHeight(svgHeight + svgPadding);
@@ -491,8 +514,8 @@ const VerticalTripDisplay = ({
           <table className="table">
             <tbody>
               <tr>
-                <th>ZugNr</th>
-                <td>{trip.tsi.trip.train_nr}</td>
+                <th>Name</th>
+                <td>{trip.tsi.service_infos[0].name}</td>
               </tr>
               <tr>
                 <th>Von</th>
@@ -507,16 +530,12 @@ const VerticalTripDisplay = ({
                 }`}</td>
               </tr>
               <tr>
-                <th>Name</th>
-                <td>{trip.tsi.service_infos[0].name}</td>
+                <th>ZugNr</th>
+                <td>{trip.tsi.trip.train_nr}</td>
               </tr>
               <tr>
                 <th>Kategorie</th>
                 <td>{trip.tsi.service_infos[0].category}</td>
-              </tr>
-              <tr>
-                <th>Zuchnummer</th>
-                <td>{trip.tsi.service_infos[0].train_nr}</td>
               </tr>
               <tr>
                 <th>Linie</th>
@@ -534,64 +553,69 @@ const VerticalTripDisplay = ({
           </table>
         </div>
         {/* Signlaeanzeige */}
-        <div className="h-[50px] flex-initial">
-          <h2 className="m-auto mt-2 ml-2 text-xl text-db-cool-gray-600">
-            Signale
-          </h2>
-        </div>
-        <div
-          className="tableContainer flex-initial overflow-y-scroll hide-scrollbar"
-          style={{
-            maxHeight: containerRef.current
-              ? (containerRef.current.getBoundingClientRect().height - 110) *
-                (1 / 3)
-              : 500,
-          }}
-        >
-          <table className="table">
-            <tbody>
-              {trip.max_excess_pax > 0 && (
-                <tr>
-                  <th>
-                    <WarningSymbol
-                      color="#ef1d18"
-                      disableTooltip
-                      symbol="excess"
-                      width={15}
-                    />
-                  </th>
-                  <td>Der Zug ist überfüllt.</td>
-                </tr>
-              )}
-              {trip.critical_sections > 0 && (
-                <tr>
-                  <th>
-                    <WarningSymbol
-                      color="#ff8200"
-                      symbol="critical"
-                      width={15}
-                      disableTooltip
-                    />
-                  </th>
-                  <td>Der Zug enthält kritische Abschnitte.</td>
-                </tr>
-              )}
-              {trip.crowded_sections > 0 && (
-                <tr>
-                  <th>
-                    <WarningSymbol
-                      color="#444444"
-                      symbol="crowded"
-                      width={15}
-                      disableTooltip
-                    />
-                  </th>
-                  <td>Der Zug enthält überfüllte Abschnitte.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {showSignals() && (
+          <>
+            <div className="h-[50px] flex-initial">
+              <h2 className="m-auto mt-2 ml-2 text-xl text-db-cool-gray-600">
+                Signale
+              </h2>
+            </div>
+            <div
+              className="tableContainer flex-initial overflow-y-scroll hide-scrollbar"
+              style={{
+                maxHeight: containerRef.current
+                  ? (containerRef.current.getBoundingClientRect().height -
+                      110) *
+                    (1 / 3)
+                  : 500,
+              }}
+            >
+              <table className="table">
+                <tbody>
+                  {trip.max_excess_pax > 0 && (
+                    <tr>
+                      <th>
+                        <WarningSymbol
+                          color="#ef1d18"
+                          disableTooltip
+                          symbol="excess"
+                          width={15}
+                        />
+                      </th>
+                      <td>Der Zug ist überfüllt.</td>
+                    </tr>
+                  )}
+                  {trip.critical_sections > 0 && (
+                    <tr>
+                      <th>
+                        <WarningSymbol
+                          color="#ff8200"
+                          symbol="critical"
+                          width={15}
+                          disableTooltip
+                        />
+                      </th>
+                      <td>Der Zug enthält kritische Abschnitte.</td>
+                    </tr>
+                  )}
+                  {trip.crowded_sections > 0 && (
+                    <tr>
+                      <th>
+                        <WarningSymbol
+                          color="#444444"
+                          symbol="crowded"
+                          width={15}
+                          disableTooltip
+                        />
+                      </th>
+                      <td>Der Zug enthält überfüllte Abschnitte.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
