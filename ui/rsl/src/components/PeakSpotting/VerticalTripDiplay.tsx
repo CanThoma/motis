@@ -537,10 +537,12 @@ const VerticalTripDisplay = ({
                 <th>Kategorie</th>
                 <td>{trip.tsi.service_infos[0].category}</td>
               </tr>
-              <tr>
-                <th>Linie</th>
-                <td>{trip.tsi.service_infos[0].line}</td>
-              </tr>
+              {trip.tsi.service_infos[0].line && (
+                <tr>
+                  <th>Linie</th>
+                  <td>{trip.tsi.service_infos[0].line}</td>
+                </tr>
+              )}
               <tr>
                 <th>Anbieter</th>
                 <td>{trip.tsi.service_infos[0].provider}</td>

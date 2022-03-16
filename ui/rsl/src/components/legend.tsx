@@ -209,7 +209,7 @@ const Legend = (): JSX.Element => {
             onClick={() => setShowModal(false)}
           />
           <div className="legend-modal">
-            <h1 className="legend_title">Legende</h1>
+            <h1 className="legend_title">Legende &amp; Navigation</h1>
             <ol className="gradient-list">
               {optionsList.map(
                 ({ title, pattern, short, show, set, long, imageURL, key }) => (
