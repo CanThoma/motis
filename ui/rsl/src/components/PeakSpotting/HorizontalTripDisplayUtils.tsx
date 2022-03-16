@@ -5,13 +5,21 @@ import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit
- * zu errechnen, um damit die x-achsen variable zu errechnen
+ * zu errechnen, um damit die x-Achsen variable zu errechnen
  * und damit das Rechteck zu zeichnen.
+ * @param hours
+ * @param minutes
  */
 const calcTimePercentage = (hours: number, minutes: number): number => {
   return hours / config.timeFrame + minutes / (60 * config.timeFrame);
 };
 
+/**
+ * berechnet die x Koordinate einer Kante
+ * @param width breite des Graphen
+ * @param hours
+ * @param minutes
+ */
 const calcXCoordinate = (
   width: number,
   hours: number,
@@ -21,6 +29,14 @@ const calcXCoordinate = (
   return width * percentage;
 };
 
+/**
+ * Berechnet die Breite eines Trips abhängig von Abfahrts- und Ankunftszeit
+ * @param width Breite des Graphen
+ * @param departureHours
+ * @param departureMinutes
+ * @param arrivalHours
+ * @param arrivalMinutes
+ */
 const calcTripWidth = (
   width: number,
   departureHours: number,
@@ -33,7 +49,12 @@ const calcTripWidth = (
   return x1 - x2;
 };
 
-const addXandWidth = (width: number, edge: TripEdge): TripEdge => {
+/**
+ * Setzt die x Koordinate und die Breite der Edge
+ * @param width Breite des Graphen
+ * @param edge
+ */
+const addXAndWidth = (width: number, edge: TripEdge): TripEdge => {
   if (
     !edge.departureHours ||
     !edge.departureMinutes ||
@@ -53,6 +74,12 @@ const addXandWidth = (width: number, edge: TripEdge): TripEdge => {
   return edge;
 };
 
+/**
+ * Übergebene tripinfos werden als Gesamtkatalog interpretiert und gibt daraus eine Subsektion aus pageNumber und pageSize an
+ * @param items
+ * @param pageNumber
+ * @param pageSize
+ */
 const paginate = (
   items: PaxMonFilteredTripInfo[] | undefined,
   pageNumber: number,
@@ -69,6 +96,13 @@ type prepareEdgesProps = {
   height: number;
 };
 
+/**
+ * Bereitet die Daten der Edges so auf das sie gezeichnet werden können.
+ * Berechnet Koordinaten und Breiten der Edges abhängig von der Dauer einer Fahrt.
+ * @param trip
+ * @param width Breite des Graphen
+ * @param height Höhe des Graphen
+ */
 const prepareEdges = ({
   trip,
   width,
@@ -129,12 +163,12 @@ const prepareEdges = ({
       timeWrapTmpEdge.departureHours = 0;
       timeWrapTmpEdge.departureMinutes = 0;
 
-      timeWrapTmpEdge = addXandWidth(width, { ...timeWrapTmpEdge });
+      timeWrapTmpEdge = addXAndWidth(width, { ...timeWrapTmpEdge });
 
       if (timeWrapOverflowTmpEdge) {
         timeWrapOverflowTmpEdge.departureMinutes = 0;
         timeWrapOverflowTmpEdge.departureHours = 0;
-        timeWrapOverflowTmpEdge = addXandWidth(width, {
+        timeWrapOverflowTmpEdge = addXAndWidth(width, {
           ...timeWrapOverflowTmpEdge,
         });
         finalEdges.push(timeWrapOverflowTmpEdge);
@@ -143,7 +177,7 @@ const prepareEdges = ({
     }
 
     if (overflowTmpEdge) {
-      overflowTmpEdge = addXandWidth(width, { ...overflowTmpEdge });
+      overflowTmpEdge = addXAndWidth(width, { ...overflowTmpEdge });
       finalEdges.push(overflowTmpEdge);
       overflowTmpEdge = null;
     }

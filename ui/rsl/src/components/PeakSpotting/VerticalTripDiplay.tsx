@@ -75,7 +75,7 @@ const VerticalTripDisplay = ({
     useSankeyContext();
 
   /**
-   * @returns Wahrheitswert, ob die Signalanzeige gerendert werden soll oder nicht.
+   * @returns boolean ob die Signalanzeige gerendert werden soll oder nicht.
    */
   const showSignals = (): boolean => {
     return (
@@ -85,6 +85,12 @@ const VerticalTripDisplay = ({
     );
   };
 
+  /**
+   * Wird aufgerufen wenn man auf einen Stationsnamen im VerticalTripDisplay drückt. Ruft den Stationsgraphen zur ausgewählten Station auf.
+   * @param onStationSelected
+   * @param edge
+   * @param lastStationFlag
+   */
   const handleStationSelect = (
     onStationSelected: (() => void) | undefined,
     edge: PaxMonEdgeLoadInfo,

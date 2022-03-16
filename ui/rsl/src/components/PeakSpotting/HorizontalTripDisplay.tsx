@@ -16,8 +16,8 @@ import { TripId } from "../../api/protocol/motis";
 import { useSankeyContext } from "../context/SankeyContext";
 
 type Props = {
-  width: number;
   trip: PaxMonFilteredTripInfo;
+  width: number;
   selectedTrip: PaxMonFilteredTripInfo | undefined;
   onClick: () => void;
   onTripSelected?: () => void;
@@ -25,12 +25,12 @@ type Props = {
 };
 
 /**
- * Generiert
- * @param trip
+ * Generiert einen Balken mit Informationen zu trip
+ * @param trip der Trip dessen Informationen angezeigt werden sollen
  * @param width
- * @param selectedTrip
- * @param onClick
- * @param onTripSelected
+ * @param selectedTrip der momentan ausgewählte Trip
+ * @param onClick wird ausgeführt wenn der Graph angeklickt wird
+ * @param onTripSelected wird ausgeführt wenn die Zugnummer angeklickt wird
  * @param height
  * @constructor
  */

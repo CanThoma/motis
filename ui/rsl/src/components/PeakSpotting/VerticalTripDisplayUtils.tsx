@@ -3,6 +3,11 @@ import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
 import { peakSpottingConfig as config } from "../../config";
 import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
 
+/**
+ * Konvertiert Stunden in Minuten und addiert Minuten darauf.
+ * @param hours
+ * @param minutes
+ */
 const calcMinutes = (hours: number, minutes: number): number => {
   return hours * 60 + minutes;
 };
@@ -12,7 +17,12 @@ const color = scaleLinear<string>()
   .range(["#dfe3e7", "#c1d5d7", "#ffc700", "#f04b4a", "#dd4141"])
   .interpolate(interpolateRgb.gamma(2.2));
 
-const prepareTimeEdges = (trip: PaxMonFilteredTripInfo): TripEdge[] => {
+/**
+ * Generiere die TripEdges aus den edges der PaxMonFilteredTripInfo
+ * @param trip
+ * @return
+ */
+function prepareTimeEdges(trip: PaxMonFilteredTripInfo): TripEdge[] {
   const finalEdges = [];
 
   let offset = config.verticalInitialOffset;
@@ -47,6 +57,6 @@ const prepareTimeEdges = (trip: PaxMonFilteredTripInfo): TripEdge[] => {
     finalEdges.push(tmpEdge);
   }
   return finalEdges;
-};
+}
 
 export { prepareTimeEdges };
