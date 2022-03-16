@@ -9,6 +9,16 @@ type Props = {
   trip: PaxMonFilteredTripInfo;
 };
 
+const renderDateDisplay = (time: number) => {
+  const date = new Date(time * 1000);
+  const d = date.getDay();
+  const m = date.getMonth();
+  const dd = d < 10 ? "0" + d : d;
+  const mm = m < 10 ? "0" + m : m;
+
+  return `${dd}.${mm}.${date.getFullYear()}`;
+};
+
 /**
  * Reduziert ein Array aus Edges auf die darin vorkommenden Kapazitäten
  * @param edges Ein Array aus Edges
@@ -28,15 +38,23 @@ const TrainTable = ({ trip }: Props): JSX.Element => {
   infos.push({ label: "Name", info: trip.tsi.service_infos[0].name });
   infos.push({
     label: "Von",
-    info: `${renderTimeDisplay(trip.tsi.trip.time)} ${
-      trip.tsi.primary_station.name
-    }`,
+    info: trip.tsi.primary_station.name,
+  });
+  infos.push({
+    label: "",
+    info: `${renderTimeDisplay(trip.tsi.trip.time)} am ${renderDateDisplay(
+      trip.tsi.trip.time
+    )}`,
   });
   infos.push({
     label: "Bis",
-    info: `${renderTimeDisplay(trip.tsi.trip.target_time)} ${
-      trip.tsi.secondary_station.name
-    }`,
+    info: trip.tsi.secondary_station.name,
+  });
+  infos.push({
+    label: " ",
+    info: `${renderTimeDisplay(
+      trip.tsi.trip.target_time
+    )} am ${renderDateDisplay(trip.tsi.trip.target_time)}`,
   });
   infos.push({ label: "ZugNr", info: trip.tsi.trip.train_nr.toString() });
   infos.push({ label: "Kategorie", info: trip.tsi.service_infos[0].category });

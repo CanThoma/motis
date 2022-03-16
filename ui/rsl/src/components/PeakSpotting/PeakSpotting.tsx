@@ -263,7 +263,6 @@ const PeakSpotting = ({
           <div className="flex-initial">
             <HorizontalTripDisplayTitle
               width={width}
-              selectedTrip={selectedTrip}
               title={`Alle Züge (${
                 peakSpottingTrips ? peakSpottingTrips.length : 0
               })`}
