@@ -24,6 +24,16 @@ type Props = {
   height?: number;
 };
 
+/**
+ * gene
+ * @param trip
+ * @param width
+ * @param selectedTrip
+ * @param onClick
+ * @param onTripSelected
+ * @param height
+ * @constructor
+ */
 const HorizontalTripDisplay = ({
   trip,
   width,
