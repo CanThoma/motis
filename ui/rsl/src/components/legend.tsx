@@ -7,7 +7,6 @@ const Legend = (): JSX.Element => {
   const [showModal, setShowModal] = useState(false);
 
   const [showPage1, setShowPage1] = useState(false);
-  const [showPage2, setShowPage2] = useState(false);
 
   const optionsList = [
     {
@@ -74,8 +73,6 @@ const Legend = (): JSX.Element => {
     {
       key: 2,
       title: "Normale Zugauslastung",
-      show: showPage2,
-      set: setShowPage2,
       pattern: (
         <svg width="50" height="50">
           <rect
@@ -100,42 +97,6 @@ const Legend = (): JSX.Element => {
   Die Höhe des Balkens ist proportional zur Auslastung des
   Zuges. Ist der farbige Balken beispielsweise halb so hoch wie
   der graue zeigt das eine 50% Auslastung des Zuges an.`,
-      ],
-      imageURL: "https://img.pr0gramm.com/2015/03/27/e51e1d60458d6494.jpg",
-      long: [
-        `Die Kartoffeln in Spalten schneiden und in einer
-  Schüssel mit Parmesan und Olivenöl vermischen. Die
-  Gewürze in einer separaten Schüssel vermengen und dann
-  zu den Kartoffeln geben. Noch einmal kräftig
-  durchmischen, die Kartoffelecken dann auf einem mit
-  Backpapier ausgelegten Backblech verteilen und bei 200
-  °C Ober-/Unterhitze für ca. 40 Minuten backen. Hinweis:
-  Heißhunger auf eine deftige Beilage oder einfach nur
-  Appetit auf einen leckeren Snack? Diese Kartoffelecken
-  sind genau das richtige für alle, die es gerne deftig
-  mögen und etwas Neues ausprobieren wollen. Dazu schmeckt
-  Sour Cream mit ein paar frischen Kräutern wirklich
-  köstlich, alternativ könnt ihr die Wedges natürlich auch
-  als Beilage zu einem leckeren Steak oder gebratenem
-  Fisch servieren. Eurer Kreativität sind keine Grenzen
-  gesetzt. `,
-        <br key={2} />,
-        ` Die Kartoffeln in Spalten schneiden und
-  in einer Schüssel mit Parmesan und Olivenöl vermischen.
-  Die Gewürze in einer separaten Schüssel vermengen und
-  dann zu den Kartoffeln geben. Noch einmal kräftig
-  durchmischen, die Kartoffelecken dann auf einem mit
-  Backpapier ausgelegten Backblech verteilen und bei 200
-  °C Ober-/Unterhitze für ca. 40 Minuten backen. Hinweis:
-  Heißhunger auf eine deftige Beilage oder einfach nur
-  Appetit auf einen leckeren Snack? Diese Kartoffelecken
-  sind genau das richtige für alle, die es gerne deftig
-  mögen und etwas Neues ausprobieren wollen. Dazu schmeckt
-  Sour Cream mit ein paar frischen Kräutern wirklich
-  köstlich, alternativ könnt ihr die Wedges natürlich auch
-  als Beilage zu einem leckeren Steak oder gebratenem
-  Fisch servieren. Eurer Kreativität sind keine Grenzen
-  gesetzt.`,
       ],
     },
     {
@@ -275,8 +236,8 @@ const Legend = (): JSX.Element => {
         </div>
       )}
       <div
-        className="legend-container  w-10 h-8 text-center bg-teal-400 mr-2"
-        data-tooltip="Was bedeuten eigentlich diese ganzen Farben? :("
+        className="legend-container  w-10 h-8 text-center bg-teal-400 mr-4"
+        data-tooltip="Du brauchst eine Erklärung?"
         data-tooltip-location="left"
       >
         <svg
