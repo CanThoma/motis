@@ -4,6 +4,7 @@ import {
   PaxMonEdgeLoadInfo,
 } from "../../api/protocol/motis/paxmon";
 import { renderTimeDisplay } from "../Sankey/SankeyUtils";
+import { formatDateTime } from "../../util/dateFormat";
 
 type Props = {
   trip: PaxMonFilteredTripInfo;
@@ -42,9 +43,7 @@ const TrainTable = ({ trip }: Props): JSX.Element => {
   });
   infos.push({
     label: "",
-    info: `${renderTimeDisplay(trip.tsi.trip.time)} am ${renderDateDisplay(
-      trip.tsi.trip.time
-    )}`,
+    info: `${formatDateTime(trip.tsi.trip.time)}`,
   });
   infos.push({
     label: "Bis",
@@ -52,9 +51,7 @@ const TrainTable = ({ trip }: Props): JSX.Element => {
   });
   infos.push({
     label: " ",
-    info: `${renderTimeDisplay(
-      trip.tsi.trip.target_time
-    )} am ${renderDateDisplay(trip.tsi.trip.target_time)}`,
+    info: `${formatDateTime(trip.tsi.trip.target_time)}`,
   });
   infos.push({ label: "ZugNr", info: trip.tsi.trip.train_nr.toString() });
   infos.push({ label: "Kategorie", info: trip.tsi.service_infos[0].category });

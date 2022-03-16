@@ -67,6 +67,7 @@ const InputSlider = ({
 }: InputSliderProps): JSX.Element => {
   const TRACKREF_LEFT_OFFSET = 14;
   const TRACKREF_WIDTH_LESS = 28;
+  const DEFAULT_WIDTH = 272;
 
   /* HTML references to later modify width */
   const knobRef = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ const InputSlider = ({
   const min = 0;
   const max = values.length - 1;
 
-  const [width, setWidth] = useState(272);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [left, setLeft] = useState(0);
   const [knobX, setKnobX] = useState(0);
   const [dragging, setDragging] = useState(false);
