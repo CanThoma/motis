@@ -162,7 +162,7 @@ const PeakSpotting = ({
   };
 
   useEffect(() => {
-    setPageSize(Math.max(Math.floor((window.innerHeight - 400) / 85), 1));
+    setPageSize(Math.max(Math.floor((window.innerHeight - 350) / 85), 1));
   }, []);
 
   useEffect(() => {
@@ -239,7 +239,7 @@ const PeakSpotting = ({
           placeholder="50"
           onBlur={(input) => {
             const maxPax = parseInt(input.target.value);
-            if (isNaN(maxPax)) return;
+            if (isNaN(maxPax) || maxPax <= 0) return;
 
             handleMaxResultChange(maxPax);
           }}
