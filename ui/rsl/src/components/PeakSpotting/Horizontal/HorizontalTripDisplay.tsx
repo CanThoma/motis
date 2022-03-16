@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { select as d3Select } from "d3";
-import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
+import { PaxMonFilteredTripInfo } from "../../../api/protocol/motis/paxmon";
 
 import {
   font_family,
@@ -8,12 +8,12 @@ import {
   peakSpottingConfig as config,
   peakSpottingConfig,
   stationConfig,
-} from "../../config";
+} from "../../../config";
 
 import { prepareEdges, formatEdgeInfo } from "./HorizontalTripDisplayUtils";
-import WarningSymbol from "./TripDisplaySymbols";
-import { TripId } from "../../api/protocol/motis";
-import { useSankeyContext } from "../context/SankeyContext";
+import WarningSymbol from "../TripDisplaySymbols";
+import { TripId } from "../../../api/protocol/motis";
+import { useSankeyContext } from "../../context/SankeyContext";
 
 type Props = {
   trip: PaxMonFilteredTripInfo;

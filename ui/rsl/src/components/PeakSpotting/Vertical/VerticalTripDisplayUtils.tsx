@@ -1,7 +1,7 @@
 import { interpolateRgb, scaleLinear } from "d3";
-import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
-import { peakSpottingConfig as config } from "../../config";
-import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
+import { PaxMonFilteredTripInfo } from "../../../api/protocol/motis/paxmon";
+import { peakSpottingConfig as config } from "../../../config";
+import { initCommonEdgeInfo, TripEdge } from "../TripDisplayUtils";
 
 /**
  * Konvertiert Stunden in Minuten und addiert Minuten darauf.

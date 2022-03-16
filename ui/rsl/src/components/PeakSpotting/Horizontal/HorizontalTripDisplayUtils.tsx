@@ -1,7 +1,7 @@
 import { interpolateRgb, scaleLinear } from "d3";
-import { colorSchema, peakSpottingConfig as config } from "../../config";
-import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
-import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
+import { colorSchema, peakSpottingConfig as config } from "../../../config";
+import { PaxMonFilteredTripInfo } from "../../../api/protocol/motis/paxmon";
+import { initCommonEdgeInfo, TripEdge } from "../TripDisplayUtils";
 
 /**
  * Der Grundgedanke ist den prozentualen Anteil der Zeit

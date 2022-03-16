@@ -10,7 +10,7 @@ import {
 
 import { universeAtom } from "../../data/simulation";
 import Pagination from "../common/pagination";
-import { paginate } from "./HorizontalTripDisplayUtils";
+import { paginate } from "./Horizontal/HorizontalTripDisplayUtils";
 import { useSankeyContext } from "../context/SankeyContext";
 import Loading from "../common/Loading";
 import {
@@ -18,11 +18,11 @@ import {
   peakSpottingConfig,
   peakSpottingConfig as config,
 } from "../../config";
-import HorizontalTripDisplay from "./HorizontalTripDisplay";
-import HorizontalTripDisplayTitle from "./HorizontalTripDisplayTitle";
-import VerticalTripDisplay from "./VerticalTripDiplay";
+import HorizontalTripDisplay from "./Horizontal/HorizontalTripDisplay";
+import HorizontalTripDisplayTitle from "./Horizontal/HorizontalTripDisplayTitle";
+import VerticalTripDisplay from "./Vertical/VerticalTripDiplay";
 
-import "./HorizontalTripDisplay.css";
+import "./Horizontal/HorizontalTripDisplay.css";
 
 type Props = {
   onTripSelected?: () => void;
