@@ -29,6 +29,12 @@ type Props = {
   onStationSelected?: () => void | undefined;
 };
 
+/**
+ * Gibt ein JSX.Element zurück welches PeakSpotting beinhaltet. Optionen zur Darstellung von diesem befinden sich in der config
+ * @param onTripSelected
+ * @param onStationSelected
+ * @constructor
+ */
 const PeakSpotting = ({
   onTripSelected,
   onStationSelected,

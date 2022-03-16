@@ -22,6 +22,11 @@ const findCapacities = (edges: PaxMonEdgeLoadInfo[]): string => {
   return uniqueCapacities.filter((v, i, a) => a.indexOf(v) === i).toString();
 };
 
+/**
+ * Erstellt eine Tabelle mit Informationen zum übergebenen Zug.
+ * @param trip
+ * @constructor
+ */
 const TrainTable = ({ trip }: Props): JSX.Element => {
   const infos: { label: string; info: string }[] = [];
 

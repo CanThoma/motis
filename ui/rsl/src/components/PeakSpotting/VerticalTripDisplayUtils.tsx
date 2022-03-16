@@ -3,6 +3,11 @@ import { PaxMonFilteredTripInfo } from "../../api/protocol/motis/paxmon";
 import { peakSpottingConfig as config } from "../../config";
 import { initCommonEdgeInfo, TripEdge } from "./TripDisplayUtils";
 
+/**
+ * Konvertiert Stunden in Minuten und addiert Minuten darauf.
+ * @param hours
+ * @param minutes
+ */
 const calcMinutes = (hours: number, minutes: number): number => {
   return hours * 60 + minutes;
 };
