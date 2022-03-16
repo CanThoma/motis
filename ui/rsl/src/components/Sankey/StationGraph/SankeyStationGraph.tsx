@@ -16,9 +16,7 @@ import { DownloadIcon } from "@heroicons/react/solid";
 import Loading from "../../common/Loading";
 import { font_family } from "../../../config";
 import { stationConfig } from "../../../config";
-import { usePaxMonStatusQuery } from "../../../api/paxmon";
-import { universeAtom } from "../../../data/simulation";
-import { useAtom } from "jotai";
+import { saveAsSVG } from "../SankeyUtils";
 
 type Props = {
   stationId: string;
@@ -32,46 +30,6 @@ type Props = {
   nodePadding?: number;
   duration?: number;
 };
-
-/**
- * download URL as filename
- * @param url
- * @param filename
- */
-function downloadBlob(url: string, filename: string) {
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-}
-
-/**
- * Get Blob of SVG Element
- * @param svgEl
- */
-function getSvgBlob(svgEl: SVGSVGElement) {
-  const serializer = new XMLSerializer();
-  let source = serializer.serializeToString(svgEl);
-  const css = document.getElementById("svgStyle")?.outerHTML;
-  if (css) {
-    source = source.replace("<g", css + "<g");
-  }
-  return new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-}
-
-/**
- * Save a SVG Element blob by creating url for it and downloading it
- * @param svgEl
- * @param baseFileName
- */
-function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
-  if (!svgEl) {
-    return;
-  }
-  const svgBlob = getSvgBlob(svgEl);
-  const url = URL.createObjectURL(svgBlob);
-  downloadBlob(url, baseFileName + ".svg");
-}
 
 /**
  *

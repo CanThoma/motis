@@ -111,10 +111,14 @@ const prepareEdges = ({
       tmpEdge.y = height - tmpEdge.capacity / config.horizontalCapacityScale;
       tmpEdge.height = tmpEdge.capacity / config.horizontalCapacityScale;
 
-      overflowTmpEdge.height =
-        (rightValue - tmpEdge.capacity) / config.horizontalCapacityScale - 1.5;
-      overflowTmpEdge.y =
-        height - tmpEdge.height - overflowTmpEdge.height - 1.5;
+      overflowTmpEdge.height = Math.max(
+        0,
+        (rightValue - tmpEdge.capacity) / config.horizontalCapacityScale - 1.5
+      );
+      overflowTmpEdge.y = Math.max(
+        0,
+        height - tmpEdge.height - overflowTmpEdge.height - 1.5
+      );
     }
 
     // z.B. 23:00 abgefahren und 00:30 angekommen

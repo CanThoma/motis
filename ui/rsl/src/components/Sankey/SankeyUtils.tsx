@@ -5,6 +5,46 @@ import { MouseEvent } from "react";
 import { stationConfig } from "../../config";
 
 /**
+ * download URL as filename
+ * @param url
+ * @param filename
+ */
+function downloadBlob(url: string, filename: string) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+}
+
+/**
+ * Get Blob of SVG Element
+ * @param svgEl
+ */
+function getSvgBlob(svgEl: SVGSVGElement) {
+  const serializer = new XMLSerializer();
+  let source = serializer.serializeToString(svgEl);
+  const css = document.getElementById("svgStyle")?.outerHTML;
+  if (css) {
+    source = source.replace("<g", css + "<g");
+  }
+  return new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+}
+
+/**
+ * Save a SVG Element blob by creating url for it and downloading it
+ * @param svgEl
+ * @param baseFileName
+ */
+export function saveAsSVG(svgEl: SVGSVGElement | null, baseFileName: string) {
+  if (!svgEl) {
+    return;
+  }
+  const svgBlob = getSvgBlob(svgEl);
+  const url = URL.createObjectURL(svgBlob);
+  downloadBlob(url, baseFileName + ".svg");
+}
+
+/**
  * Erstellt einen Daten string zur Darstellung der Ankunfts- und Abfahrtszeit der Züge
  * @param n Node
  */

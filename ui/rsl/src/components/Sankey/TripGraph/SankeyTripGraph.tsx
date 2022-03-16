@@ -14,6 +14,8 @@ import { TripId } from "../../../api/protocol/motis";
 import { ExtractGroupInfoForThisTrain } from "../../TripInfoUtils";
 import Modal from "./Modal/Modal";
 import { font_family, tripConfig } from "../../../config";
+import { DownloadIcon } from "@heroicons/react/solid";
+import { saveAsSVG } from "../SankeyUtils";
 
 type Props = {
   tripId: TripId;
@@ -435,13 +437,28 @@ const SankeyTripGraph = ({
       {!graphData && <div>Daten zum Zug nicht verfügbar</div>}
       {isOpen && <Modal setIsOpen={setIsOpen} param={clickedNode} />}
       {graphData && (
-        <svg
-          ref={svgRef}
-          width={tripConfig.width}
-          height={svgHeight}
-          className="m-auto"
-          style={{ marginBottom: "1.45rem" }}
-        />
+        <>
+          <svg
+            ref={svgRef}
+            width={tripConfig.width}
+            height={svgHeight}
+            className="m-auto"
+            style={{ marginBottom: "1.45rem" }}
+          />
+          <div
+            className="flex justify-center mb-5"
+            data-tooltip="Diagramm Download"
+            data-tooltip-location="top"
+          >
+            <button
+              className="flex items-center bg-db-red-500 px-3 py-1 rounded text-white text-sm hover:bg-db-red-600"
+              onClick={() => saveAsSVG(svgRef.current, "stationgraph")}
+            >
+              <DownloadIcon className="w-5 h-5 mr-2" aria-hidden="true" />
+              SVG
+            </button>
+          </div>
+        </>
       )}
     </>
   );
