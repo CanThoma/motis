@@ -47,22 +47,6 @@ const App = (): JSX.Element => {
     setStationName,
   } = useSankeyContext();
 
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyboardNavigation);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyboardNavigation);
-    };
-  }, []);
-
-  const handleKeyboardNavigation = (e: KeyboardEvent) => {
-    if (e.key === "ArrowLeft") {
-      setActivePage(activePage === 0 ? pages.length - 1 : activePage - 1);
-    } else if (e.key === "ArrowRight") {
-      setActivePage(activePage === pages.length - 1 ? 0 : activePage + 1);
-    }
-  };
-
   const handleStationSelect = () => {
     setActivePage(1);
   };
