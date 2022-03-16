@@ -4,7 +4,7 @@ import {
   colorSchema,
   font_family,
   peakSpottingConfig as config,
-} from "../../config";
+} from "../../../config";
 
 /**
  * Gibt Titelleiste des Horizontalen Peak Spotting graphen zurück

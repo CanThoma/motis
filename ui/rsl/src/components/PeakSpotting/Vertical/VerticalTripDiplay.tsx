@@ -6,18 +6,18 @@ import {
   peakSpottingConfig,
   peakSpottingConfig as config,
   stationConfig,
-} from "../../config";
+} from "../../../config";
 import { prepareTimeEdges } from "./VerticalTripDisplayUtils";
 import {
   PaxMonEdgeLoadInfo,
   PaxMonFilteredTripInfo,
-} from "../../api/protocol/motis/paxmon";
-import { useSankeyContext } from "../context/SankeyContext";
+} from "../../../api/protocol/motis/paxmon";
+import { useSankeyContext } from "../../context/SankeyContext";
 
 import "./VerticalTripDisplay.css";
-import WarningSymbol from "./TripDisplaySymbols";
-import { renderTimeDisplay } from "../Sankey/SankeyUtils";
-import TrainTable from "./TrainTable";
+import WarningSymbol from "../TripDisplaySymbols";
+import { renderTimeDisplay } from "../../Sankey/SankeyUtils";
+import TrainTable from "../TrainTable";
 
 type Props = {
   width: number;
@@ -300,7 +300,9 @@ const VerticalTripDisplay = ({
 
       const appendPrognoseNumberText = (
         type: "absolute" | "percent",
-        fontSize: number
+        fontSize: number,
+        yOffset: number,
+        fillColor: string
       ) => {
         view
           .append("text")
@@ -318,18 +320,28 @@ const VerticalTripDisplay = ({
               : `${Math.round((rightValue / edge.capacity) * 100)}%`
           )
           .attr("dx", graphNumberXOffset)
-          .attr("dy", graphLargeNumberYOffset)
-          .attr("fill", colorSchema.grey)
+          .attr("dy", yOffset)
+          .attr("fill", fillColor)
           .attr("text-anchor", "start")
           .attr("font-size", fontSize)
           .attr("font-weight", "inherit")
           .attr("font-family", font_family);
       };
       // "Prognosen" absolute Zahl
-      appendPrognoseNumberText("absolute", fontSizeM);
+      appendPrognoseNumberText(
+        "absolute",
+        fontSizeM,
+        graphLargeNumberYOffset,
+        colorSchema.grey
+      );
 
       // "Prognose" Prozent
-      appendPrognoseNumberText("percent", fontSizeS);
+      appendPrognoseNumberText(
+        "percent",
+        fontSizeS,
+        graphPercentageYOffset,
+        colorSchema.bluishGrey
+      );
     }
 
     //"BUCHUNGEN" TITEL
