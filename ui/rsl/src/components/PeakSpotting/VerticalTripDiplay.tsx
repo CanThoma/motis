@@ -507,7 +507,8 @@ const VerticalTripDisplay = ({
           style={{
             maxHeight: containerRef.current
               ? (containerRef.current.getBoundingClientRect().height - 110) *
-                (2 / 3)
+                  (2 / 3) +
+                4
               : 500,
           }}
         >
