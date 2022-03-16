@@ -47,13 +47,13 @@ export const formatTextNode = (node: Node): string => {
   if (typeof node.id === "string") {
     switch (node.id) {
       case "previous":
-        return `${node.pax} people coming from trips outside the selected timeframe.`;
+        return `${node.pax} Personen die aus Verbindungen vor Anfang des Zeitfensters einsteigen.`;
       case "boarding":
-        return `${node.pax} people starting their trip at this station.`;
+        return `${node.pax} Personen die ihre Reise hier starten.`;
       case "future":
-        return `${node.pax} people boarding trips outside the selected timeframe.`;
+        return `${node.pax} Personen die in Verbindungen nach Ende des Zeitfensters einsteigen.`;
       case "exiting":
-        return `${node.pax} people ending their trip at this station.`;
+        return `${node.pax} Personen die ihre Reise hier beenden.`;
       default:
         return "";
     }
