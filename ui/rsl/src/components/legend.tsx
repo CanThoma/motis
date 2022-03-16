@@ -138,6 +138,15 @@ const Legend = (): JSX.Element => {
   gesetzt.`,
       ],
     },
+    {
+      key: 3,
+      title: "Klick auf einen Trip",
+      pattern: <img src={"../../public/images/tripClicked.jpg"} alt="Test" />,
+      short: [
+        `Klickt man auf einen Trip im Stationsgraphen, wird man automatisch zum entsprechenden Trip im Tripgraphen geführt. 
+  `,
+      ],
+    },
   ];
 
   return (
@@ -160,41 +169,46 @@ const Legend = (): JSX.Element => {
                       {title}
                     </h2>
                     <p>{short}</p>
-                    <div className="cursor-pointer" onClick={() => set(!show)}>
-                      {show ? (
-                        <div
-                          data-tooltip="Alles klar, verstanden!"
-                          data-tooltip-location="top"
-                        >
-                          <ChevronUpIcon className="block m-auto h-4 w-4 text-gray-500" />
-                        </div>
-                      ) : (
-                        <div
-                          data-tooltip="Du willst es genauer wissen?"
-                          data-tooltip-location="top"
-                        >
-                          <ChevronDownIcon className="block m-auto h-4 w-4 text-gray-500" />
-                        </div>
-                      )}
-                      {show && (
-                        <div style={{ overflow: "auto" }}>
-                          <div>
-                            <img
-                              src={imageURL}
-                              alt="Test"
-                              style={{
-                                float: "left",
-                                margin: "5px",
-                                width: "400px",
-                              }}
-                            />
+                    {long && (
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => set(!show)}
+                      >
+                        {show ? (
+                          <div
+                            data-tooltip="Alles klar, verstanden!"
+                            data-tooltip-location="top"
+                          >
+                            <ChevronUpIcon className="block m-auto h-4 w-4 text-gray-500" />
                           </div>
-                          {long && (
-                            <p style={{ textAlign: "justify" }}>{long}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                        ) : (
+                          <div
+                            data-tooltip="Du willst es genauer wissen?"
+                            data-tooltip-location="top"
+                          >
+                            <ChevronDownIcon className="block m-auto h-4 w-4 text-gray-500" />
+                          </div>
+                        )}
+                        {show && (
+                          <div style={{ overflow: "auto" }}>
+                            <div>
+                              <img
+                                src={imageURL}
+                                alt="Test"
+                                style={{
+                                  float: "left",
+                                  margin: "5px",
+                                  width: "400px",
+                                }}
+                              />
+                            </div>
+                            {long && (
+                              <p style={{ textAlign: "justify" }}>{long}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </li>
                 )
               )}
