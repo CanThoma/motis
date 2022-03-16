@@ -63,8 +63,8 @@ const peakSpottingConfig = {
   verticalHeightMultiplier: 3,
   verticalWidthMultiplier: 0.15,
   topOffsetEffect: 350,
-  pageHeightDividor: 85,
   warningSymbolSize: 15,
+  horizontalDisplayHeightPadding: 5,
 };
 
 const font_family = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;

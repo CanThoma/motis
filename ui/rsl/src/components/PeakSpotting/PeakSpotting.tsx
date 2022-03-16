@@ -152,7 +152,8 @@ const PeakSpotting = ({
       Math.max(
         Math.floor(
           (window.innerHeight - config.topOffset) /
-            peakSpottingConfig.pageHeightDividor
+            (peakSpottingConfig.defaultHorizontalDisplayHeight +
+              peakSpottingConfig.horizontalDisplayHeightPadding)
         ),
         1
       )
@@ -175,7 +176,8 @@ const PeakSpotting = ({
       Math.max(
         Math.floor(
           (window.innerHeight - config.topOffsetEffect) /
-            peakSpottingConfig.pageHeightDividor
+            (peakSpottingConfig.defaultHorizontalDisplayHeight +
+              peakSpottingConfig.horizontalDisplayHeightPadding)
         ),
         1
       )
