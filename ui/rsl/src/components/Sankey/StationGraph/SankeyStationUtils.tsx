@@ -34,6 +34,7 @@ const calcNodeHeight = (
  * @param factor Skalierungsfaktor
  */
 const calcNodeHeightWithoutMinHeight = (value: number, factor = 15): number => {
+  if (factor <= 0) return value;
   return value / factor;
 };
 
